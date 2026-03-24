@@ -10,7 +10,7 @@ import SwiftUI
 /// Usage:
 /// ```swift
 /// struct CounterView: StateView {
-///     var hookBody: some View {
+///     var stateBody: some View {
 ///         let (count, setCount) = useStateSet(0)
 ///         VStack {
 ///             Text("Count: \(count)")
@@ -29,8 +29,8 @@ public protocol StateView: View {
     @ViewBuilder @MainActor var stateBody: Self.StateBody { get }
 }
 
-/// Default implementation that wires `hookBody` into SwiftUI's `body`
-/// by wrapping it in a `HookScope`.
+/// Default implementation that wires `stateBody` into SwiftUI's `body`
+/// by wrapping it in a `StateScope`.
 @MainActor
 public extension StateView {
     var body: some View {
