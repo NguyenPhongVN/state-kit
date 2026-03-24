@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9A9534192F83E8AB00F5F87F /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 9A9534182F83E8AB00F5F87F /* Textual */; };
 		EC5E79392F659FF8006164B0 /* StateKit in Frameworks */ = {isa = PBXBuildFile; productRef = EC5E79382F659FF8006164B0 /* StateKit */; };
 		EC5E793B2F659FF8006164B0 /* StateKitCombine in Frameworks */ = {isa = PBXBuildFile; productRef = EC5E793A2F659FF8006164B0 /* StateKitCombine */; };
 		EC5E793D2F659FF8006164B0 /* StateKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = EC5E793C2F659FF8006164B0 /* StateKitCore */; };
@@ -39,6 +40,7 @@
 				EC5E79412F659FF8006164B0 /* StateKitSupport in Frameworks */,
 				EC5E793B2F659FF8006164B0 /* StateKitCombine in Frameworks */,
 				EC5E79432F659FF8006164B0 /* StateKitTesting in Frameworks */,
+				9A9534192F83E8AB00F5F87F /* Textual in Frameworks */,
 				EC5E793D2F659FF8006164B0 /* StateKitCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -97,6 +99,7 @@
 				EC5E79402F659FF8006164B0 /* StateKitSupport */,
 				EC5E79422F659FF8006164B0 /* StateKitTesting */,
 				EC5E79442F659FF8006164B0 /* StateKitUI */,
+				9A9534182F83E8AB00F5F87F /* Textual */,
 			);
 			productName = CaseStudies;
 			productReference = ECADE9C32F65345E00B4D816 /* CaseStudies.app */;
@@ -110,7 +113,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2620;
-				LastUpgradeCheck = 2620;
+				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					ECADE9C22F65345E00B4D816 = {
 						CreatedOnToolsVersion = 26.2;
@@ -126,6 +129,9 @@
 			);
 			mainGroup = ECADE9BA2F65345E00B4D816;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = ECADE9C42F65345E00B4D816 /* Products */;
 			projectDirPath = "";
@@ -191,6 +197,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -213,6 +220,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -252,6 +260,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -267,6 +276,7 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -278,6 +288,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -320,6 +331,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -378,7 +390,23 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/textual";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		9A9534182F83E8AB00F5F87F /* Textual */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */;
+			productName = Textual;
+		};
 		EC5E79382F659FF8006164B0 /* StateKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = StateKit;

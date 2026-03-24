@@ -7,7 +7,9 @@ import SwiftUI
 struct CaseStudiesApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                ContentView()
+            }
         }
     }
 }

@@ -1,3 +1,45 @@
+// ============================================================
+// MARK: - Planned: Atom / Selector Graph
+// ============================================================
+//
+// This file contains an in-progress implementation of a Recoil-style
+// atom-selector dependency graph for StateKit's shared state layer.
+//
+// ## Concept
+//
+// The design mirrors Recoil (React) and Jotai's computed atoms:
+//
+//   Atom<Value>          — a leaf node holding mutable global state.
+//                          Equivalent to Recoil's `atom()` or Jotai's
+//                          writable `atom(initialValue)`.
+//
+//   Selector<Value>      — a derived node whose value is computed
+//                          synchronously from one or more Atoms or other
+//                          Selectors. Equivalent to Recoil's `selector()`
+//                          or Jotai's read-only `atom(get => ...)`.
+//
+//   AsyncSelector<Value> — a derived node computed asynchronously (network,
+//                          disk I/O, etc.). Equivalent to Recoil's async
+//                          `selector` or Jotai's async `atom`.
+//
+// ## Dependency graph
+//
+// Each node tracks:
+//   - `dependencies`  — the set of nodes this node reads from.
+//   - `dependents`    — the set of nodes that read from this node.
+//   - `revision`      — a monotonic clock value bumped on each write,
+//                       used to detect stale cache entries.
+//   - `dirty`         — true when the cached value may be out of date
+//                       and needs recomputation.
+//
+// When an Atom is written, StateStore marks all transitive dependents dirty,
+// enqueues them, and runs a scheduler that recomputes Selectors in order.
+// This is equivalent to Recoil's atom effect propagation or MobX's
+// derivation graph.
+//
+// ## Status: commented out — not yet integrated with the active StateStore.
+// ============================================================
+
 //import Foundation
 //import Observation
 //
@@ -142,7 +184,7 @@
 //
 //@Observable
 //@MainActor public class StateStore {
-//    
+//
 //    public static let shared = StateStore()
 //
 //    private var storage: [NodeID: any Node] = [:]

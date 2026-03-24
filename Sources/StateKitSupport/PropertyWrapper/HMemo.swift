@@ -1,40 +1,65 @@
 import Foundation
 
+/// A property wrapper that memoizes a computed value using `useMemo`,
+/// recomputing it only when `updateStrategy` changes.
+///
+/// `HMemo` is syntactic sugar over `useMemo`: instead of writing
+/// ```swift
+/// let sorted = useMemo(updateStrategy: .preserved(by: items)) {
+///     items.sorted()
+/// }
+/// ```
+/// you can write:
+/// ```swift
+/// @HMemo(.preserved(by: items)) var sorted = items.sorted()
+/// ```
+///
+/// The initializer expression is captured as an `@autoclosure`, so it is
+/// passed directly to `useMemo` as the compute closure. On the first render
+/// the expression is evaluated and cached. On subsequent renders it is only
+/// re-evaluated if `updateStrategy` changes between renders.
+///
+/// Must be used inside a `StateScope` closure or a `StateView.stateBody`.
+/// Hook ordering rules apply: always declare `@HMemo` properties in the
+/// same order across renders.
+///
+/// - Note: `HMemo` has no `projectedValue`. Access the memoized result
+///   directly through the property name.
+///
+/// ### Example
+/// ```swift
+/// struct SortedListView: StateView {
+///     let items: [Int]
+///
+///     var stateBody: some View {
+///         @HMemo(.preserved(by: items)) var sorted = items.sorted()
+///
+///         List(sorted, id: \.self) { Text("\($0)") }
+///     }
+/// }
+/// ```
 @propertyWrapper
 @MainActor
 public struct HMemo<Node> {
 
     private let _value: Node
 
-    /// Khởi tạo với deps dạng mảng.
-    /// Cú pháp dùng:
-    /// ```
-    /// @HMemo(deps: [a, b]) var result = expensive(a, b)
-    /// ```
-    public init(wrappedValue compute: @autoclosure @escaping () -> Node, deps: [AnyHashable]) {
-        _value = useMemo({ compute() }, deps: deps)
+    /// Creates a memoized property backed by `useMemo`.
+    ///
+    /// - Parameters:
+    ///   - compute: The expression to memoize, captured as an `@autoclosure`.
+    ///     Passed directly to `useMemo` as its compute closure.
+    ///   - updateStrategy: Controls when `compute` is re-evaluated.
+    ///     Defaults to `.once` — computed exactly once on the first render.
+    public init(
+        wrappedValue compute: @autoclosure @escaping () -> Node,
+        updateStrategy: UpdateStrategy = .once
+    ) {
+        _value = useMemo(updateStrategy: updateStrategy, compute)
     }
 
-    /// Khởi tạo với deps variadic để viết gọn.
-    /// Cú pháp dùng:
-    /// ```
-    /// @HMemo(a, b) var result = expensive(a, b)
-    /// ```
-    public init(wrappedValue compute: @autoclosure @escaping () -> Node, _ deps: AnyHashable...) {
-        _value = useMemo({ compute() }, deps: deps)
-    }
-
-    /// Không có deps: chỉ tính một lần.
-    /// Cú pháp dùng:
-    /// ```
-    /// @HMemo var formatter = DateFormatter()
-    /// ```
-    public init(wrappedValue compute: @autoclosure @escaping () -> Node) {
-        _value = useMemo({ compute() })
-    }
-
+    /// The memoized value produced by the compute expression.
     public var wrappedValue: Node {
         _value
     }
 }
-

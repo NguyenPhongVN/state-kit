@@ -1,15 +1,33 @@
 import SwiftUI
+import Textual
 
 struct ContentView: View {
     
     var body: some View {
-        List {
-            Text("Hello, World!")
-                .padding()
+        ScrollView {
+            StructuredText(
+                markdown: mdString,
+                syntaxExtensions: [.emoji([])]
+            )
+            .padding()
+        }
+    }
+    
+    var mdString: String {
+        let url = Bundle.main.url(forResource: "AAA", withExtension: "md")!
+        do {
+            let string = try String(contentsOf: url, encoding: .utf8)
+            print(string)
+            return string
+        } catch {
+            return ""
         }
     }
 }
 
 #Preview {
-    ContentView()
+    NavigationStack {
+        ContentView()
+            .navigationTitle(Text("Textual"))
+    }
 }

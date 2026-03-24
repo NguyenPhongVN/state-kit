@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2620"
+   LastUpgradeVersion = "2640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKit"
-               BuildableName = "HookKit"
-               BlueprintName = "HookKit"
+               BlueprintIdentifier = "StateKit"
+               BuildableName = "StateKit"
+               BlueprintName = "StateKit"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -29,9 +29,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitCombine"
-               BuildableName = "HookKitCombine"
-               BlueprintName = "HookKitCombine"
+               BlueprintIdentifier = "StateKitCombine"
+               BuildableName = "StateKitCombine"
+               BlueprintName = "StateKitCombine"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -43,9 +43,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitCore"
-               BuildableName = "HookKitCore"
-               BlueprintName = "HookKitCore"
+               BlueprintIdentifier = "StateKitCore"
+               BuildableName = "StateKitCore"
+               BlueprintName = "StateKitCore"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -57,9 +57,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitDevTools"
-               BuildableName = "HookKitDevTools"
-               BlueprintName = "HookKitDevTools"
+               BlueprintIdentifier = "StateKitDevTools"
+               BuildableName = "StateKitDevTools"
+               BlueprintName = "StateKitDevTools"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -71,9 +71,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitSupport"
-               BuildableName = "HookKitSupport"
-               BlueprintName = "HookKitSupport"
+               BlueprintIdentifier = "StateKitSupport"
+               BuildableName = "StateKitSupport"
+               BlueprintName = "StateKitSupport"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -85,9 +85,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitTesting"
-               BuildableName = "HookKitTesting"
-               BlueprintName = "HookKitTesting"
+               BlueprintIdentifier = "StateKitTesting"
+               BuildableName = "StateKitTesting"
+               BlueprintName = "StateKitTesting"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -99,9 +99,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitUI"
-               BuildableName = "HookKitUI"
-               BlueprintName = "HookKitUI"
+               BlueprintIdentifier = "StateKitUI"
+               BuildableName = "StateKitUI"
+               BlueprintName = "StateKitUI"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -118,9 +118,9 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "HookKitTests"
-               BuildableName = "HookKitTests"
-               BlueprintName = "HookKitTests"
+               BlueprintIdentifier = "StateKitTests"
+               BuildableName = "StateKitTests"
+               BlueprintName = "StateKitTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
@@ -135,7 +135,8 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
-      allowLocationSimulation = "YES">
+      allowLocationSimulation = "YES"
+      queueDebuggingEnableBacktraceRecording = "Yes">
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -146,9 +147,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "HookKit"
-            BuildableName = "HookKit"
-            BlueprintName = "HookKit"
+            BlueprintIdentifier = "StateKit"
+            BuildableName = "StateKit"
+            BlueprintName = "StateKit"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>

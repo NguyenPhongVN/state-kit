@@ -45,6 +45,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "602.0.0"),
+        .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.0.0"),
+        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.4.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -69,6 +71,14 @@ let package = Package(
             name: "StateKitCombine",
             dependencies: [
                 "StateKit"
+            ]
+        ),
+        .target(
+            name: "StateConcurrency",
+            dependencies: [
+                "StateKit",
+                .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
+                .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
             ]
         ),
         .target(

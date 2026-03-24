@@ -1,5 +1,10 @@
-/// Returns a modified closure that emits the latest non-nil value
-/// if the original closure would return nil.
+/// Returns a wrapper around `f` that caches the last non-nil result and
+/// replays it when `f` would return `nil`.
+///
+/// On each call the wrapper invokes `f($0)`. If the result is non-nil it is
+/// stored in an internal memo and returned. If the result is `nil` the last
+/// cached non-nil value is returned instead (or `nil` if `f` has never
+/// returned a non-nil value).
 ///
 /// - SeeAlso: https://github.com/Thomvis/Construct/blob/main/Construct/Foundation/Memoize.swift
 internal func replayNonNil<A, B>(_ f: @escaping (A) -> B?) -> (A) -> B? {
@@ -13,17 +18,41 @@ internal func replayNonNil<A, B>(_ f: @escaping (A) -> B?) -> (A) -> B? {
     }
 }
 
-/// Creates a closure (T?) -> T? that returns last non-`nil` T passed to it.
+/// Returns a closure `(T?) -> T?` that caches and replays the last non-nil
+/// value passed to it.
+///
+/// Convenience overload of `replayNonNil(_:)` using the identity function,
+/// equivalent to `replayNonNil { $0 }`.
 ///
 /// - SeeAlso: https://github.com/Thomvis/Construct/blob/main/Construct/Foundation/Memoize.swift
 internal func replayNonNil<T>() -> (T?) -> T? {
     replayNonNil { $0 }
 }
 
+/// Discards `t` and returns `Void`. Useful as a closure adapter where a
+/// `(T) -> Void` signature is required but the value is not needed.
 internal func ignore<T>(_ t: T) -> Void { }
+
+/// Returns `t` unchanged. Standard identity function; useful as a default
+/// transform or in higher-order function pipelines.
 internal func identity<T>(_ t: T) -> T { t }
+
+/// Proves ex falso quodlibet: converts an uninhabited `Never` value into any
+/// type `T`. Because `Never` has no cases this function can never actually be
+/// called; it exists to satisfy the type system in exhaustive switches over
+/// `Never`-typed expressions.
 internal func absurd<T>(_ never: Never) -> T { }
 
+/// Unwraps `condition` and returns it if non-nil; otherwise calls `else` and
+/// returns its result.
+///
+/// A typed alternative to the `??` operator for cases where the fallback is
+/// produced by a closure rather than a pre-evaluated expression.
+///
+/// - Parameters:
+///   - condition: An optional value to unwrap.
+///   - else: A closure called only when `condition` is `nil`.
+/// - Returns: The unwrapped value of `condition`, or the result of `else()`.
 internal func guardFunction<Content>(_ condition: Content?, else: () -> Content) -> Content {
     if let condition {
         return condition
@@ -31,34 +60,52 @@ internal func guardFunction<Content>(_ condition: Content?, else: () -> Content)
     return `else`()
 }
 
-/// Utilty for applying a transform to a value.
+/// Returns a copy of `input` with `transform` applied to it.
+///
+/// Copies `input` into a local `var`, passes it to `transform` as `inout`,
+/// then returns the modified copy. The original value is never mutated.
+///
 /// - Parameters:
-///   - condition: An optional value to be evaluated.
-///   - else: A closure that is executed and its result is returned if `condition` is nil.
-/// - Returns: The value of `condition` if it is not nil; otherwise, the result of the `else` closure.
+///   - input: The value to transform.
+///   - transform: A closure that mutates `input` in place.
+/// - Returns: The transformed copy of `input`.
 internal func apply<T>(_ input: T,_ transform: (inout T) -> Void) -> T {
     var input = input
     transform(&input)
     return input
 }
 
-/// Utilty for applying a transform to a value.
+/// Returns a copy of `input` with `transform` applied to it.
+///
+/// Copies `input` into a local `var`, passes it to `transform` as `inout`,
+/// then returns the modified copy. The original value is never mutated.
+///
 /// - Parameters:
-///   - transform: The transform to apply.
-///   - input: The value to be transformed.
-/// - Returns: The transformed value.
+///   - input: The value to transform.
+///   - transform: A closure that mutates `input` in place.
+/// - Returns: The transformed copy of `input`.
 internal func transform<T>(_ input: T,_ transform: (inout T) -> Void) -> T {
     var input = input
     transform(&input)
     return input
 }
 
-/// return description sourceId
+/// Builds a string identifier from the call-site's file and line number,
+/// with an optional custom prefix.
+///
+/// Used internally to produce stable, human-readable identifiers for
+/// hook slots or debug labels without requiring the caller to supply one
+/// explicitly.
+///
 /// - Parameters:
-///   - id: id description
-///   - fileID: fileID description
-///   - line: line description
-/// - Returns: description
+///   - id: An optional custom identifier. When non-empty it is appended to
+///     the string. Defaults to `""`.
+///   - fileID: The source file identifier; populated automatically by the
+///     compiler via `#fileID`. Do not pass this argument manually.
+///   - line: The source line number; populated automatically by the compiler
+///     via `#line`. Do not pass this argument manually.
+/// - Returns: `"fileID: <fileID> line: <line>"` when `id` is empty, or
+///   `"fileID: <fileID> line: <line> id: <id>"` when `id` is non-empty.
 internal func sourceId(
     id: String = "",
     fileID: String = #fileID,

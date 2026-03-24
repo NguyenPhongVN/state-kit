@@ -7,8 +7,8 @@ struct UseMemo: View {
             @HState var numberOne = 0
             @HState var numberTwo = 0
             
-            @HMemo(deps: [numberOne])
-            var memo: Int = {
+            @HMemo(updateStrategy: .preserved(by: numberOne))
+            var memo = {
                 Int.random(in: 1...100)
             }()
             

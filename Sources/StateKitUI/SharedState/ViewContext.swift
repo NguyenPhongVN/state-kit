@@ -80,3 +80,46 @@ extension ViewContext: Sendable {}
 #else
 extension ViewContext: @unchecked Sendable {}
 #endif
+
+@propertyWrapper
+public struct Inject<P: Provider>: DynamicProperty {
+    @Environment(Container.self) private var container
+    
+    public init() { }
+    
+    public var wrappedValue: P.Value {
+        container.resolve(P())
+    }
+}
+
+@propertyWrapper
+public struct InjectFamily<F: FamilyProvider>: DynamicProperty {
+    @Environment(Container.self) private var container
+    
+    let param: F.Param
+    
+    public init(param: F.Param) {
+        self.param = param
+    }
+    
+    public var wrappedValue: F.Value {
+        container.resolve(F(), param: param)
+    }
+}
+
+@propertyWrapper
+public struct Watch<P: Provider>: DynamicProperty {
+    @Environment(Container.self) private var container
+    
+    @State private var value: P.Value?
+    
+    public init() { }
+    
+    public var wrappedValue: P.Value {
+        let resolved = container.resolve(P())
+        value = resolved
+        return resolved
+    }
+}
+
+

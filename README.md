@@ -1,84 +1,108 @@
-Now I'll create a comprehensive overview of StateKit's public APIs.
+# StateKit
 
-## StateKit: Comprehensive Public API Overview
+A React Hooks-inspired state management library for Swift and SwiftUI. StateKit provides a lightweight hook runtime for scoped local state, plus a global atom store modelled after Jotai / Recoil.
 
-StateKit is a React Hooks-inspired state management library for Swift/SwiftUI that provides a lightweight runtime with hooks, UI utilities, and testing support. Here's a complete guide to all public APIs:
+## Platforms
 
----
-
-## **Core Architecture**
-
-### **StateContext** ([StateKitCore](Sources/StateKitCore/ScopedState/StateContext.swift))
-Manages hook state storage and execution index for each render pass.
-
-```swift
-public final class StateContext {
-    public var states: [Any] = []
-    public var context: [Any] = []
-    public private(set) var index: Int = 0
-    
-    public func nextIndex() -> Int  // Called by hooks internally
-    public func reset()              // Reset index for new render
-}
-```
-
-### **StateRuntime** ([StateKitCore](Sources/StateKitCore/ScopedState/StateRuntime.swift))
-Static manager that sets up the hook execution environment.
-
-```swift
-@MainActor
-public enum StateRuntime {
-    public static var current: StateContext?
-    public static func begin(_ context: StateContext)
-    public static func end()
-    
-    // Convenience wrapper for hook execution
-    public static func stateRun<T>(
-        context: StateContext,
-        body: () -> T
-    ) -> T
-}
-```
-
-Usage Example:
-```swift
-StateRuntime.begin(context)
-let result = body()  // Hook code runs here
-StateRuntime.end()
-```
+| Platform | Minimum |
+|---|---|
+| iOS | 17.0 |
+| macOS | 14.0 |
+| tvOS | 17.0 |
+| watchOS | 10.0 |
+| visionOS | 1.0 |
 
 ---
 
-## **State Hooks** (StateKit)
-
-### **useState** — Basic State Management
-Returns current value and setter function.
+## Installation
 
 ```swift
-@MainActor
-public func useState<T>(_ initial: T) -> (T, ((T) -> Void))
+// Package.swift
+.package(url: "https://github.com/your-org/state-kit", from: "1.0.0")
 ```
 
-**Example from Case Studies** ([UseState.swift](Examples/CaseStudies/CaseStudies/ScopedStudies/UseState.swift)):
+### Modules
+
+| Module | What it provides |
+|---|---|
+| `StateKitCore` | `StateContext`, `StateRuntime`, `StateSignal`, `StateRef`, `StateStore`, `StateKey` |
+| `StateKit` | All hook functions — `useState`, `useReducer`, `useMemo`, `useAsync`, `usePublisher`, … |
+| `StateKitUI` | `StateView`, `StateScope`, `ViewContext` |
+| `StateKitSupport` | Property wrappers — `@HState`, `@HMemo`, `@HRef` |
+| `StateKitCombine` | Combine bridge — `usePublisher` |
+| `StateKitTesting` | `StateTest` harness for unit-testing hooks |
+
+---
+
+## Concepts
+
+### Scoped state (hook layer)
+
+Local state that lives inside a single `StateScope` / `StateView` — equivalent to React's component-local hooks. Hooks are identified by **call-site position**, so they must always be called in the same order across renders.
+
+### Global state (atom layer)
+
+Shared state keyed by `StateKey<T>` atoms, stored in the process-wide `StateStore.shared` singleton — equivalent to Jotai's `atom` / Riverpod's `StateProvider`.
+
+---
+
+## Quick Start
+
 ```swift
-struct CounterView: View {
-    var body: some View {
-        StateScope {
-            let (count, setCount) = useState(0)
-            
-            VStack {
-                Text("Count: \(count)")
-                Button("Increment") {
-                    setCount(count + 1)
-                }
-            }
+import SwiftUI
+import StateKit
+import StateKitUI
+
+struct CounterView: StateView {
+    var stateBody: some View {
+        let (count, setCount) = useState(0)
+
+        VStack {
+            Text("Count: \(count)")
+            Button("Increment") { setCount(count + 1) }
         }
     }
 }
 ```
 
-### **useReducer** — Advanced State with Actions
-Manages complex state with action dispatching (Redux-like pattern).
+---
+
+## Scoped State — Hook API
+
+All hooks must be called inside a `StateScope` closure or a `StateView.stateBody`. Hook call order must be stable across renders — never call hooks inside `if`, `guard`, or `for`.
+
+### useState
+
+Returns the current value and a setter. Calling the setter writes to an `@Observable` `StateSignal` and triggers a re-render.
+
+```swift
+@MainActor
+public func useState<T>(_ initial: T) -> (T, (T) -> Void)
+```
+
+```swift
+let (isOn, setIsOn) = useState(false)
+
+Toggle("Enable", isOn: Binding(get: { isOn }, set: setIsOn))
+```
+
+### useBinding
+
+Like `useState` but returns a SwiftUI `Binding<T>` directly — ideal for controls that require a binding.
+
+```swift
+@MainActor
+public func useBinding<T>(_ initial: T) -> Binding<T>
+```
+
+```swift
+let name = useBinding("")
+TextField("Name", text: name)
+```
+
+### useReducer
+
+Manages state through a typed action enum. The reducer closure is updated every render; `dispatch` always calls the latest version.
 
 ```swift
 @MainActor
@@ -88,166 +112,127 @@ public func useReducer<Action, State>(
 ) -> (State, (Action) -> Void)
 ```
 
-**Example from Case Studies** ([UseReducer.swift](Examples/CaseStudies/CaseStudies/ScopedStudies/UseReducer.swift)):
 ```swift
-enum CounterAction {
-    case increment
-    case decrement
-}
+enum Action { case increment, decrement, reset }
 
-struct CounterView: View {
-    var body: some View {
-        StateScope {
-            let (count, dispatch): (Int, (CounterAction) -> Void) = useReducer(0) { state, action in
-                switch action {
-                case .increment:
-                    state += 1
-                case .decrement:
-                    state -= 1
-                }
-            }
-            
-            VStack {
-                Text("Count: \(count)")
-                HStack {
-                    Button("-") { dispatch(.decrement) }
-                    Button("+") { dispatch(.increment) }
-                }
-            }
-        }
+let (count, dispatch) = useReducer(0) { state, action in
+    switch action {
+    case .increment: state += 1
+    case .decrement: state -= 1
+    case .reset:     state = 0
     }
 }
-```
 
-### **useMemo** — Value Memoization
-Caches computation results based on dependencies.
-
-```swift
-@MainActor
-public func useMemo<T>(_ compute: () -> T, deps: [AnyHashable]) -> T
-public func useMemo<T>(_ compute: () -> T, _ deps: AnyHashable...) -> T
-public func useMemo<T>(_ compute: () -> T) -> T  // Compute once
-```
-
-**Example from Case Studies** ([UseMemo.swift](Examples/CaseStudies/CaseStudies/ScopedStudies/UseMemo.swift)):
-```swift
-struct UseMemo: View {
-    var body: some View {
-        StateScope {
-            @HState var numberOne = 0
-            @HState var numberTwo = 0
-            
-            @HMemo(deps: [numberOne])
-            var memo: Int = { Int.random(in: 1...100) }()
-            
-            VStack {
-                Text("Memo: \(memo)")
-                Button("Increment") { numberOne += 1 }
-                Button("Increment 2") { numberTwo += 1 }
-            }
-        }
-    }
+HStack {
+    Button("-") { dispatch(.decrement) }
+    Text("\(count)")
+    Button("+") { dispatch(.increment) }
 }
 ```
 
-### **useRef** — Non-Rendering References
-Persists mutable values across renders without triggering re-renders.
+### useRef
+
+Returns a `StateRef<T>` that persists across renders. Mutations to `.value` do **not** trigger a re-render — use this for timers, cancellables, or any imperative object.
 
 ```swift
 @MainActor
 public func useRef<T>(_ initial: T) -> StateRef<T>
 ```
 
-**Example**:
 ```swift
-struct TimerView: View {
-    var body: some View {
-        StateScope {
-            let timerRef = useRef<Timer?>(nil)
-            
-            VStack {
-                Button("Start timer") {
-                    timerRef.value?.invalidate()
-                    timerRef.value = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-                        print("tick")
-                    }
-                }
-            }
-        }
+let timerRef = useRef<Timer?>(nil)
+
+Button("Start") {
+    timerRef.value?.invalidate()
+    timerRef.value = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
+        print("tick")
     }
 }
 ```
 
-### **useCallback** — Function Memoization
-Preserves function identity based on dependencies.
+### useMemo
+
+Returns a cached value, recomputing only when `updateStrategy` changes.
 
 ```swift
 @MainActor
-func useCallback<T>(
-    _ callback: T,
-    deps: [AnyHashable]? = nil
+public func useMemo<T>(
+    updateStrategy: UpdateStrategy? = .once,
+    _ compute: () -> T
 ) -> T
 ```
 
-**Example**:
 ```swift
-let memoizedHandler = useCallback({
-    // Handler logic reused unless deps change
-}, deps: [dependencyValue])
+let sorted = useMemo(updateStrategy: .preserved(by: items)) {
+    items.sorted()
+}
 ```
 
-### **useEffect** — Side Effects with Cleanup
-Runs effects after render with optional cleanup.
+### useCallback
 
-```swift
-@MainActor 
-public func useEffect(
-    _ effect: @escaping () -> (() -> Void)?,
-    deps: [AnyHashable]? = nil
-)
-```
-
-**Example**:
-```swift
-useEffect({
-    let subscription = publisher.sink { value in
-        // Handle value
-    }
-    return {
-        subscription.cancel()  // Cleanup
-    }
-}, deps: [publisher])
-```
-
-### **useLayoutEffect** — Post-Layout Effects
-Runs effects after layout updates with manual disposal.
+Returns a cached closure, replacing it only when `updateStrategy` changes. Preserving closure identity avoids unnecessary re-execution in downstream hooks.
 
 ```swift
 @MainActor
-@discardableResult
-public func useLayoutEffect<Deps: LayoutEffectDependencies>(
-    key: AnyHashable,
-    deps: Deps,
-    _ effect: @escaping () -> (() -> Void)?
-) -> () -> Void
+public func useCallback<T>(
+    updateStrategy: UpdateStrategy? = .once,
+    _ callback: T
+) -> T
+```
+
+```swift
+let stableHandler = useCallback(updateStrategy: .preserved(by: query)) {
+    performSearch(query)
+}
+```
+
+### useEffect
+
+Runs a side effect after render. Calls the previous cleanup before re-running, and calls cleanup one final time when the `StateScope` is destroyed.
+
+```swift
+@MainActor
+public func useEffect(
+    _ effect: @escaping () -> (() -> Void)?,
+    updateStrategy: UpdateStrategy? = nil
+)
+```
+
+```swift
+useEffect(updateStrategy: .preserved(by: userId)) {
+    let task = Task { await loadProfile(userId) }
+    return { task.cancel() }
+}
+```
+
+### useLayoutEffect
+
+Identical storage and dependency semantics to `useEffect`. Intended for effects that must observe or mutate layout-related state before the view is presented.
+
+```swift
+@MainActor
+public func useLayoutEffect(
+    _ effect: @escaping () -> (() -> Void)?,
+    updateStrategy: UpdateStrategy? = nil
+)
 ```
 
 ---
 
-## **Async Hooks** (StateKit)
+## Async Hooks
 
-### **useAsync** — Async Operation State
-Handles Promise-like async operations with loading/success/failure states.
+### useAsync
+
+Runs an `async throws` operation and returns its current `AsyncPhase`. The active task is cancelled when the scope is destroyed or when `updateStrategy` changes.
 
 ```swift
 @MainActor
 public func useAsync<Value>(
-    _ operation: @escaping () async throws -> Value,
-    deps: [AnyHashable]
-) -> StateSignal<AsyncPhase<Value>>
+    updateStrategy: UpdateStrategy = .once,
+    _ operation: @escaping () async throws -> Value
+) -> AsyncPhase<Value>
 ```
 
-Where `AsyncPhase<Value>` is:
 ```swift
 public enum AsyncPhase<Value> {
     case idle
@@ -257,76 +242,68 @@ public enum AsyncPhase<Value> {
 }
 ```
 
-**Example**:
 ```swift
-struct UserView: View {
+struct UserView: StateView {
     let userId: String
-    
-    var body: some View {
-        StateScope {
-            let userPhase = useAsync({
-                try await api.fetchUser(id: userId)
-            }, deps: [userId])
-            
-            switch userPhase.value {
-            case .idle, .loading:
-                ProgressView()
-            case .success(let user):
-                Text(user.name)
-            case .failure(let error):
-                Text(error.localizedDescription)
-            }
+
+    var stateBody: some View {
+        let phase = useAsync(updateStrategy: .preserved(by: userId)) {
+            try await api.fetchUser(id: userId)
+        }
+
+        switch phase {
+        case .idle, .loading: ProgressView()
+        case .success(let user): Text(user.name)
+        case .failure(let error): Text(error.localizedDescription)
         }
     }
 }
 ```
 
-### **useAsyncSequence** — Async Sequence Consumption
-Consumes async sequences with state tracking.
+### useAsyncSequence
+
+Iterates an `AsyncSequence` element-by-element, updating the phase on each emission. Cancellation is checked after every `await`.
 
 ```swift
 @MainActor
 public func useAsyncSequence<S: AsyncSequence>(
-    _ sequence: @escaping () -> S,
-    deps: [AnyHashable]
-) -> StateSignal<AsyncPhase<S.Element>>
+    _ updateStrategy: UpdateStrategy = .once,
+    _ sequence: @escaping () -> S
+) -> AsyncSequencePhase<S.Element>
 ```
 
-**Example**:
 ```swift
-struct ClockView: View {
-    var body: some View {
-        StateScope {
-            let tick = useAsyncSequence({
-                AsyncTimerSequence(interval: .seconds(1))
-                    .map { Date() }
-            }, deps: [])
-            
-            switch tick.value {
-            case .idle, .loading:
-                ProgressView()
-            case .success(let date):
-                Text(date.formatted())
-            case .failure(let error):
-                Text(error.localizedDescription)
-            }
-        }
-    }
+public enum AsyncSequencePhase<Element> {
+    case idle
+    case loading
+    case value(Element)
+    case finished
+    case failure(Error)
 }
 ```
 
-### **usePublisher** — Combine Publisher Integration
-Subscribes to Combine publishers with event tracking.
+```swift
+let phase = useAsyncSequence {
+    NotificationCenter.default.notifications(named: .NSSystemClockDidChange).map { _ in Date() }
+}
+
+if case .value(let date) = phase {
+    Text(date.formatted())
+}
+```
+
+### usePublisher
+
+Subscribes to a Combine `Publisher` and exposes its latest event as a `PublisherPhase`. Subscription is restarted when `updateStrategy` changes.
 
 ```swift
 @MainActor
 public func usePublisher<P: Publisher>(
-    _ publisher: @escaping () -> P,
-    deps: [AnyHashable]
+    updateStrategy: UpdateStrategy?,
+    _ publisher: @escaping () -> P
 ) -> PublisherPhase<P.Output>
 ```
 
-Where `PublisherPhase<Output>` is:
 ```swift
 public enum PublisherPhase<Output> {
     case idle
@@ -336,29 +313,70 @@ public enum PublisherPhase<Output> {
 }
 ```
 
-**Example**:
 ```swift
-struct SearchView: View {
-    let service: SearchService
-    let query: String
-    
+let phase = usePublisher(updateStrategy: .preserved(by: query)) {
+    searchService.search(query: query)
+}
+
+switch phase {
+case .idle:             ProgressView()
+case .value(let items): ResultsList(items)
+case .finished:         EmptyView()
+case .failure(let e):   Text(e.localizedDescription)
+}
+```
+
+---
+
+## UpdateStrategy
+
+All hooks that support conditional re-execution accept an `UpdateStrategy`.
+
+```swift
+// Run exactly once — never re-run (default for useMemo, useCallback, useAsync)
+.once
+
+// Re-run when a single value changes
+.preserved(by: someEquatableValue)
+
+// Re-run when any value in a set changes
+.preserved(by: a, b, c)          // variadic AnyHashable
+.preserved(by: [a, b])           // array
+.preserved(by: { expensiveValue }) // closure — evaluated each render
+```
+
+---
+
+## SwiftUI Integration
+
+### StateView
+
+Adopt `StateView` instead of `View`. Implement `stateBody` instead of `body` — the protocol wraps it in a `StateScope` automatically.
+
+```swift
+struct ProfileView: StateView {
+    let userId: String
+
+    var stateBody: some View {
+        let phase = useAsync(updateStrategy: .preserved(by: userId)) {
+            try await api.fetchUser(id: userId)
+        }
+        // ...
+    }
+}
+```
+
+### StateScope
+
+Use `StateScope` directly when you need hooks inside a plain `View.body`.
+
+```swift
+struct RootView: View {
     var body: some View {
         StateScope {
-            let phase = usePublisher({
-                service.search(query: query)
-            }, deps: [query])
-            
-            switch phase {
-            case .idle:
-                ProgressView()
-            case .value(let results):
-                List(results) { result in
-                    Text(result.title)
-                }
-            case .finished:
-                Text("Search completed")
-            case .failure(let error):
-                Text(error.localizedDescription)
+            let (tab, setTab) = useState(0)
+            TabView(selection: Binding(get: { tab }, set: setTab)) {
+                // ...
             }
         }
     }
@@ -367,323 +385,164 @@ struct SearchView: View {
 
 ---
 
-## **UI Utilities** (StateKitUI)
+## Property Wrappers
 
-### **StateView** — Hook-Enabled View Protocol
-SwiftUI View that automatically wraps hook code execution.
+Property wrappers provide `@`-syntax for the most common hooks. They must be declared inside a `StateScope` or `stateBody`.
+
+### @HState
+
+Backed by `useBinding`. Exposes state as a SwiftUI `Binding` via `$name`. Can also wrap an existing `Binding` from a parent view.
 
 ```swift
-public protocol StateView: View {
-    associatedtype StateBody: View
-    
-    @ViewBuilder @MainActor var stateBody: Self.StateBody { get }
-}
+// Hook-backed (allocates a new state slot)
+@HState var count = 0
+@HState var name  = ""
 
-@MainActor
-public extension StateView {
-    var body: some View {
-        StateScope { stateBody }
-    }
+// Bridge an external Binding — no hook slot consumed
+@HState var externalCount = $parentCount
+```
+
+### @HMemo
+
+Backed by `useMemo`. The initializer expression is captured as an `@autoclosure`.
+
+```swift
+@HMemo(.preserved(by: items)) var sorted = items.sorted()
+@HMemo var expensive = computeOnce()   // .once by default
+```
+
+### @HRef
+
+Backed by `useRef`. Mutations to the property do not trigger re-renders. Use `$name` to access the underlying `StateRef<T>`.
+
+```swift
+@HRef var cancellable: AnyCancellable? = nil
+
+Button("Load") {
+    cancellable?.cancel()
+    cancellable = publisher.sink { print($0) }
 }
 ```
 
-**Example**:
+---
+
+## Global State — Atom API
+
+Global state is keyed by `StateKey<T>` atoms and stored in the process-wide `StateStore.shared`.
+
+### Declare atoms
+
 ```swift
-struct CounterView: StateView {
-    var stateBody: some View {
-        let (count, setCount) = useState(0)
-        
+extension StateKey {
+    static let counter    = StateKey<Int>("counter")
+    static let currentUser = StateKey<User?>("currentUser")
+}
+```
+
+### Read and write
+
+```swift
+// Read (initialises to default on first access)
+let count = StateStore.shared.get(key: .counter, default: 0)
+
+// Write (triggers re-render in subscribed views)
+StateStore.shared.set(key: .counter, value: count + 1)
+
+// Pre-register a default without overwriting an existing value
+StateStore.shared.registerIfNeeded(key: .counter, value: 0)
+```
+
+### Access in views — ViewContext
+
+`@ViewContext` gives direct access to `StateStore.shared` inside any SwiftUI view.
+
+```swift
+struct CounterView: View {
+    @ViewContext var store
+
+    var body: some View {
+        let count = store.get(key: .counter, default: 0)
+
         VStack {
-            Text("Count: \(count)")
-            Button("Increment") { setCount(count + 1) }
+            Text("\(count)")
+            Button("Increment") {
+                store.set(key: .counter, value: count + 1)
+            }
         }
     }
 }
 ```
 
-### **StateScope** — Hook Execution Container
-Creates execution environment for hooks.
+### useEnvironment
+
+Reads a SwiftUI `EnvironmentValues` key path from within a `StateScope`.
 
 ```swift
-public struct StateScope<Content: View>: View {
-    @State private var context = StateContext
-    let content: () -> Content
-    
-    public init(@ViewBuilder content: @escaping () -> Content)
-    
-    public var body: some View
-}
-```
-
-### **ViewContext** — Shared State Access
-Property wrapper for accessing shared state store with dynamic member lookup.
-
-```swift
-@propertyWrapper
-@dynamicMemberLookup
-@MainActor 
-public struct ViewContext: DynamicProperty {
-    public var wrappedValue: StateStore
-    public var projectedValue: Binding<StateStore>
-    
-    public subscript<U>(dynamicMember keyPath: KeyPath<StateStore, U>) -> U
-    public subscript<U>(dynamicMember keyPath: WritableKeyPath<StateStore, U>) -> U
-}
-```
-
-**Example**:
-```swift
-struct MyView: View {
-    @ViewContext var viewContext
-    
-    var body: some View {
-        Text(viewContext.wrappedValue.get(key: myKey, default: 0))
-    }
-}
+let colorScheme = useEnvironment(\.colorScheme)
+let locale      = useEnvironment(\.locale)
 ```
 
 ---
 
-## **Support Types** (StateKitCore)
+## Testing
 
-### **StateSignal** — Observable State Value
-Wraps state with observation system for SwiftUI reactivity.
+`StateTest` provides a minimal hook harness for unit tests — no SwiftUI required.
 
-```swift
-@Observable
-public final class StateSignal<T> {
-    public var value: T
-    public init(_ value: T)
-}
-```
-
-### **StateRef** — Non-Observable Reference
-Mutable reference without observation or re-render triggers.
-
-```swift
-public final class StateRef<T> {
-    public var value: T
-    public init(_ value: T)
-}
-```
-
-### **StateStore** — Shared Global State
-Observable state storage accessible across views via `StateKey`.
-
-```swift
-@MainActor
-@Observable
-public final class StateStore {
-    public static let shared = StateStore()
-    
-    public func get<T>(
-        key: StateKey<T>,
-        default defaultValue: @autoclosure () -> T
-    ) -> T
-    
-    public func set<T>(key: StateKey<T>, value: T)
-    public func registerIfNeeded<T>(key: StateKey<T>, value: T)
-}
-```
-
-### **StateKey** — Type-Safe State Key
-Identifier for accessing state in StateStore.
-
-```swift
-public struct StateKey<T>: Hashable, Identifiable {
-    public let name: String
-    public init(_ name: String)
-    public var id: String
-}
-```
-
----
-
-## **Property Wrappers** (StateKitSupport)
-
-### **@HState** — Hook State Binding
-Provides binding-based state access via property wrapper.
-
-```swift
-@propertyWrapper
-@MainActor
-public struct HState<Node> {
-    public init(wrappedValue: @escaping () -> Node)
-    public init(wrappedValue: Node)
-    public init(wrappedValue: @escaping () -> Binding<Node>)
-    public init(wrappedValue: Binding<Node>)
-    
-    public var wrappedValue: Node
-    public var projectedValue: Binding<Node>
-}
-```
-
-**Example**:
-```swift
-StateScope {
-    @HState var count = 0
-    @HState var name = ""
-    
-    VStack {
-        Text("Count: \(count)")
-        TextField("Name", text: $name)
-    }
-}
-```
-
-### **@HMemo** — Property Wrapper Memoization
-Memoizes computed values with dependency tracking.
-
-```swift
-@propertyWrapper
-@MainActor
-public struct HMemo<Node> {
-    public init(wrappedValue compute: @autoclosure @escaping () -> Node, 
-                deps: [AnyHashable])
-    public init(wrappedValue compute: @autoclosure @escaping () -> Node, 
-                _ deps: AnyHashable...)
-    public init(wrappedValue compute: @autoclosure @escaping () -> Node)
-    
-    public var wrappedValue: Node
-}
-```
-
-**Example**:
-```swift
-StateScope {
-    @HState var a = 5
-    
-    @HMemo(deps: [a])
-    var expensive = computeHeavyValue(a)
-}
-```
-
-### **@HRef** — Reference Property Wrapper
-Wraps `useRef` for property-based reference access.
-
-```swift
-@propertyWrapper
-@MainActor 
-public struct HRef<Node> {
-    public init(wrappedValue initial: @autoclosure @escaping () -> Node)
-    public init(wrappedValue initial: @escaping () -> Node)
-    
-    public var wrappedValue: Node
-    public var projectedValue: StateRef<Node>
-}
-```
-
-**Example**:
-```swift
-StateScope {
-    @HRef var timerRef: Timer? = nil
-    
-    Button("Start") {
-        timerRef = Timer.scheduledTimer(...)
-    }
-}
-```
-
----
-
-## **Testing Utilities** (StateKitTesting)
-
-### **StateTest** — Hook Testing Harness
-Lightweight testing framework for hooks without SwiftUI.
-
-```swift
-@MainActor
-public final class StateTest {
-    public let context: StateContext
-    public private(set) var renderCount: Int
-    
-    public init(context: StateContext = StateContext())
-    
-    @discardableResult
-    public func render<T>(_ body: () -> T) -> T
-    
-    public func renderAndCaptureStates<T>(_ body: () -> T) -> (result: T, states: [Any])
-    
-    public func reset()
-}
-```
-
-**Example**:
 ```swift
 import Testing
 import StateKit
 import StateKitTesting
 
 @Test @MainActor
-func useState_persistsAcrossRenders() {
+func counter_incrementsCorrectly() {
     let test = StateTest()
-    
-    let first = test.render {
-        useState(0).1(0)  // Initial state
-        let (count, setter) = useState(0)
+
+    // First render — state initialised to 0
+    let initial = test.render {
+        let (count, _) = useState(0)
         return count
     }
-    expect(first == 0)
-    
-    _ = test.render {
-        let (count, setter) = useState(0)
-        setter(5)
-        return count
+    #expect(initial == 0)
+
+    // Second render — call the setter
+    test.render {
+        let (_, setCount) = useState(0)
+        setCount(5)
     }
-    
+
+    // Third render — persisted value is 5
     let result = test.render {
         let (count, _) = useState(0)
         return count
     }
-    expect(result == 5)  // State persists
+    #expect(result == 5)
 }
 ```
 
----
-
-## **Environment Access**
-
-### **useEnvironment** — SwiftUI Environment Access
-Reads SwiftUI environment values from hook context.
+`StateTest` API:
 
 ```swift
 @MainActor
-public func useEnvironment<Value>(
-    _ keyPath: KeyPath<EnvironmentValues, Value>
-) -> Value
-```
+public final class StateTest {
+    public let context: StateContext
+    public private(set) var renderCount: Int
 
-**Example**:
-```swift
-StateScope {
-    let colorScheme = useEnvironment(\.colorScheme)
-    
-    if colorScheme == .dark {
-        // Dark mode UI
-    }
+    public init(context: StateContext = StateContext())
+
+    @discardableResult
+    public func render<T>(_ body: () -> T) -> T
+
+    public func renderAndCaptureStates<T>(_ body: () -> T) -> (result: T, states: [Any])
+
+    public func reset()
 }
 ```
 
 ---
 
-## **Module Organization**
+## Rules of Hooks
 
-| Module | Purpose |
-|--------|---------|
-| **StateKitCore** | Core types: `StateContext`, `StateRuntime`, `StateSignal`, `StateRef`, `StateStore`, `StateKey` |
-| **StateKit** | All hook functions: `useState`, `useReducer`, `useMemo`, `useAsync`, `usePublisher`, etc. |
-| **StateKitUI** | SwiftUI integration: `StateView`, `StateScope`, `ViewContext` |
-| **StateKitSupport** | Property wrappers: `@HState`, `@HMemo`, `@HRef` |
-| **StateKitCombine** | Combine framework bridge |
-| **StateKitTesting** | Testing utilities: `StateTest` |
-| **StateKitDevTools** | Development tools |
-
----
-
-## **Key Patterns**
-
-1. **All hooks must be called within `StateRuntime.current` context** (set up by `StateScope` or `StateView`)
-2. **Hook order must be stable** across renders (call hooks at top level, never conditionally)
-3. **Dependencies** control re-execution of memoized values and effects
-4. **Thread safety**: All APIs are `@MainActor` for SwiftUI safety
-5. **Automatic cleanup**: Tasks and subscriptions cancel when scope deallocates
+1. **Call hooks at the top level** — never inside `if`, `guard`, `for`, or nested closures.
+2. **Same order every render** — hooks are identified by position; reordering breaks state.
+3. **Only inside a StateScope** — calling a hook outside `StateRuntime.current` is a `fatalError`.
+4. **Main thread only** — all hooks are `@MainActor`.
