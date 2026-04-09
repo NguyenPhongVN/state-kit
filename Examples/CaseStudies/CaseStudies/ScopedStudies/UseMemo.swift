@@ -4,10 +4,10 @@ struct UseMemo: View {
     
     var body: some View {
         StateScope {
-            @HState var numberOne = 0
-            @HState var numberTwo = 0
+            @SKScopeState var numberOne = 0
+            @SKScopeState var numberTwo = 0
             
-            @HMemo(updateStrategy: .preserved(by: numberOne))
+            @SKScopeMemo(updateStrategy: .preserved(by: numberOne))
             var memo = {
                 Int.random(in: 1...100)
             }()

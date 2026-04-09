@@ -4,13 +4,13 @@ import Foundation
 /// `useRef`, suitable for values that must survive re-renders without
 /// triggering them.
 ///
-/// `HRef` is syntactic sugar over `useRef`: instead of writing
+/// `SKScopeRef` is syntactic sugar over `useRef`: instead of writing
 /// ```swift
 /// let timerRef = useRef<Timer?>(nil)
 /// ```
 /// you can write:
 /// ```swift
-/// @HRef var timer: Timer? = nil
+/// @SKScopeRef var timer: Timer? = nil
 /// ```
 ///
 /// The underlying `StateRef<Node>` is allocated once on the first render and
@@ -18,7 +18,7 @@ import Foundation
 /// assigning to the property does **not** trigger a re-render.
 ///
 /// Must be used inside a `StateScope` closure or a `StateView.stateBody`.
-/// Hook ordering rules apply: always declare `@HRef` properties in the same
+/// Hook ordering rules apply: always declare `@SKScopeRef` properties in the same
 /// order across renders.
 ///
 /// Use `$name` to access the underlying `StateRef<Node>` when you need to
@@ -28,7 +28,7 @@ import Foundation
 /// ```swift
 /// struct TimerView: StateView {
 ///     var stateBody: some View {
-///         @HRef var timer: Timer? = nil
+///         @SKScopeRef var timer: Timer? = nil
 ///
 ///         Button("Start") {
 ///             timer?.invalidate()
@@ -40,7 +40,7 @@ import Foundation
 /// }
 /// ```
 @propertyWrapper
-@MainActor public struct HRef<Node> {
+@MainActor public struct SKScopeRef<Node> {
 
     private let _ref: StateRef<Node>
 

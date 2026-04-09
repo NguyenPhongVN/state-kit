@@ -73,14 +73,22 @@ public enum StateRuntime {
     ///
     /// - Parameters:
     ///   - context: The `StateContext` to activate for this render pass.
+    ///   - environment: An optional opaque environment value (e.g.
+    ///     `EnvironmentValues`) injected by `StateScope`. Stored in
+    ///     `context.injectedEnvironment` so that `useEnvironment(_:)` and
+    ///     atom hooks can retrieve the correct environment without SwiftUI
+    ///     property-wrapper access. Pass `nil` (the default) to leave any
+    ///     previously stored environment unchanged.
     ///   - body: The closure to execute while `current` is set. For
     ///     `StateScope` this is the user's `@ViewBuilder` content closure.
     /// - Returns: The value returned by `body`.
     @MainActor
     public static func stateRun<T>(
         context: StateContext,
+        environment: Any? = nil,
         body: () -> T
     ) -> T {
+        if let environment { context.injectedEnvironment = environment }
         StateRuntime.begin(context)
         let view = body()
         StateRuntime.end()

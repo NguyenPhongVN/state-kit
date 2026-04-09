@@ -105,6 +105,20 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitAtoms"
+               BuildableName = "StateKitAtoms"
+               BlueprintName = "StateKitAtoms"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -121,6 +135,16 @@
                BlueprintIdentifier = "StateKitTests"
                BuildableName = "StateKitTests"
                BlueprintName = "StateKitTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitAtomsTests"
+               BuildableName = "StateKitAtomsTests"
+               BlueprintName = "StateKitAtomsTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>

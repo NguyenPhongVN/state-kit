@@ -3,7 +3,7 @@ import Foundation
 /// A property wrapper that memoizes a computed value using `useMemo`,
 /// recomputing it only when `updateStrategy` changes.
 ///
-/// `HMemo` is syntactic sugar over `useMemo`: instead of writing
+/// `SKScopeMemo` is syntactic sugar over `useMemo`: instead of writing
 /// ```swift
 /// let sorted = useMemo(updateStrategy: .preserved(by: items)) {
 ///     items.sorted()
@@ -11,7 +11,7 @@ import Foundation
 /// ```
 /// you can write:
 /// ```swift
-/// @HMemo(.preserved(by: items)) var sorted = items.sorted()
+/// @SKScopeMemo(.preserved(by: items)) var sorted = items.sorted()
 /// ```
 ///
 /// The initializer expression is captured as an `@autoclosure`, so it is
@@ -20,10 +20,10 @@ import Foundation
 /// re-evaluated if `updateStrategy` changes between renders.
 ///
 /// Must be used inside a `StateScope` closure or a `StateView.stateBody`.
-/// Hook ordering rules apply: always declare `@HMemo` properties in the
+/// Hook ordering rules apply: always declare `@SKScopeMemo` properties in the
 /// same order across renders.
 ///
-/// - Note: `HMemo` has no `projectedValue`. Access the memoized result
+/// - Note: `SKScopeMemo` has no `projectedValue`. Access the memoized result
 ///   directly through the property name.
 ///
 /// ### Example
@@ -32,7 +32,7 @@ import Foundation
 ///     let items: [Int]
 ///
 ///     var stateBody: some View {
-///         @HMemo(.preserved(by: items)) var sorted = items.sorted()
+///         @SKScopeMemo(.preserved(by: items)) var sorted = items.sorted()
 ///
 ///         List(sorted, id: \.self) { Text("\($0)") }
 ///     }
@@ -40,7 +40,7 @@ import Foundation
 /// ```
 @propertyWrapper
 @MainActor
-public struct HMemo<Node> {
+public struct SKScopeMemo<Node> {
 
     private let _value: Node
 

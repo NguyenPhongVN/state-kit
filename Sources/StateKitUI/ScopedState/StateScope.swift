@@ -15,6 +15,6 @@ public struct StateScope<Content: View>: View {
     @ViewBuilder
     public var body: some View {
         StateRuntime
-            .stateRun(context: context, body: content)
+            .stateRun(context: context, environment: environment, body: content)
     }
 }

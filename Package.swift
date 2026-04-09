@@ -42,6 +42,10 @@ let package = Package(
             name: "StateKitDevTools",
             targets: ["StateKitDevTools"]
         ),
+        .library(
+            name: "StateKitAtoms",
+            targets: ["StateKitAtoms"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "602.0.0"),
@@ -85,7 +89,8 @@ let package = Package(
             name: "StateKitUI",
             dependencies: [
                 "StateKit",
-                "StateKitCore"
+                "StateKitCore",
+                "StateKitAtoms",
             ]
         ),
         .target(
@@ -98,7 +103,9 @@ let package = Package(
         .target(
             name: "StateKitSupport",
             dependencies: [
-                "StateKit"
+                "StateKit",
+                "StateKitCore",
+                "StateKitAtoms",
             ]
         ),
         .target(
@@ -107,11 +114,23 @@ let package = Package(
                 "StateKit"
             ]
         ),
+        .target(
+            name: "StateKitAtoms",
+            dependencies: [
+                "StateKit",
+            ]
+        ),
         .testTarget(
             name: "StateKitTests",
             dependencies: [
                 "StateKit",
                 "StateKitTesting"
+            ]
+        ),
+        .testTarget(
+            name: "StateKitAtomsTests",
+            dependencies: [
+                "StateKitAtoms",
             ]
         ),
     ]

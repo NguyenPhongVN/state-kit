@@ -33,6 +33,16 @@ public final class StateContext {
     /// Not indexed by `nextIndex()`; accessed by scanning the array directly.
     public var context: [Any] = []
 
+    /// The environment value (typically `EnvironmentValues`) injected by the
+    /// enclosing `StateScope` before each render. Atom hooks and
+    /// `useEnvironment(_:)` read this to pick up the correct store and other
+    /// environment values without requiring SwiftUI property-wrapper access.
+    ///
+    /// Set by `StateRuntime.stateRun(context:environment:body:)`. `nil` means
+    /// no environment has been injected yet (e.g. the context was created
+    /// outside of a `StateScope`).
+    public var injectedEnvironment: Any?
+
     /// The next hook slot position to hand out. Incremented by `nextIndex()`
     /// and reset to `0` by `reset()` before each render.
     public private(set) var index: Int = 0

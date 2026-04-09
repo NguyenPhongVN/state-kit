@@ -83,11 +83,10 @@ func useContext<T>(
 @MainActor
 public func useEnvironment<Value>(_ keyPath: KeyPath<EnvironmentValues, Value>) -> Value {
     guard let context = StateRuntime.current else {
-        fatalError("Hooks must be used inside StateRuntime")
+        fatalError("\(#function) must be used inside StateRuntime")
     }
-
-    let environment: EnvironmentValues = guardFunction(context.states.filter({$0 is EnvironmentValues}).first) {
-        EnvironmentValues()
-    } as! EnvironmentValues
+    // `injectedEnvironment` is set by StateScope before each render.
+    // Fall back to a default EnvironmentValues when no StateScope is present.
+    let environment = (context.injectedEnvironment as? EnvironmentValues) ?? EnvironmentValues()
     return environment[keyPath: keyPath]
 }
