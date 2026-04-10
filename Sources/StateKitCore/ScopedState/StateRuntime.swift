@@ -86,7 +86,7 @@ public enum StateRuntime {
     public static func stateRun<T>(
         context: StateContext,
         environment: Any? = nil,
-        body: () -> T
+        body: @MainActor () -> T
     ) -> T {
         if let environment { context.injectedEnvironment = environment }
         StateRuntime.begin(context)

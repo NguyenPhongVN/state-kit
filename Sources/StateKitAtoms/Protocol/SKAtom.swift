@@ -10,12 +10,13 @@
 ///
 /// Do not conform to `SKAtom` directly. Use one of the sub-protocols:
 ///
-/// | Protocol                | Value kind                       |
-/// |-------------------------|----------------------------------|
-/// | `SKStateAtom`           | Mutable, has a default value     |
-/// | `SKValueAtom`           | Derived/read-only, watches atoms |
-/// | `SKTaskAtom`            | Async non-throwing → `AsyncPhase`|
-/// | `SKThrowingTaskAtom`    | Async throwing → `AsyncPhase`    |
+/// | Protocol                | Value kind                            |
+/// |-------------------------|---------------------------------------|
+/// | `SKStateAtom`           | Mutable, has a default value          |
+/// | `SKValueAtom`           | Derived/read-only, watches atoms      |
+/// | `SKTaskAtom`            | Async non-throwing → `AsyncPhase`     |
+/// | `SKThrowingTaskAtom`    | Async throwing → `AsyncPhase`         |
+/// | `SKPublisherAtom`       | Combine publisher → `PublisherPhase`  |
 ///
 /// ## Swift 6.3 associated-type inference note
 ///

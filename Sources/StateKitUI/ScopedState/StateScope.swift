@@ -4,11 +4,11 @@ public struct StateScope<Content: View>: View {
 
     @State private var context = StateContext()
 
-    let content: () -> Content
-    
+    let content: @MainActor () -> Content
+
     @Environment(\.self) private var environment
 
-    public init(@ViewBuilder content: @escaping () -> Content) {
+    public init(@ViewBuilder content: @escaping @MainActor () -> Content) {
         self.content = content
     }
 

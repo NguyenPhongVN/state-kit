@@ -66,12 +66,12 @@ public struct StateDevScope<Content: View>: View {
     public let showOverlay: Bool
     public let overlayAlignment: Alignment
 
-    let content: () -> Content
+    let content: @MainActor () -> Content
 
     public init(
         showOverlay: Bool = true,
         overlayAlignment: Alignment = .topLeading,
-        @ViewBuilder content: @escaping () -> Content
+        @ViewBuilder content: @escaping @MainActor () -> Content
     ) {
         self.showOverlay = showOverlay
         self.overlayAlignment = overlayAlignment

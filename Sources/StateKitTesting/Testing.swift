@@ -98,7 +98,7 @@ public final class StateTest {
     ///   value (typically a tuple of state values and setters).
     /// - Returns: Whatever `body` returns.
     @discardableResult
-    public func render<T>(_ body: () -> T) -> T {
+    public func render<T>(_ body: @MainActor () -> T) -> T {
         renderCount += 1
         return StateRuntime.stateRun(context: context, body: body)
     }
@@ -114,7 +114,7 @@ public final class StateTest {
     ///   - body: A closure that calls hook functions and returns a value.
     /// - Returns: Whatever `body` returns.
     @discardableResult
-    public func render<T>(environment: EnvironmentValues, _ body: () -> T) -> T {
+    public func render<T>(environment: EnvironmentValues, _ body: @MainActor () -> T) -> T {
         renderCount += 1
         return StateRuntime.stateRun(context: context, environment: environment, body: body)
     }

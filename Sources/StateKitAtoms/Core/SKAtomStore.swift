@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import StateKit
 
@@ -44,6 +45,9 @@ public final class SKAtomStore: @unchecked Sendable {
 
     /// Running tasks for async atoms.
     var tasks: [SKAtomKey: Task<Void, Never>] = [:]
+
+    /// Active Combine subscriptions for publisher atoms.
+    var cancellables: [SKAtomKey: AnyCancellable] = [:]
 
     // MARK: - Init
 
@@ -256,6 +260,56 @@ public final class SKAtomStore: @unchecked Sendable {
         propagateChange(from: key)
     }
 
+    // MARK: - Publisher atom operations
+
+    /// Returns the box for a `SKPublisherAtom`, subscribing to the publisher immediately.
+    @MainActor
+    public func publisherBox<A: SKPublisherAtom>(for atom: A) -> SKAtomBox<A.Value> {
+        let key = SKAtomKey(atom)
+        if let existing: SKAtomBox<A.Value> = existingBox(for: key) { return existing }
+
+        let box = SKAtomBox<A.Value>(.idle)
+        storeBox(box, for: key)
+        subscribePublisher(for: atom, box: box, key: key)
+
+        registerRecomputer(for: key) { [weak self] in
+            self?.restartPublisher(for: atom)
+        }
+        return box
+    }
+
+    @MainActor
+    private func subscribePublisher<A: SKPublisherAtom>(
+        for atom: A, box: SKAtomBox<A.Value>, key: SKAtomKey
+    ) {
+        cancellables[key]?.cancel()
+        let ctx = SKAtomTransactionContext(store: self, currentKey: key)
+        cancellables[key] = atom.publisher(context: ctx)
+            .sink { [weak self, weak box] completion in
+                guard let box else { return }
+                switch completion {
+                case .finished:
+                    box.value = .finished
+                case .failure(let error):
+                    box.value = .failure(error)
+                }
+                self?.propagateChange(from: key)
+            } receiveValue: { [weak self, weak box] output in
+                guard let box else { return }
+                box.value = .value(output)
+                self?.propagateChange(from: key)
+            }
+    }
+
+    /// Cancels the current subscription and re-subscribes.
+    @MainActor
+    public func restartPublisher<A: SKPublisherAtom>(for atom: A) {
+        let key = SKAtomKey(atom)
+        guard let box: SKAtomBox<A.Value> = existingBox(for: key) else { return }
+        box.value = .idle
+        subscribePublisher(for: atom, box: box, key: key)
+    }
+
     // MARK: - Change propagation
 
     /// Walks the dependency graph from `key` and recomputes all descendants
@@ -288,6 +342,8 @@ public final class SKAtomStore: @unchecked Sendable {
         recomputers.removeValue(forKey: key)
         tasks[key]?.cancel()
         tasks.removeValue(forKey: key)
+        cancellables[key]?.cancel()
+        cancellables.removeValue(forKey: key)
     }
 
     // MARK: - Debug
