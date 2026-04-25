@@ -42,10 +42,7 @@ import StateKit
 /// ```swift
 /// let userAtom = asyncAtom { _ in await UserService.fetch(id: "abc") }
 /// ```
-public protocol SKTaskAtom: SKAtom where Value == AsyncPhase<TaskSuccess> {
-    /// The type of the successful result produced by this atom's task.
-    associatedtype TaskSuccess
-
+public protocol SKTaskAtom: SKAsyncPhaseAtom {
     /// Performs the async work and returns the result.
     ///
     /// - Parameter context: A transaction context. Call `context.read(_:)` to

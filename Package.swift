@@ -91,6 +91,7 @@ let package = Package(
                 "StateKit",
                 "StateKitCore",
                 "StateKitAtoms",
+                "StateKitSupport",
             ]
         ),
         .target(
@@ -124,6 +125,7 @@ let package = Package(
             name: "StateKitTests",
             dependencies: [
                 "StateKit",
+                "StateKitCombine",
                 "StateKitTesting"
             ]
         ),

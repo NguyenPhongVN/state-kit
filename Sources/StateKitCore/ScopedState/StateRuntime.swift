@@ -92,6 +92,8 @@ public enum StateRuntime {
         StateRuntime.begin(context)
         let view = body()
         StateRuntime.end()
+        context.flushLayoutEffects()
+        context.flushPostRenderEffects()
         return view
     }
 }

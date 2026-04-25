@@ -8,6 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		9A9534192F83E8AB00F5F87F /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 9A9534182F83E8AB00F5F87F /* Textual */; };
+		9AD747FD2F9D00FE008D66BB /* StateKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD747FC2F9D00FE008D66BB /* StateKit */; };
+		9AD747FF2F9D00FE008D66BB /* StateKitAtoms in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD747FE2F9D00FE008D66BB /* StateKitAtoms */; };
+		9AD748012F9D00FE008D66BB /* StateKitCombine in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748002F9D00FE008D66BB /* StateKitCombine */; };
+		9AD748032F9D00FE008D66BB /* StateKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748022F9D00FE008D66BB /* StateKitCore */; };
+		9AD748052F9D00FE008D66BB /* StateKitDevTools in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748042F9D00FE008D66BB /* StateKitDevTools */; };
+		9AD748072F9D00FE008D66BB /* StateKitSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748062F9D00FE008D66BB /* StateKitSupport */; };
+		9AD748092F9D00FE008D66BB /* StateKitTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748082F9D00FE008D66BB /* StateKitTesting */; };
+		9AD7480B2F9D00FE008D66BB /* StateKitUI in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD7480A2F9D00FE008D66BB /* StateKitUI */; };
 		EC5E79392F659FF8006164B0 /* StateKit in Frameworks */ = {isa = PBXBuildFile; productRef = EC5E79382F659FF8006164B0 /* StateKit */; };
 		EC5E793B2F659FF8006164B0 /* StateKitCombine in Frameworks */ = {isa = PBXBuildFile; productRef = EC5E793A2F659FF8006164B0 /* StateKitCombine */; };
 		EC5E793D2F659FF8006164B0 /* StateKitCore in Frameworks */ = {isa = PBXBuildFile; productRef = EC5E793C2F659FF8006164B0 /* StateKitCore */; };
@@ -34,14 +42,22 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9AD748012F9D00FE008D66BB /* StateKitCombine in Frameworks */,
+				9AD7480B2F9D00FE008D66BB /* StateKitUI in Frameworks */,
 				EC5E79452F659FF8006164B0 /* StateKitUI in Frameworks */,
+				9AD748032F9D00FE008D66BB /* StateKitCore in Frameworks */,
 				EC5E79392F659FF8006164B0 /* StateKit in Frameworks */,
 				EC5E793F2F659FF8006164B0 /* StateKitDevTools in Frameworks */,
+				9AD748072F9D00FE008D66BB /* StateKitSupport in Frameworks */,
 				EC5E79412F659FF8006164B0 /* StateKitSupport in Frameworks */,
 				EC5E793B2F659FF8006164B0 /* StateKitCombine in Frameworks */,
 				EC5E79432F659FF8006164B0 /* StateKitTesting in Frameworks */,
+				9AD747FF2F9D00FE008D66BB /* StateKitAtoms in Frameworks */,
+				9AD748092F9D00FE008D66BB /* StateKitTesting in Frameworks */,
 				9A9534192F83E8AB00F5F87F /* Textual in Frameworks */,
+				9AD748052F9D00FE008D66BB /* StateKitDevTools in Frameworks */,
 				EC5E793D2F659FF8006164B0 /* StateKitCore in Frameworks */,
+				9AD747FD2F9D00FE008D66BB /* StateKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -100,6 +116,14 @@
 				EC5E79422F659FF8006164B0 /* StateKitTesting */,
 				EC5E79442F659FF8006164B0 /* StateKitUI */,
 				9A9534182F83E8AB00F5F87F /* Textual */,
+				9AD747FC2F9D00FE008D66BB /* StateKit */,
+				9AD747FE2F9D00FE008D66BB /* StateKitAtoms */,
+				9AD748002F9D00FE008D66BB /* StateKitCombine */,
+				9AD748022F9D00FE008D66BB /* StateKitCore */,
+				9AD748042F9D00FE008D66BB /* StateKitDevTools */,
+				9AD748062F9D00FE008D66BB /* StateKitSupport */,
+				9AD748082F9D00FE008D66BB /* StateKitTesting */,
+				9AD7480A2F9D00FE008D66BB /* StateKitUI */,
 			);
 			productName = CaseStudies;
 			productReference = ECADE9C32F65345E00B4D816 /* CaseStudies.app */;
@@ -131,6 +155,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */,
+				9AD747FB2F9D00FE008D66BB /* XCLocalSwiftPackageReference "../../../state-kit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = ECADE9C42F65345E00B4D816 /* Products */;
@@ -289,6 +314,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 2H5PN3F9B6;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -332,6 +358,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 2H5PN3F9B6;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -390,6 +417,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		9AD747FB2F9D00FE008D66BB /* XCLocalSwiftPackageReference "../../../state-kit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = "../../../state-kit";
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -406,6 +440,38 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */;
 			productName = Textual;
+		};
+		9AD747FC2F9D00FE008D66BB /* StateKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKit;
+		};
+		9AD747FE2F9D00FE008D66BB /* StateKitAtoms */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitAtoms;
+		};
+		9AD748002F9D00FE008D66BB /* StateKitCombine */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitCombine;
+		};
+		9AD748022F9D00FE008D66BB /* StateKitCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitCore;
+		};
+		9AD748042F9D00FE008D66BB /* StateKitDevTools */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitDevTools;
+		};
+		9AD748062F9D00FE008D66BB /* StateKitSupport */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitSupport;
+		};
+		9AD748082F9D00FE008D66BB /* StateKitTesting */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitTesting;
+		};
+		9AD7480A2F9D00FE008D66BB /* StateKitUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = StateKitUI;
 		};
 		EC5E79382F659FF8006164B0 /* StateKit */ = {
 			isa = XCSwiftPackageProductDependency;

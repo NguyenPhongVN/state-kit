@@ -115,6 +115,9 @@ public struct SKAtomViewContext {
 
     /// Removes all cached state for `atom` from the store.
     ///
+    /// Cached descendants that depend on `atom` are also evicted so they do
+    /// not retain stale derived values or stale dependency edges.
+    ///
     /// After eviction, the next read will re-initialise the atom from its
     /// default value or re-run its task.
     ///

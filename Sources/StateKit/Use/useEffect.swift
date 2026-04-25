@@ -31,12 +31,13 @@ private class Effect {
 /// Runs a side effect after render and re-runs it whenever `updateStrategy`
 /// changes.
 ///
-/// On the first render `effect` is called immediately and its return value
-/// (an optional cleanup closure) is stored alongside the current
-/// `updateStrategy`.
+/// On the first render `effect` is queued and runs after the current render
+/// pass completes. Its return value (an optional cleanup closure) is stored
+/// alongside the current `updateStrategy`.
 ///
 /// On every subsequent render the stored `UpdateStrategy.Dependency` is
-/// compared against the one passed on this render. If they differ:
+/// compared against the one passed on this render. If they differ, a post-
+/// render job is queued that:
 /// 1. The previous cleanup closure is called, if one exists.
 /// 2. `effect` is called again and the new cleanup and strategy are stored.
 ///
@@ -81,8 +82,8 @@ private class Effect {
 /// }
 /// ```
 @MainActor public func useEffect(
-    _ effect: @escaping () -> (() -> Void)?,
-    updateStrategy: UpdateStrategy? = nil
+    updateStrategy: UpdateStrategy? = nil,
+    _ effect: @escaping () -> (() -> Void)?
 ) {
     guard let context = StateRuntime.current else {
         fatalError("\(#function) must be used inside StateRuntime")
@@ -90,29 +91,21 @@ private class Effect {
     let index = context.nextIndex()
 
     if index < context.states.count {
+        guard let box = context.states[index] as? Effect else { return }
 
-        guard let old = context.states[index] as? Effect else { return }
-
-        if !areEqual(old.updateStrategy?.dependency, updateStrategy?.dependency) {
-
-            old.cleanup?()
-
-            let cleanup = effect()
-
-            context.states[index] = Effect(
-                updateStrategy: updateStrategy,
-                cleanup: cleanup
-            )
+        if !areEqual(box.updateStrategy?.dependency, updateStrategy?.dependency) {
+            context.enqueuePostRenderEffect {
+                box.cleanup?()
+                box.cleanup = effect()
+                box.updateStrategy = updateStrategy
+            }
         }
     } else {
-
-        let cleanup = effect()
-
-        context.states.append(
-            Effect(
-                updateStrategy: updateStrategy,
-                cleanup: cleanup
-            )
-        )
+        let box = Effect()
+        context.states.append(box)
+        context.enqueuePostRenderEffect {
+            box.cleanup = effect()
+            box.updateStrategy = updateStrategy
+        }
     }
 }

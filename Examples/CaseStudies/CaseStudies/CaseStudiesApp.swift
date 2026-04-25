@@ -7,8 +7,10 @@ import SwiftUI
 struct CaseStudiesApp: App {
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                ContentView()
+            SKAtomRoot {
+                NavigationStack {
+                    ContentView()
+                }
             }
         }
     }

@@ -44,7 +44,7 @@ import SwiftUI
 /// ```
 @MainActor
 @propertyWrapper
-public struct SKTask<A: SKAtom>: DynamicProperty {
+public struct SKTask<A: SKAsyncPhaseAtom>: DynamicProperty {
 
     // MARK: - Dependencies
 

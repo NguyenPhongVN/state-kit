@@ -31,9 +31,10 @@ private class Effect {
 /// Runs a layout-time side effect after render and re-runs it whenever
 /// `updateStrategy` changes.
 ///
-/// The timing and storage semantics are identical to `useEffect`: both run
-/// synchronously during the `StateRuntime.stateRun` body evaluation, and
-/// both use the same `UpdateStrategy`-based dependency comparison.
+/// `useLayoutEffect` runs in a dedicated post-render phase: after the
+/// current render pass completes, but before regular `useEffect` jobs are
+/// flushed. This mirrors React's distinction between layout effects and
+/// passive effects as closely as the local hook runtime allows.
 ///
 /// `useLayoutEffect` is intended for effects that must observe or mutate
 /// layout-related state before the view is presented — analogous to React's
@@ -42,12 +43,13 @@ private class Effect {
 /// depend on layout measurement or that can safely run after the render
 /// is committed.
 ///
-/// On the first render `effect` is called immediately and its return value
-/// (an optional cleanup closure) is stored alongside the current
-/// `updateStrategy`.
+/// On the first render `effect` is queued into the layout-effect phase and
+/// its return value (an optional cleanup closure) is stored alongside the
+/// current `updateStrategy`.
 ///
 /// On every subsequent render the stored `UpdateStrategy.Dependency` is
-/// compared against the one passed on this render. If they differ:
+/// compared against the one passed on this render. If they differ, a layout-
+/// phase job is queued that:
 /// 1. The previous cleanup closure is called, if one exists.
 /// 2. `effect` is called again and the new cleanup and strategy are stored.
 ///
@@ -83,8 +85,8 @@ private class Effect {
 /// }
 /// ```
 @MainActor public func useLayoutEffect(
-    _ effect: @escaping () -> (() -> Void)?,
-    updateStrategy: UpdateStrategy? = nil
+    updateStrategy: UpdateStrategy? = nil,
+    _ effect: @escaping () -> (() -> Void)?
 ) {
     guard let context = StateRuntime.current else {
         fatalError("\(#function) must be used inside StateRuntime")
@@ -92,29 +94,21 @@ private class Effect {
     let index = context.nextIndex()
 
     if index < context.states.count {
+        guard let box = context.states[index] as? Effect else { return }
 
-        guard let old = context.states[index] as? Effect else { return }
-
-        if !areEqual(old.updateStrategy?.dependency, updateStrategy?.dependency) {
-
-            old.cleanup?()
-
-            let cleanup = effect()
-
-            context.states[index] = Effect(
-                updateStrategy: updateStrategy,
-                cleanup: cleanup
-            )
+        if !areEqual(box.updateStrategy?.dependency, updateStrategy?.dependency) {
+            context.enqueueLayoutEffect {
+                box.cleanup?()
+                box.cleanup = effect()
+                box.updateStrategy = updateStrategy
+            }
         }
     } else {
-
-        let cleanup = effect()
-
-        context.states.append(
-            Effect(
-                updateStrategy: updateStrategy,
-                cleanup: cleanup
-            )
-        )
+        let box = Effect()
+        context.states.append(box)
+        context.enqueueLayoutEffect {
+            box.cleanup = effect()
+            box.updateStrategy = updateStrategy
+        }
     }
 }

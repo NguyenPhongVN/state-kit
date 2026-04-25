@@ -58,6 +58,8 @@ public struct SKAtomRoot<Content: View>: View {
     }
 }
 
+/*
+
 // MARK: - View modifier convenience
 
 extension View {
@@ -72,3 +74,5 @@ extension View {
         SKAtomRoot { self }
     }
 }
+
+*/

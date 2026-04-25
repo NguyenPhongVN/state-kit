@@ -44,20 +44,29 @@ struct UseState: View {
 
     var body: some View {
         StateScope {
-
-            // Initialize `count` to 0 on the first render.
-            // `countSetter` replaces the state and triggers a re-render.
             let (count, countSetter) = useState(0)
 
-            VStack {
-
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Count: \(count)")
+                    .font(.title3.monospacedDigit())
 
-                Button("Increment") {
-                    countSetter(count + 1)
+                HStack {
+                    Button("-1") {
+                        countSetter(count - 1)
+                    }
+
+                    Button("+1") {
+                        countSetter(count + 1)
+                    }
+                    .buttonStyle(.borderedProminent)
+
+                    Button("Reset") {
+                        countSetter(0)
+                    }
                 }
-
+                .buttonStyle(.bordered)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

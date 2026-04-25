@@ -1,0 +1,19 @@
+import SwiftUI
+
+@propertyWrapper
+@MainActor public struct HEnvironment<Value> {
+
+    public init(_ keyPath: KeyPath<EnvironmentValues, Value>) {
+        self.wrappedValue = useEnvironment(keyPath)
+    }
+
+    public var wrappedValue: Value
+
+    public var projectedValue: Self {
+        self
+    }
+
+    public var value: Value {
+        wrappedValue
+    }
+}

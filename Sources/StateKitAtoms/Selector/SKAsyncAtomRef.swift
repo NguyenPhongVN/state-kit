@@ -29,6 +29,8 @@
 /// ```
 public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
 
+    public typealias TaskSuccess = Success
+
     // MARK: - Storage
 
     private let _task: @MainActor (SKAtomTransactionContext) async -> Success
@@ -66,6 +68,8 @@ public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
 /// Like `SKAsyncAtomRef` but the task closure can throw; failures surface as
 /// `.failure(error)` in the `AsyncPhase<Success, Error>` value.
 public final class SKThrowingAsyncAtomRef<Success>: SKThrowingTaskAtom, @unchecked Sendable {
+
+    public typealias TaskSuccess = Success
 
     // MARK: - Storage
 

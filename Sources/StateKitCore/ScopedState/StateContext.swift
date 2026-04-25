@@ -47,6 +47,18 @@ public final class StateContext {
     /// and reset to `0` by `reset()` before each render.
     public private(set) var index: Int = 0
 
+    /// `useLayoutEffect` jobs captured during the current render pass.
+    ///
+    /// These closures are flushed first after `StateRuntime.end()` so layout
+    /// effects run synchronously after render but before regular effects.
+    private var pendingLayoutEffects: [() -> Void] = []
+
+    /// `useEffect` jobs captured during the current render pass.
+    ///
+    /// These closures are flushed after `StateRuntime.end()` so post-render
+    /// effects do not run while hooks are still being evaluated.
+    private var pendingPostRenderEffects: [() -> Void] = []
+
     /// Creates a new context, optionally pre-populated with existing hook
     /// slots and a starting index.
     ///
@@ -79,5 +91,33 @@ public final class StateContext {
     /// slot `1`, and so on — matching the order from the previous render.
     public func reset() {
         index = 0
+    }
+
+    /// Queues a closure to run in the layout-effect phase after render.
+    public func enqueueLayoutEffect(_ effect: @escaping () -> Void) {
+        pendingLayoutEffects.append(effect)
+    }
+
+    /// Queues a closure to run after the current render pass completes.
+    public func enqueuePostRenderEffect(_ effect: @escaping () -> Void) {
+        pendingPostRenderEffects.append(effect)
+    }
+
+    /// Runs and clears all queued layout effects.
+    public func flushLayoutEffects() {
+        let effects = pendingLayoutEffects
+        pendingLayoutEffects.removeAll(keepingCapacity: true)
+        for effect in effects {
+            effect()
+        }
+    }
+
+    /// Runs and clears all queued post-render effects.
+    public func flushPostRenderEffects() {
+        let effects = pendingPostRenderEffects
+        pendingPostRenderEffects.removeAll(keepingCapacity: true)
+        for effect in effects {
+            effect()
+        }
     }
 }

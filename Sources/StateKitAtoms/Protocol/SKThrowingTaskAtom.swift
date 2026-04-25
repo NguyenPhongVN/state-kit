@@ -36,10 +36,7 @@ import StateKit
 ///     }
 /// }
 /// ```
-public protocol SKThrowingTaskAtom: SKAtom where Value == AsyncPhase<TaskSuccess> {
-    /// The type of the successful result produced by this atom's task.
-    associatedtype TaskSuccess
-
+public protocol SKThrowingTaskAtom: SKAsyncPhaseAtom {
     /// Performs the async, potentially throwing work and returns the result.
     ///
     /// - Parameter context: A transaction context. Call `context.read(_:)` to

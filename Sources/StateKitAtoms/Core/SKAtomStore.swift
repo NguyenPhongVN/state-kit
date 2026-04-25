@@ -149,7 +149,8 @@ public final class SKAtomStore: @unchecked Sendable {
 
         let box = SKAtomBox<A.Value>(.loading)
         storeBox(box, for: key)
-        launchTask(for: atom, box: box, key: key)
+        let task = makeTask(for: atom, box: box, key: key)
+        setTask(task, for: key)
 
         registerRecomputer(for: key) { [weak self] in
             self?.restartTask(for: atom)
@@ -158,10 +159,10 @@ public final class SKAtomStore: @unchecked Sendable {
     }
 
     @MainActor
-    private func launchTask<A: SKTaskAtom>(
+    private func makeTask<A: SKTaskAtom>(
         for atom: A, box: SKAtomBox<A.Value>, key: SKAtomKey
-    ) {
-        let task = Task { @MainActor [weak self, weak box] in
+    ) -> Task<Void, Never> {
+        Task { @MainActor [weak self, weak box] in
             guard let self, let box else { return }
             let ctx = SKAtomTransactionContext(store: self, currentKey: nil)
             let result = await atom.task(context: ctx)
@@ -169,7 +170,6 @@ public final class SKAtomStore: @unchecked Sendable {
             box.value = .success(result)
             self.propagateChange(from: key)
         }
-        setTask(task, for: key)
     }
 
     /// Cancels the current task and restarts it.
@@ -178,7 +178,8 @@ public final class SKAtomStore: @unchecked Sendable {
         let key = SKAtomKey(atom)
         guard let box: SKAtomBox<A.Value> = existingBox(for: key) else { return }
         box.value = .loading
-        launchTask(for: atom, box: box, key: key)
+        let task = makeTask(for: atom, box: box, key: key)
+        setTask(task, for: key)
     }
 
     /// Refreshes a `SKTaskAtom` and suspends until the new task completes.
@@ -186,13 +187,10 @@ public final class SKAtomStore: @unchecked Sendable {
     public func refreshTask<A: SKTaskAtom>(for atom: A) async {
         let key = SKAtomKey(atom)
         guard let box: SKAtomBox<A.Value> = existingBox(for: key) else { return }
-        tasks[key]?.cancel()
         box.value = .loading
-        let ctx = SKAtomTransactionContext(store: self, currentKey: nil)
-        let result = await atom.task(context: ctx)
-        guard !Task.isCancelled else { return }
-        box.value = .success(result)
-        propagateChange(from: key)
+        let task = makeTask(for: atom, box: box, key: key)
+        setTask(task, for: key)
+        await task.value
     }
 
     // MARK: - Throwing task atom operations
@@ -205,7 +203,8 @@ public final class SKAtomStore: @unchecked Sendable {
 
         let box = SKAtomBox<A.Value>(.loading)
         storeBox(box, for: key)
-        launchThrowingTask(for: atom, box: box, key: key)
+        let task = makeThrowingTask(for: atom, box: box, key: key)
+        setTask(task, for: key)
 
         registerRecomputer(for: key) { [weak self] in
             self?.restartThrowingTask(for: atom)
@@ -214,10 +213,10 @@ public final class SKAtomStore: @unchecked Sendable {
     }
 
     @MainActor
-    private func launchThrowingTask<A: SKThrowingTaskAtom>(
+    private func makeThrowingTask<A: SKThrowingTaskAtom>(
         for atom: A, box: SKAtomBox<A.Value>, key: SKAtomKey
-    ) {
-        let task = Task { @MainActor [weak self, weak box] in
+    ) -> Task<Void, Never> {
+        Task { @MainActor [weak self, weak box] in
             guard let self, let box else { return }
             let ctx = SKAtomTransactionContext(store: self, currentKey: nil)
             do {
@@ -230,7 +229,6 @@ public final class SKAtomStore: @unchecked Sendable {
             }
             self.propagateChange(from: key)
         }
-        setTask(task, for: key)
     }
 
     @MainActor
@@ -238,7 +236,8 @@ public final class SKAtomStore: @unchecked Sendable {
         let key = SKAtomKey(atom)
         guard let box: SKAtomBox<A.Value> = existingBox(for: key) else { return }
         box.value = .loading
-        launchThrowingTask(for: atom, box: box, key: key)
+        let task = makeThrowingTask(for: atom, box: box, key: key)
+        setTask(task, for: key)
     }
 
     /// Refreshes a `SKThrowingTaskAtom` and suspends until the new task completes.
@@ -246,18 +245,10 @@ public final class SKAtomStore: @unchecked Sendable {
     public func refreshThrowingTask<A: SKThrowingTaskAtom>(for atom: A) async {
         let key = SKAtomKey(atom)
         guard let box: SKAtomBox<A.Value> = existingBox(for: key) else { return }
-        tasks[key]?.cancel()
         box.value = .loading
-        let ctx = SKAtomTransactionContext(store: self, currentKey: nil)
-        do {
-            let result = try await atom.task(context: ctx)
-            guard !Task.isCancelled else { return }
-            box.value = .success(result)
-        } catch {
-            guard !Task.isCancelled else { return }
-            box.value = .failure(error)
-        }
-        propagateChange(from: key)
+        let task = makeThrowingTask(for: atom, box: box, key: key)
+        setTask(task, for: key)
+        await task.value
     }
 
     // MARK: - Publisher atom operations
@@ -282,22 +273,39 @@ public final class SKAtomStore: @unchecked Sendable {
     private func subscribePublisher<A: SKPublisherAtom>(
         for atom: A, box: SKAtomBox<A.Value>, key: SKAtomKey
     ) {
+        let deliver: (@escaping @MainActor () -> Void) -> Void = { operation in
+            if Thread.isMainThread {
+                MainActor.assumeIsolated {
+                    operation()
+                }
+            } else {
+                Task { @MainActor in
+                    operation()
+                }
+            }
+        }
+
         cancellables[key]?.cancel()
+        clearGraphDependencies(of: key)
         let ctx = SKAtomTransactionContext(store: self, currentKey: key)
         cancellables[key] = atom.publisher(context: ctx)
             .sink { [weak self, weak box] completion in
-                guard let box else { return }
-                switch completion {
-                case .finished:
-                    box.value = .finished
-                case .failure(let error):
-                    box.value = .failure(error)
+                deliver {
+                    guard let self, let box else { return }
+                    switch completion {
+                    case .finished:
+                        box.value = .finished
+                    case .failure(let error):
+                        box.value = .failure(error)
+                    }
+                    self.propagateChange(from: key)
                 }
-                self?.propagateChange(from: key)
             } receiveValue: { [weak self, weak box] output in
-                guard let box else { return }
-                box.value = .value(output)
-                self?.propagateChange(from: key)
+                deliver {
+                    guard let self, let box else { return }
+                    box.value = .value(output)
+                    self.propagateChange(from: key)
+                }
             }
     }
 
@@ -332,18 +340,31 @@ public final class SKAtomStore: @unchecked Sendable {
 
     // MARK: - Eviction
 
-    /// Removes all cached state for `atom`: box, graph edges, recomputer, task.
     @MainActor
-    public func evict<A: SKAtom>(_ atom: A) {
-        let key = SKAtomKey(atom)
+    private func clearCachedState(for key: SKAtomKey) {
         boxes.removeValue(forKey: key)
-        graph.clearDependencies(of: key)
-        graph.clearChildren(of: key)
         recomputers.removeValue(forKey: key)
         tasks[key]?.cancel()
         tasks.removeValue(forKey: key)
         cancellables[key]?.cancel()
         cancellables.removeValue(forKey: key)
+    }
+
+    /// Removes all cached state for `atom` and any cached descendants that
+    /// depend on it.
+    @MainActor
+    public func evict<A: SKAtom>(_ atom: A) {
+        let key = SKAtomKey(atom)
+        let keysToEvict = [key] + graph.topologicallySortedDescendants(of: key)
+
+        for evictedKey in keysToEvict {
+            clearCachedState(for: evictedKey)
+        }
+
+        for evictedKey in keysToEvict {
+            graph.clearDependencies(of: evictedKey)
+            graph.clearChildren(of: evictedKey)
+        }
     }
 
     // MARK: - Debug
