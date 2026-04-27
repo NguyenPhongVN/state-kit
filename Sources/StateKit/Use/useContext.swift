@@ -70,15 +70,16 @@ extension HookContext: Observable {}
 /// state; it simply validates that a hook render is active, mirroring the
 /// requirement that all hooks run inside `StateScope` / `StateView`.
 ///
-/// Mutating `context.value` is visible to future renders that read the same
-/// `HookContext` instance. Because `HookContext` is not `Observable`, those
-/// mutations do not trigger a re-render by themselves; some other state
-/// change must cause the scope to render again.
+/// Because `HookContext` is `@Observable`, accessing `context.value` registers
+/// the enclosing `StateScope` as a subscriber. Mutating `context.value`
+/// automatically triggers a re-render of all views that called `useContext`
+/// with this instance.
 ///
 /// - Parameter context: The shared `HookContext` instance to read from.
 /// - Returns: The `Value` stored in `context` at the time of the call.
 @MainActor
 public func useContext<T>(
+
     _ context: HookContext<T>
 ) -> T {
     guard StateRuntime.current != nil else {

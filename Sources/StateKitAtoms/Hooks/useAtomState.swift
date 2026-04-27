@@ -34,6 +34,13 @@ import StateKit
 @MainActor
 public func useAtomValue<A: SKAtom>(_ atom: A) -> A.Value {
     let store = useEnvironment(\.skAtomStore)
+    let key = SKAtomKey(atom)
+
+    useEffect(updateStrategy: .preserved(by: key)) {
+        store.addExternalSubscriber(for: key)
+        return { store.removeExternalSubscriber(for: key) }
+    }
+
     return atom._getOrCreateBox(in: store).value
 }
 
@@ -76,6 +83,13 @@ public func useAtomValue<A: SKAtom>(_ atom: A) -> A.Value {
 @MainActor
 public func useAtomState<A: SKStateAtom>(_ atom: A) -> (A.Value, (A.Value) -> Void) {
     let store = useEnvironment(\.skAtomStore)
+    let key = SKAtomKey(atom)
+
+    useEffect(updateStrategy: .preserved(by: key)) {
+        store.addExternalSubscriber(for: key)
+        return { store.removeExternalSubscriber(for: key) }
+    }
+
     let value = store.stateBox(for: atom).value
     let set: (A.Value) -> Void = { [atom] newValue in
         store.setStateValue(newValue, for: atom)
@@ -111,6 +125,13 @@ public func useAtomState<A: SKStateAtom>(_ atom: A) -> (A.Value, (A.Value) -> Vo
 @MainActor
 public func useAtomBinding<A: SKStateAtom>(_ atom: A) -> Binding<A.Value> {
     let store = useEnvironment(\.skAtomStore)
+    let key = SKAtomKey(atom)
+
+    useEffect(updateStrategy: .preserved(by: key)) {
+        store.addExternalSubscriber(for: key)
+        return { store.removeExternalSubscriber(for: key) }
+    }
+
     return Binding {
         store.stateBox(for: atom).value
     } set: { newValue in

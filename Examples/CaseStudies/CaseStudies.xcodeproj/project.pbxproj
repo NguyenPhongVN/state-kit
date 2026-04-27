@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		9A9534192F83E8AB00F5F87F /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 9A9534182F83E8AB00F5F87F /* Textual */; };
+		9AB0D6372FB7F0DA001FB12D /* Riverpods in Frameworks */ = {isa = PBXBuildFile; productRef = 9AB0D6362FB7F0DA001FB12D /* Riverpods */; };
 		9AD747FD2F9D00FE008D66BB /* StateKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD747FC2F9D00FE008D66BB /* StateKit */; };
 		9AD747FF2F9D00FE008D66BB /* StateKitAtoms in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD747FE2F9D00FE008D66BB /* StateKitAtoms */; };
 		9AD748012F9D00FE008D66BB /* StateKitCombine in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748002F9D00FE008D66BB /* StateKitCombine */; };
@@ -48,6 +49,7 @@
 				9AD748032F9D00FE008D66BB /* StateKitCore in Frameworks */,
 				EC5E79392F659FF8006164B0 /* StateKit in Frameworks */,
 				EC5E793F2F659FF8006164B0 /* StateKitDevTools in Frameworks */,
+				9AB0D6372FB7F0DA001FB12D /* Riverpods in Frameworks */,
 				9AD748072F9D00FE008D66BB /* StateKitSupport in Frameworks */,
 				EC5E79412F659FF8006164B0 /* StateKitSupport in Frameworks */,
 				EC5E793B2F659FF8006164B0 /* StateKitCombine in Frameworks */,
@@ -124,6 +126,7 @@
 				9AD748062F9D00FE008D66BB /* StateKitSupport */,
 				9AD748082F9D00FE008D66BB /* StateKitTesting */,
 				9AD7480A2F9D00FE008D66BB /* StateKitUI */,
+				9AB0D6362FB7F0DA001FB12D /* Riverpods */,
 			);
 			productName = CaseStudies;
 			productReference = ECADE9C32F65345E00B4D816 /* CaseStudies.app */;
@@ -440,6 +443,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 9A9534172F83E8AB00F5F87F /* XCRemoteSwiftPackageReference "textual" */;
 			productName = Textual;
+		};
+		9AB0D6362FB7F0DA001FB12D /* Riverpods */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AD747FB2F9D00FE008D66BB /* XCLocalSwiftPackageReference "../../../state-kit" */;
+			productName = Riverpods;
 		};
 		9AD747FC2F9D00FE008D66BB /* StateKit */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1,4 +1,3 @@
-import StateKit
 /// Logs lifecycle events (mounted, updated, unmounted) and optional items when the hook runs. Useful for debugging and monitoring when a scope is evaluated.
 ///
 /// - Parameters:

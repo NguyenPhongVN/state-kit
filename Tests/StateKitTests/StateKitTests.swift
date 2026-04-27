@@ -32,10 +32,10 @@ struct UseEffectTests {
         let setValue = harness.render {
             let (value, setValue) = useState(0)
             steps.append("render-\(value)-start")
-            useEffect({
+            useEffect(updateStrategy: .preserved(by: value)) {
                 steps.append("effect-\(value)")
                 return { steps.append("cleanup-\(value)") }
-            }, updateStrategy: .preserved(by: value))
+            }
             steps.append("render-\(value)-end")
             return setValue
         }
@@ -45,10 +45,10 @@ struct UseEffectTests {
         harness.render {
             let (value, _) = useState(0)
             steps.append("render-\(value)-start")
-            useEffect({
+            useEffect(updateStrategy: .preserved(by: value)) {
                 steps.append("effect-\(value)")
                 return { steps.append("cleanup-\(value)") }
-            }, updateStrategy: .preserved(by: value))
+            }
             steps.append("render-\(value)-end")
         }
 
@@ -113,14 +113,14 @@ struct UseLayoutEffectTests {
         let setValue = harness.render {
             let (value, setValue) = useState(0)
             steps.append("render-\(value)-start")
-            useLayoutEffect({
+            useLayoutEffect(updateStrategy: .preserved(by: value)) {
                 steps.append("layout-\(value)")
                 return { steps.append("layout-cleanup-\(value)") }
-            }, updateStrategy: .preserved(by: value))
-            useEffect({
+            }
+            useEffect(updateStrategy: .preserved(by: value)) {
                 steps.append("effect-\(value)")
                 return nil
-            }, updateStrategy: .preserved(by: value))
+            }
             steps.append("render-\(value)-end")
             return setValue
         }
@@ -130,14 +130,14 @@ struct UseLayoutEffectTests {
         harness.render {
             let (value, _) = useState(0)
             steps.append("render-\(value)-start")
-            useLayoutEffect({
+            useLayoutEffect(updateStrategy: .preserved(by: value)) {
                 steps.append("layout-\(value)")
                 return { steps.append("layout-cleanup-\(value)") }
-            }, updateStrategy: .preserved(by: value))
-            useEffect({
+            }
+            useEffect(updateStrategy: .preserved(by: value)) {
                 steps.append("effect-\(value)")
                 return nil
-            }, updateStrategy: .preserved(by: value))
+            }
             steps.append("render-\(value)-end")
         }
 

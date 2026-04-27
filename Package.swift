@@ -46,6 +46,14 @@ let package = Package(
             name: "StateKitAtoms",
             targets: ["StateKitAtoms"]
         ),
+        .library(
+            name: "Riverpods",
+            targets: ["Riverpods"]
+        ),
+        .library(
+            name: "StateConcurrency",
+            targets: ["StateConcurrency"]
+        ),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "603.0.0"),
@@ -121,6 +129,12 @@ let package = Package(
                 "StateKit",
             ]
         ),
+        .target(
+            name: "Riverpods",
+            dependencies: [
+                "StateKit",
+            ]
+        ),
         .testTarget(
             name: "StateKitTests",
             dependencies: [
@@ -133,6 +147,12 @@ let package = Package(
             name: "StateKitAtomsTests",
             dependencies: [
                 "StateKitAtoms",
+            ]
+        ),
+        .testTarget(
+            name: "RiverpodsTests",
+            dependencies: [
+                "Riverpods",
             ]
         ),
     ]

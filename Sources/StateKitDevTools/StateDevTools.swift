@@ -78,14 +78,20 @@ public struct StateDevScope<Content: View>: View {
         self.content = content
     }
 
+    @ViewBuilder
     public var body: some View {
         let view = StateRuntime.stateRun(context: context, environment: environment, body: content)
 
         // Increment the counter after the current render pass completes.
-        // Using Task avoids mutating @State during a view update.
-        let _ = Task { @MainActor in renderCount += 1 }
+        // We use enqueuePostRenderEffect to ensure we are out of the body execution,
+        // and then Task to ensure we are out of the render call stack.
+        let _ = context.enqueuePostRenderEffect {
+            Task { @MainActor in
+                renderCount += 1
+            }
+        }
 
-        return view.modifier(StateDevOverlayModifier(
+        view.modifier(StateDevOverlayModifier(
             show: showOverlay,
             alignment: overlayAlignment,
             renderCount: renderCount,

@@ -58,6 +58,10 @@ public protocol SKAtom: Hashable, Sendable {
     /// The type of value this atom produces.
     associatedtype Value
 
+    /// Determines the memory management strategy for this atom in the store.
+    /// Defaults to `.keepAlive`.
+    var evictionPolicy: SKAtomEvictionPolicy { get }
+
     /// Returns the atom's reactive box from `store`, creating and initialising
     /// it on first access.
     ///
@@ -69,4 +73,22 @@ public protocol SKAtom: Hashable, Sendable {
     ///   triggering conformance issues — callers are responsible for MainActor
     ///   isolation (all public API enforces this through `@MainActor` context).
     func _getOrCreateBox(in store: SKAtomStore) -> SKAtomBox<Value>
+}
+
+/// Determines how `SKAtomStore` manages the memory of an atom.
+public enum SKAtomEvictionPolicy: Sendable {
+    /// The atom and its value stay in the store until explicitly evicted or
+    /// the store is destroyed. This is the default.
+    case keepAlive
+
+    /// The atom is automatically removed from the store as soon as it has no
+    /// active external subscribers (views) or internal children (dependent atoms).
+    ///
+    /// Use this for transient state or large collections (e.g. `atomFamily`)
+    /// where memory growth is a concern.
+    case evictWhenUnused
+}
+
+extension SKAtom {
+    public var evictionPolicy: SKAtomEvictionPolicy { .keepAlive }
 }

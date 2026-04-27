@@ -1,8 +1,36 @@
+# macOS
 .DS_Store
-/.build
-/Packages
-xcuserdata/
-DerivedData/
-.swiftpm/configuration/registries.json
+.AppleDouble
+.LSOverride
+
+# Swift Package Manager
+.build/
+Packages/
+Package.resolved
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/configuration/registries.json
+
+# Xcode
+build/
+DerivedData/
+*.xcuserdata
+*.xccheckout
+*.xcscmblueprint
+*.cache
+*.moved-aside
+*.xcuserstate
+**/*.xcuserdata/
+**/DerivedData/
+**/.build/
+
+# IDEs
+.vscode/
+.idea/
+
+# Local configuration
+.env
+.env.*
+.claude/settings.local.json
+
+# Misc
 .netrc

@@ -50,7 +50,7 @@ private func _startPublisher<P: Publisher>(
 ) {
     box.cancellable?.cancel()
     box.updateStrategy = updateStrategy
-    box.signal.value = .idle
+    box.signal._safeUpdate(to: .idle)
 
     box.cancellable = publisher.sink { completion in
         switch completion {

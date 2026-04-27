@@ -109,3 +109,13 @@ private class Effect {
         }
     }
 }
+
+@MainActor public func useEffect(
+    updateStrategy: UpdateStrategy? = nil,
+    effect: (() -> Void)? = nil
+) {
+    useEffect(updateStrategy: updateStrategy) {
+        effect?()
+        return nil
+    }
+}

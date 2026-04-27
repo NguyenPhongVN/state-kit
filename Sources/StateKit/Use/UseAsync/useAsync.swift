@@ -56,7 +56,7 @@ private func _startAsync<Value>(
 ) {
     box.task?.cancel()
     box.updateStrategy = updateStrategy
-    box.signal.value = .loading
+    box.signal._safeUpdate(to: .loading)
 
     box.task = Task { @MainActor in
         do {
@@ -139,7 +139,7 @@ public func useAsync<Value>(
     let box: _HookAsyncBox<Value>
 
     if context.states.count <= index {
-        box = _HookAsyncBox(initialPhase: .idle, updateStrategy: nil)
+        box = _HookAsyncBox(initialPhase: .loading, updateStrategy: updateStrategy)
         context.states.append(box)
         _startAsync(box: box, updateStrategy: updateStrategy, operation: operation)
     } else {

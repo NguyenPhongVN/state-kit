@@ -75,19 +75,80 @@ extension SKAtomEffect {
 
 // MARK: - Combined protocol
 
+/// A base protocol for any atom that carries an `SKAtomEffect`.
+public protocol SKAtomWithEffect: SKAtom {
+    /// The type of effect associated with this atom.
+    associatedtype Effect: SKAtomEffect where Effect.Value == Value
+
+    /// Returns the effect instance for this atom.
+    var effect: Effect { get }
+
+    /// Internal hook for `SKAtomStore` to register the effect.
+    @MainActor
+    func _registerEffect(in store: SKAtomStore, key: SKAtomKey)
+}
+
 /// A `SKStateAtom` that also carries an `SKAtomEffect`.
 ///
 /// Atoms conforming to this protocol declare their effect via the `effect`
 /// property. The store will call the effect's lifecycle methods at appropriate
 /// times.
-public protocol SKStateAtomWithEffect: SKStateAtom {
-    /// The type of effect associated with this atom.
-    associatedtype Effect: SKAtomEffect where Effect.Value == Value
+public protocol SKStateAtomWithEffect: SKStateAtom, SKAtomWithEffect {}
 
-    /// Returns the effect instance for this atom.
-    ///
-    /// The effect is instantiated once per atom key per store.
-    var effect: Effect { get }
+extension SKAtomWithEffect {
+    @MainActor
+    public func _registerEffect(in store: SKAtomStore, key: SKAtomKey) {
+        // This is tricky because we need the box, but box creation is atom-kind specific.
+        // For state atoms, store.stateBox(for: self) works.
+        // For value atoms, store.valueBox(for: self) works.
+        // We'll let the sub-protocols handle this or use a generic approach.
+    }
+}
+
+extension SKStateAtomWithEffect {
+    @MainActor
+    public func _registerEffect(in store: SKAtomStore, key: SKAtomKey) {
+        let box = store.stateBox(for: self)
+        let erased = _erasedEffect(for: box)
+        store.effects[key] = erased
+        erased.initialized(SKAtomViewContext(store: store))
+    }
+}
+
+/// A `SKValueAtom` that also carries an `SKAtomEffect`.
+public protocol SKValueAtomWithEffect: SKValueAtom, SKAtomWithEffect {}
+
+extension SKValueAtomWithEffect {
+    @MainActor
+    public func _registerEffect(in store: SKAtomStore, key: SKAtomKey) {
+        let box = store.valueBox(for: self)
+        let erased = _erasedEffect(for: box)
+        store.effects[key] = erased
+        erased.initialized(SKAtomViewContext(store: store))
+    }
+}
+
+// ... we could add more for Task atoms, but let's start with these.
+
+extension SKAtomWithEffect {
+    /// Internal helper to erase the effect's type for storage in `SKAtomStore`.
+    @MainActor
+    func _erasedEffect(for box: SKAtomBox<Value>) -> SKAtomEffectContainer {
+        let effectInstance = effect
+        return SKAtomEffectContainer(
+            initialized: { ctx in
+                effectInstance.initialized(value: box.value, context: ctx)
+            },
+            updated: { old, new, ctx in
+                if let oldVal = old as? Value, let newVal = new as? Value {
+                    effectInstance.updated(oldValue: oldVal, newValue: newVal, context: ctx)
+                }
+            },
+            released: {
+                effectInstance.released()
+            }
+        )
+    }
 }
 
 // MARK: - Type-erased container (internal use)
@@ -95,6 +156,6 @@ public protocol SKStateAtomWithEffect: SKStateAtom {
 /// Internal type-erasure wrapper used by `SKAtomStore` to store effects.
 struct SKAtomEffectContainer {
     let initialized: @MainActor (SKAtomViewContext) -> Void
-    let updated: @MainActor (SKAtomViewContext) -> Void
+    let updated: @MainActor (Any, Any, SKAtomViewContext) -> Void
     let released: @MainActor () -> Void
 }

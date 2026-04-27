@@ -84,7 +84,7 @@ extension AsyncCurrentValueStream {
     public func makeAsyncIterator() -> Iterator {
         let id = UUID()
 
-        let stream = AsyncStream<Element> { continuation in
+        let stream = AsyncStream<Element>(Element.self, bufferingPolicy: .bufferingNewest(1)) { continuation in
             continuation.yield(lockedValue.value)
             continuations.withValue {
                 $0[id] = continuation

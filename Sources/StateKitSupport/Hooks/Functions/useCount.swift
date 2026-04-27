@@ -1,4 +1,3 @@
-import StateKit
 /// A hook that returns the number of times the current scope has been evaluated.
 /// The count is incremented on each evaluation and is stable for the given `updateStrategy`.
 ///

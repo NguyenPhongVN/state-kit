@@ -40,4 +40,18 @@ public final class StateSignal<T> {
     public init(_ value: T) {
         self.value = value
     }
+
+    /// Updates the signal value safely, deferring the change if currently
+    /// in a render pass to avoid SwiftUI "Modifying state during view update"
+    /// warnings.
+    @MainActor
+    public func _safeUpdate(to newValue: T) {
+        if StateRuntime.current != nil {
+            Task { @MainActor in
+                self.value = newValue
+            }
+        } else {
+            self.value = newValue
+        }
+    }
 }
