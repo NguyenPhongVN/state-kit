@@ -52,6 +52,15 @@ public final class HookContext<Value>: @unchecked Sendable {
     }
 }
 
+extension HookContext {
+    public func update(_ body: (inout Value) -> Void) {
+        _registrar.withMutation(of: self, keyPath: \.value) {
+            body(&_value)
+        }
+    }
+}
+
+
 extension HookContext: Observable {}
 
 /// Returns the current value of the given `HookContext`.
