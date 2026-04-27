@@ -1,5 +1,3 @@
-import StateKit
-
 /// Returns the current success value from `phase`, or the last success value
 /// seen in a previous render.
 ///

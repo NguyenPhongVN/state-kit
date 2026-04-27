@@ -3,14 +3,14 @@ import SwiftUI
 /// A property wrapper that exposes hook-based state as a SwiftUI `Binding`,
 /// backed by `useBinding`.
 ///
-/// `SKScopeState` is syntactic sugar over `useBinding`: instead of writing
+/// `HState` is syntactic sugar over `useBinding`: instead of writing
 /// ```swift
 /// let name = useBinding("")
 /// TextField("Name", text: name)
 /// ```
 /// you can write:
 /// ```swift
-/// @SKScopeState var name = ""
+/// @HState var name = ""
 /// TextField("Name", text: $name)
 /// ```
 ///
@@ -18,14 +18,14 @@ import SwiftUI
 /// mutates the `StateSignal` and triggers a re-render of the enclosing
 /// `StateScope` via `@Observable`.
 ///
-/// `SKScopeState` also accepts an existing `Binding<Node>` directly (via the
+/// `HState` also accepts an existing `Binding<Node>` directly (via the
 /// `Binding`-typed overloads), allowing you to bridge external SwiftUI state
 /// — from a parent `@State`, `@Binding`, or `@Environment` — into a
-/// `StateView` using the same `@SKScopeState` syntax.
+/// `StateView` using the same `@HState` syntax.
 ///
 /// Must be used inside a `StateScope` closure or a `StateView.stateBody`.
 /// Hook ordering rules apply for the `useBinding`-backed overloads: always
-/// declare `@SKScopeState` properties in the same order across renders.
+/// declare `@HState` properties in the same order across renders.
 ///
 /// Use `$name` to obtain the `Binding<Node>` for passing to SwiftUI controls.
 ///
@@ -33,7 +33,7 @@ import SwiftUI
 /// ```swift
 /// struct NameFormView: StateView {
 ///     var stateBody: some View {
-///         @SKScopeState var name = ""
+///         @HState var name = ""
 ///
 ///         VStack {
 ///             TextField("Name", text: $name)
@@ -50,7 +50,7 @@ import SwiftUI
 ///
 ///     var body: some View {
 ///         StateScope {
-///             @SKScopeState var count = $count   // wraps the parent Binding
+///             @HState var count = $count   // wraps the parent Binding
 ///             Stepper("Count: \(count)", value: $count)
 ///         }
 ///     }

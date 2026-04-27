@@ -94,8 +94,8 @@ public extension UpdateStrategy {
     /// rather than passed as individual arguments.
     ///
     /// - Parameter value: An array of `AnyHashable` dependencies to track.
-    static func preserved(by value: [AnyHashable]) -> Self {
-        self.init(dependency: value)
+    static func preserved(by value: [any Hashable]) -> Self {
+        self.init(dependency: value.map { AnyHashable($0) })
     }
 
     /// Returns a strategy that re-runs the hook whenever the value produced
@@ -131,7 +131,7 @@ public extension UpdateStrategy {
     ///
     /// - Parameter value: One or more closures each returning an `AnyHashable`
     ///   dependency.
-    static func preserved(by value: (() -> AnyHashable)...) -> Self {
+    static func preserved(by value: (() -> any Hashable)...) -> Self {
         .preserved(by: value.compactMap({ $0() }))
     }
 
@@ -143,7 +143,7 @@ public extension UpdateStrategy {
     ///
     /// - Parameter value: A closure that returns an array of `AnyHashable`
     ///   dependencies.
-    static func preserved(by value: () -> [AnyHashable]) -> Self {
+    static func preserved(by value: () -> [any Hashable]) -> Self {
         .preserved(by: value())
     }
 }

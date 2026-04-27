@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import StateKit
 
 private func _normalizedTimeInterval(_ interval: TimeInterval) -> TimeInterval {
     interval > 0 ? interval : 0.0001

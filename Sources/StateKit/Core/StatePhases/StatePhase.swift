@@ -18,10 +18,28 @@ public extension AsyncPhase {
     /// result into UI that already consumes `AsyncSequencePhase`.
     func asSequencePhase() -> AsyncSequencePhase<Value> {
         switch self {
-            case .idle:            return .idle
-            case .loading:         return .loading
-            case .success(let v): return .value(v)
-            case .failure(let e): return .failure(e)
+        case .idle:            return .idle
+        case .loading:         return .loading
+        case .success(let v): return .value(v)
+        case .failure(let e): return .failure(e)
+        }
+    }
+
+
+    /// Converts this `AsyncPhase` to a `PublisherPhase`.
+    ///
+    /// | `AsyncPhase` | `PublisherPhase` |
+    /// |---|---|
+    /// | `.idle` | `.idle` |
+    /// | `.loading` | `.idle` — no loading concept in `PublisherPhase` |
+    /// | `.success(v)` | `.value(v)` |
+    /// | `.failure(e)` | `.failure(e)` |
+    func asPublisherPhase() -> PublisherPhase<Value> {
+        switch self {
+        case .idle:            return .idle
+        case .loading:         return .idle
+        case .success(let v): return .value(v)
+        case .failure(let e): return .failure(e)
         }
     }
 }
@@ -44,11 +62,11 @@ public extension AsyncSequencePhase {
     /// concept; use `asPublisherPhase()` if you need `.finished` to be preserved.
     func asAsyncPhase() -> AsyncPhase<Element> {
         switch self {
-            case .idle:            return .idle
-            case .loading:         return .loading
-            case .value(let v):   return .success(v)
-            case .finished:        return .idle
-            case .failure(let e): return .failure(e)
+        case .idle:            return .idle
+        case .loading:         return .loading
+        case .value(let v):   return .success(v)
+        case .finished:        return .idle
+        case .failure(let e): return .failure(e)
         }
     }
 
@@ -63,11 +81,50 @@ public extension AsyncSequencePhase {
     /// | `.failure(e)` | `.failure(e)` |
     func asPublisherPhase() -> PublisherPhase<Element> {
         switch self {
-            case .idle:            return .idle
-            case .loading:         return .idle
-            case .value(let v):   return .value(v)
-            case .finished:        return .finished
-            case .failure(let e): return .failure(e)
+        case .idle:            return .idle
+        case .loading:         return .idle
+        case .value(let v):   return .value(v)
+        case .finished:        return .finished
+        case .failure(let e): return .failure(e)
         }
     }
 }
+
+public extension PublisherPhase {
+
+    /// Converts this `PublisherPhase` to an `AsyncPhase`.
+    ///
+    /// | `PublisherPhase` | `AsyncPhase` |
+    /// |---|---|
+    /// | `.idle` | `.idle` |
+    /// | `.value(v)` | `.success(v)` |
+    /// | `.finished` | `.idle` — no single-result terminal equivalent |
+    /// | `.failure(e)` | `.failure(e)` |
+    func asAsyncPhase() -> AsyncPhase<Output> {
+        switch self {
+        case .idle:            return .idle
+        case .value(let v):   return .success(v)
+        case .finished:        return .idle
+        case .failure(let e): return .failure(e)
+        }
+    }
+
+    /// Converts this `PublisherPhase` to an `AsyncSequencePhase`.
+    ///
+    /// | `PublisherPhase` | `AsyncSequencePhase` |
+    /// |---|---|
+    /// | `.idle` | `.idle` |
+    /// | `.value(v)` | `.value(v)` |
+    /// | `.finished` | `.finished` |
+    /// | `.failure(e)` | `.failure(e)` |
+    func asSequencePhase() -> AsyncSequencePhase<Output> {
+        switch self {
+        case .idle:            return .idle
+        case .value(let v):   return .value(v)
+        case .finished:        return .finished
+        case .failure(let e): return .failure(e)
+        }
+    }
+}
+
+

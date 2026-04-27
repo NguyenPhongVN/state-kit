@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A property wrapper that injects an `SKAtomViewContext` into a view.
 ///
-/// Use `@SKAtomContext` when you need imperative access to the atom store —
+/// Use `@SKContext` when you need imperative access to the atom store —
 /// for reading arbitrary atoms, performing mutations in response to events,
 /// or refreshing async atoms on demand — without committing the view to
 /// observing a specific atom via `@SKValue` or `@SKState`.
@@ -11,7 +11,7 @@ import SwiftUI
 ///
 /// ```swift
 /// struct CartView: View {
-///     @SKAtomContext var atomContext
+///     @SKContext var atomContext
 ///
 ///     var body: some View {
 ///         Button("Clear cart") {

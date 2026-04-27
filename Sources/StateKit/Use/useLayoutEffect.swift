@@ -112,3 +112,13 @@ private class Effect {
         }
     }
 }
+
+@MainActor public func useLayoutEffect(
+    updateStrategy: UpdateStrategy? = nil,
+    effect: (() -> Void)? = nil
+) {
+    useLayoutEffect(updateStrategy: updateStrategy) {
+        effect?()
+        return nil
+    }
+}
