@@ -54,7 +54,7 @@ public final class DeterministicTestEnvironment {
         asyncQueue.append((id, operation))
 
         // Execute operations in order
-        while let (index, op) = asyncQueue.first {
+        while let (_, op) = asyncQueue.first {
             asyncQueue.removeFirst()
             await op()
         }
@@ -191,15 +191,11 @@ public final class TestExecutionRecord {
     /// Verifies events match expected sequence.
     public func verify(
         _ expectedSequence: [String],
-        file: StaticString = #filePath,
+        file: StaticString = #file,
         line: UInt = #line
     ) {
         let actualSequence = events.map { $0.description }
         guard actualSequence == expectedSequence else {
-            let diff = zip(actualSequence, expectedSequence)
-                .enumerated()
-                .filter { $0.element.0 != $0.element.1 }
-
             fatalError(
                 "Event sequence mismatch:\nExpected: \(expectedSequence)\nActual: \(actualSequence)",
                 file: file,
@@ -350,7 +346,7 @@ public struct DeterministicAssertions {
     public static func assertDeterministic<T: Sendable & Equatable>(
         seed: UInt64 = 42,
         operation: @escaping () -> T,
-        file: StaticString = #filePath,
+        file: StaticString = #file,
         line: UInt = #line
     ) {
         // Run operation multiple times with same seed
@@ -373,7 +369,7 @@ public struct DeterministicAssertions {
     public static func assertReproducible<T: Sendable & Equatable>(
         seed: UInt64,
         operation: @escaping (UInt64) -> T,
-        file: StaticString = #filePath,
+        file: StaticString = #file,
         line: UInt = #line
     ) {
         let result1 = operation(seed)

@@ -92,6 +92,12 @@ public struct FunnelAnalyzer: Sendable {
         public let name: String
         public let eventName: String
         public let index: Int
+
+        public init(name: String, eventName: String, index: Int) {
+            self.name = name
+            self.eventName = eventName
+            self.index = index
+        }
     }
 
     public struct FunnelResult: Sendable {

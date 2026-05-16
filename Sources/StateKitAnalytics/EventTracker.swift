@@ -104,6 +104,7 @@ public final class EventTracker: Sendable {
 // MARK: - Event Logger
 
 /// Logs events for debugging.
+@MainActor
 public struct EventLogger: Sendable {
     private let tracker: EventTracker
 

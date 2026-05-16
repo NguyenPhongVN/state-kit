@@ -8,6 +8,7 @@ public enum StateKitDevTools {
     /// Creates a new DevTools observer for time-travel debugging.
     ///
     /// - Returns: A configured DevTools observer
+    @MainActor
     public static func createDevToolsObserver() -> DevToolsObserver {
         DevToolsObserver()
     }
@@ -15,6 +16,7 @@ public enum StateKitDevTools {
     /// Creates a console logger observer for development.
     ///
     /// - Returns: A configured console logger
+    @MainActor
     public static func createConsoleLogger() -> ConsoleLoggerObserver {
         ConsoleLoggerObserver()
     }

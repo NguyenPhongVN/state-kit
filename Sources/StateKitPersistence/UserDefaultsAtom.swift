@@ -33,7 +33,7 @@ public func userDefaultsAtom<T: UserDefaultsSerializable>(
     _ type: T.Type,
     suiteName: String? = nil
 ) -> (() -> T) {
-    let defaults = suiteName.map { UserDefaults(suiteName: $0) } ?? UserDefaults.standard
+    let defaults = suiteName.flatMap { UserDefaults(suiteName: $0) } ?? UserDefaults.standard
 
     return {
         // Try to load from UserDefaults
@@ -52,10 +52,11 @@ public func userDefaultsAtom<T: UserDefaultsSerializable>(
 // MARK: - Persistent Atom Storage
 
 /// Storage system for persistent atoms with observation.
-public final class PersistentAtomStorage<T: UserDefaultsSerializable>: Sendable {
+public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecked Sendable {
     private let defaults: UserDefaults
     private let key: String
     private var observers: [(T) -> Void] = []
+    private let lock = NSLock()
 
     public init(
         type: T.Type,
@@ -63,7 +64,7 @@ public final class PersistentAtomStorage<T: UserDefaultsSerializable>: Sendable 
         suiteName: String? = nil
     ) {
         self.key = userDefaultsKey ?? T.userDefaultsKey
-        self.defaults = suiteName.map { UserDefaults(suiteName: $0) } ?? UserDefaults.standard
+        self.defaults = suiteName.flatMap { UserDefaults(suiteName: $0) } ?? UserDefaults.standard
     }
 
     /// Loads current value.
@@ -93,11 +94,17 @@ public final class PersistentAtomStorage<T: UserDefaultsSerializable>: Sendable 
 
     /// Adds observer for value changes.
     public func addObserver(_ observer: @escaping (T) -> Void) {
+        lock.lock()
+        defer { lock.unlock() }
         observers.append(observer)
     }
 
     private func notifyObservers(_ value: T) {
-        for observer in observers {
+        lock.lock()
+        let currentObservers = observers
+        lock.unlock()
+        
+        for observer in currentObservers {
             observer(value)
         }
     }

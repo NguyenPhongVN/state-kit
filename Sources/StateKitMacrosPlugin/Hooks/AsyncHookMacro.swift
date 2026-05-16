@@ -40,6 +40,7 @@ public struct AsyncHookMacro: PeerMacro {
         let deps = depsList.isEmpty ? "" : ".preserved(by: \(depsList.joined(separator: ", ")))"
         let initCode = instanceInit.isEmpty ? "()" : "(\n" + instanceInit.joined(separator: ",\n") + "\n    )"
 
+        let hasCleanup = PropertyExtractor.function(in: structDecl, named: "cleanup") != nil
         let cleanupStmt = hasCleanup ? "\(structName)\(initCode).cleanup()" : ""
 
         let hookFunction: DeclSyntax = """

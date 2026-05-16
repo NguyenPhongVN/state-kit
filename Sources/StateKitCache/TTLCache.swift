@@ -31,7 +31,7 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
         onEvict: CacheEvictionCallback<Key, Value>? = nil,
         onExpire: ((Key, Value) -> Void)? = nil
     ) {
-        self.ttl = max(1, ttl)
+        self.ttl = max(0.001, ttl)
         self.onEvict = onEvict
         self.onExpire = onExpire
         startBackgroundCleanup()
@@ -161,7 +161,7 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
 
     /// Creates sliding window TTL cache.
     public init(ttl: TimeInterval = 300, onEvict: CacheEvictionCallback<Key, Value>? = nil) {
-        self.ttl = max(1, ttl)
+        self.ttl = max(0.001, ttl)
         self.onEvict = onEvict
         startBackgroundCleanup()
     }

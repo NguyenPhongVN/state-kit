@@ -6,7 +6,7 @@ import SwiftUI
 ///
 /// Used internally by `StateDevScope` to format the overlay. You can also call
 /// these methods directly in the Xcode console (via `po`) or in test output.
-public enum StateDevTools {
+public enum StateHookInspector {
 
     /// Returns a human-readable description of a single hook slot value.
     ///
@@ -139,7 +139,7 @@ private struct StateDevOverlay: View {
                 Divider().opacity(0.2)
             }
             ForEach(Array(states.enumerated()), id: \.0) { idx, any in
-                Text("[\(idx)] \(StateDevTools.describe(any))")
+                Text("[\(idx)] \(StateHookInspector.describe(any))")
                     .font(.caption2)
                     .monospaced()
                     .lineLimit(2)

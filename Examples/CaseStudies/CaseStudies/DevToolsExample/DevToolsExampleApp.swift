@@ -27,7 +27,6 @@ struct Todo: Identifiable, Sendable {
     let completed: Bool
 }
 
-@Notifier
 class AppNotifier: Notifier<AppState> {
     override func build() -> AppState {
         AppState()
@@ -64,7 +63,7 @@ class AppNotifier: Notifier<AppState> {
 
 let appProvider = NotifierProvider(name: "appProvider") { AppNotifier() }
 
-let counterProvider = Provider(name: "counter") { ref in
+let appCounterProvider = Provider(name: "appCounter") { ref in
     ref.watch(appProvider).counter
 }
 
@@ -109,7 +108,7 @@ struct DevToolsExampleApp: View {
 // MARK: - App Content
 
 struct AppContentView: View {
-    @Watch(counterProvider) var counter
+    @Watch(appCounterProvider) var counter
     @Watch(todosProvider) var todos
     @Environment(\.providerContainer) var container
 

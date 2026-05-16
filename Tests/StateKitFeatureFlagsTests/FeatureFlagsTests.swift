@@ -7,31 +7,31 @@ final class FeatureFlagsTests: XCTestCase {
 
     func testFlagRegistration() {
         let registry = FeatureFlagRegistry()
-        let flag = FeatureFlag<Bool>(name: "test_flag", defaultValue: false)
+        let flag = FeatureFlag<Bool>(id: "test_flag", name: "Test Flag", defaultValue: false)
 
         registry.register(flag)
-        XCTAssertFalse(registry.isEnabled("test_flag"))
+        XCTAssertFalse(registry.value(for: flag))
     }
 
     func testFlagOverride() {
         let registry = FeatureFlagRegistry()
-        let flag = FeatureFlag<Bool>(name: "test_flag", defaultValue: false)
+        let flag = FeatureFlag<Bool>(id: "test_flag", name: "Test Flag", defaultValue: false)
 
         registry.register(flag)
-        registry.override(flag, value: true)
+        registry.setOverride(flag, value: true)
 
-        XCTAssertTrue(registry.isEnabled("test_flag"))
+        XCTAssertTrue(registry.value(for: flag))
     }
 
     func testFlagOverrideClear() {
         let registry = FeatureFlagRegistry()
-        let flag = FeatureFlag<Bool>(name: "test_flag", defaultValue: false)
+        let flag = FeatureFlag<Bool>(id: "test_flag", name: "Test Flag", defaultValue: false)
 
         registry.register(flag)
-        registry.override(flag, value: true)
-        registry.clearOverride(flag)
+        registry.setOverride(flag, value: true)
+        registry.clearOverride(flag.id)
 
-        XCTAssertFalse(registry.isEnabled("test_flag"))
+        XCTAssertFalse(registry.value(for: flag))
     }
 
     // MARK: - A/B Test Assignment Tests
@@ -149,8 +149,8 @@ final class FeatureFlagsTests: XCTestCase {
     // MARK: - Statistical Test Tests
 
     func testStatisticalSignificance() {
-        let controlGroup = (successes: 45, total: 1000)
-        let treatmentGroup = (successes: 62, total: 1000)
+        let controlGroup = (successes: 40, total: 1000)
+        let treatmentGroup = (successes: 70, total: 1000)
 
         let chi2 = StatisticalTest.chiSquareTest(variantA: controlGroup, variantB: treatmentGroup)
         let isSignificant = StatisticalTest.isSignificant(chi2)

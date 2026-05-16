@@ -7,155 +7,77 @@
 		<key>Riverpods.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>1</integer>
+			<integer>3</integer>
 		</dict>
 		<key>StateConcurrency.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>2</integer>
+			<integer>10</integer>
 		</dict>
 		<key>StateKit.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>3</integer>
+			<integer>14</integer>
 		</dict>
 		<key>StateKitAnalytics.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>4</integer>
+			<integer>6</integer>
 		</dict>
 		<key>StateKitAtoms.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>5</integer>
+			<integer>9</integer>
 		</dict>
 		<key>StateKitCache.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>6</integer>
+			<integer>7</integer>
 		</dict>
 		<key>StateKitCombine.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>7</integer>
+			<integer>13</integer>
 		</dict>
 		<key>StateKitCore.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>8</integer>
+			<integer>5</integer>
 		</dict>
 		<key>StateKitDevTools.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>9</integer>
+			<integer>2</integer>
 		</dict>
 		<key>StateKitFeatureFlags.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>10</integer>
+			<integer>11</integer>
 		</dict>
 		<key>StateKitMacros.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>11</integer>
+			<integer>4</integer>
 		</dict>
 		<key>StateKitPersistence.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>12</integer>
+			<integer>16</integer>
 		</dict>
 		<key>StateKitSupport.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>13</integer>
+			<integer>15</integer>
 		</dict>
 		<key>StateKitTesting.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>14</integer>
+			<integer>12</integer>
 		</dict>
 		<key>StateKitUI.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>15</integer>
-		</dict>
-		<key>state-kit-Package.xcscheme_^#shared#^_</key>
-		<dict>
-			<key>orderHint</key>
-			<integer>0</integer>
-		</dict>
-	</dict>
-	<key>SuppressBuildableAutocreation</key>
-	<dict>
-		<key>Riverpods</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateConcurrency</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitAnalytics</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitAtoms</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitCache</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitCombine</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitCore</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitDevTools</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitFeatureFlags</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitMacros</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitPersistence</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitSupport</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitTesting</key>
-		<dict>
-			<key>primary</key>
-			<true/>
-		</dict>
-		<key>StateKitUI</key>
-		<dict>
-			<key>primary</key>
-			<true/>
+			<integer>8</integer>
 		</dict>
 	</dict>
 </dict>

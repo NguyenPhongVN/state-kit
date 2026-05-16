@@ -167,47 +167,42 @@ public struct KeychainNotifierProvider {
         initial: T,
         accessibility: KeychainAccessibility = .whenUnlocked
     ) -> NotifierProvider<KeychainNotifier<T>, T> {
-        return NotifierProvider { ref in
+        return NotifierProvider {
             let provider = KeychainStateProvider<T>(key: key, accessibility: accessibility)
-            return KeychainNotifier(provider: provider, initial: initial, ref: ref)
+            return KeychainNotifier(provider: provider, initial: initial)
         }
     }
 }
 
 /// Notifier that maintains Keychain synchronization.
-public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, Sendable {
+public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, @unchecked Sendable {
     private let provider: KeychainStateProvider<T>
-    private var cachedValue: T
+    private let initial: T
 
     public init(
         provider: KeychainStateProvider<T>,
-        initial: T,
-        ref: ProviderRef
+        initial: T
     ) {
         self.provider = provider
-
-        // Try to load from Keychain, fall back to initial
-        if let retrieved = try? provider.retrieve() {
-            self.cachedValue = retrieved
-        } else {
-            self.cachedValue = initial
-        }
+        self.initial = initial
+        super.init()
     }
 
-    /// Gets current value (from cache, not Keychain).
-    public var value: T {
-        cachedValue
+    public override func build() -> T {
+        // Try to load from Keychain, fall back to initial
+        return (try? provider.retrieve()) ?? initial
     }
 
     /// Updates value and persists to Keychain.
-    public func update(_ value: T) throws {
-        cachedValue = value
+    public func updateValue(_ value: T) throws {
+        state = value
         try provider.store(value)
     }
 
     /// Clears from Keychain.
     public func clear() throws {
         try provider.delete()
+        state = initial
     }
 }
 
@@ -305,7 +300,7 @@ public struct KeychainBatch: Sendable {
 /// Helper for migrating Keychain values.
 public struct KeychainMigration {
     /// Migrates value from one key to another.
-    public static func migrateKey<T: Codable>(
+    public static func migrateKey<T: Sendable & Codable>(
         from oldKey: String,
         to newKey: String,
         type: T.Type
@@ -320,7 +315,7 @@ public struct KeychainMigration {
     }
 
     /// Rotates Keychain values (useful for token rotation).
-    public static func rotate<T: Codable>(
+    public static func rotate<T: Sendable & Codable>(
         key: String,
         with newValue: T,
         type: T.Type

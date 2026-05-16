@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 // MARK: - Main DevTools View
 
@@ -423,7 +426,12 @@ struct InspectorTabView: View {
             // Export button
             Button(action: {
                 let json = observer.observer.exportAsJSON()
+                #if os(iOS) || os(tvOS)
                 UIPasteboard.general.string = json
+                #elseif os(macOS)
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(json, forType: .string)
+                #endif
             }) {
                 HStack {
                     Image(systemName: "doc.on.doc")
@@ -474,7 +482,7 @@ struct SettingsTabView: View {
                     Spacer()
 
                     Stepper("", value: $maxHistory, in: 10...500, step: 10)
-                        .onChange(of: maxHistory) { newValue in
+                        .onChange(of: maxHistory) { _, newValue in
                             observer.observer.maxHistoryEntries = newValue
                         }
 
@@ -494,7 +502,7 @@ struct SettingsTabView: View {
                     .fontWeight(.semibold)
 
                 Toggle("Debug Logging", isOn: $debugLogging)
-                    .onChange(of: debugLogging) { newValue in
+                    .onChange(of: debugLogging) { _, newValue in
                         observer.observer.debugLoggingEnabled = newValue
                     }
             }

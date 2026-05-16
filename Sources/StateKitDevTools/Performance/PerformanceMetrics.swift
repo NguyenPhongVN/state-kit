@@ -77,7 +77,7 @@ public protocol PerformanceMetrics {
     ///   - providerName: The provider identifier
     ///   - computeTime: Time taken to compute in milliseconds
     ///   - memoryBytes: Estimated state size in bytes
-    func recordUpdate(providerName: String, computeTime: Double, memoryBytes: Int)
+    mutating func recordUpdate(providerName: String, computeTime: Double, memoryBytes: Int)
 }
 
 // MARK: - Performance Data

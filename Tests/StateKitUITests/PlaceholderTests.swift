@@ -5,6 +5,6 @@ import Testing
 struct PlaceholderTests {
     @Test("Placeholder")
     func testPlaceholder() {
-        #expect(true)
+        #expect(Bool(true))
     }
 }

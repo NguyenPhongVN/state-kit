@@ -4,6 +4,7 @@ import Riverpods
 // MARK: - Cache Policies
 
 /// Cache-aside pattern helper.
+@MainActor
 public struct CacheAsidePattern<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let fetcher: (Key) async throws -> Value
@@ -26,6 +27,7 @@ public struct CacheAsidePattern<Key: Hashable & Sendable, Value: Sendable> {
 }
 
 /// Write-through pattern: writes to both cache and storage.
+@MainActor
 public struct WriteThroughPattern<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let writer: (Key, Value) async throws -> Void
@@ -47,6 +49,7 @@ public struct WriteThroughPattern<Key: Hashable & Sendable, Value: Sendable> {
 /// Factory for creating provider-based caches.
 public struct CacheProviderFactory {
     /// Creates a provider that uses cache-aside pattern.
+    @MainActor
     public static func cacheAside<Key: Hashable & Sendable, T: Sendable>(
         key: Key,
         capacity: Int = 100,
@@ -66,10 +69,11 @@ public struct CacheProviderFactory {
     }
 
     /// Creates family provider with caching.
+    @MainActor
     public static func cachedFamily<Key: Hashable & Sendable, T: Sendable>(
         capacity: Int = 100,
         fetcher: @escaping (Key) async throws -> T
-    ) -> FutureProvider.Family<Key, T> {
+    ) -> (Key) -> FutureProvider<T> {
         let cache = LeastRecentlyUsedCache<Key, T>(capacity: capacity)
 
         return FutureProvider.family { (ref, key: Key) in
@@ -87,6 +91,7 @@ public struct CacheProviderFactory {
 // MARK: - Memory Pressure Handling
 
 /// Handles memory pressure by clearing cache.
+@MainActor
 public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let targetSize: Int
@@ -114,6 +119,7 @@ public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
 // MARK: - Cache Preloading
 
 /// Preloads cache with values.
+@MainActor
 public struct CachePreloader<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
 
@@ -136,6 +142,7 @@ public struct CachePreloader<Key: Hashable & Sendable, Value: Sendable> {
 // MARK: - Cache Warming
 
 /// Warms cache with initial data.
+@MainActor
 public struct CacheWarmer<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
 
@@ -160,6 +167,7 @@ public enum CacheInvalidationStrategy {
     case debounced(TimeInterval)  // Invalidate after delay
     case batch(Int)            // Invalidate in batches
 
+    @MainActor
     public func apply<K: Hashable & Sendable, V: Sendable>(
         to cache: LeastRecentlyUsedCache<K, V>,
         invalidate key: K
@@ -169,8 +177,8 @@ public enum CacheInvalidationStrategy {
             cache.remove(key)
 
         case .debounced(let delay):
-            Task {
-                try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
                 cache.remove(key)
             }
 
@@ -184,6 +192,7 @@ public enum CacheInvalidationStrategy {
 // MARK: - Cache Monitoring
 
 /// Monitors cache performance.
+@MainActor
 public struct CacheMonitor<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
 

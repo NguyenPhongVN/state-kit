@@ -1,6 +1,7 @@
 import XCTest
 import StateKitCache
 
+@MainActor
 final class CacheTests: XCTestCase {
     // MARK: - LRU Cache Tests
 
@@ -32,11 +33,10 @@ final class CacheTests: XCTestCase {
     }
 
     func testLRUEvictionCallback() {
-        let cache = LeastRecentlyUsedCache<String, String>(capacity: 2)
         var evictedKey: String?
         var evictedValue: String?
 
-        cache.onEvict = { key, value, _ in
+        let cache = LeastRecentlyUsedCache<String, String>(capacity: 2) { key, value, _ in
             evictedKey = key
             evictedValue = value
         }

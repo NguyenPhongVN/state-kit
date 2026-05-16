@@ -28,7 +28,7 @@ public struct SwiftDataProvider<T: Sendable> {
 }
 
 /// Reference type for SwiftData provider context.
-public final class SwiftDataProviderRef: @preconcurrency Sendable {
+public final class SwiftDataProviderRef: @unchecked Sendable {
     public let modelContext: ModelContext
 
     public init(modelContext: ModelContext) {
@@ -91,32 +91,38 @@ public struct SwiftDataSync<T: Sendable & Codable> {
 /// Provider factory for SwiftData-backed notifiers.
 public struct SwiftDataNotifierProvider {
     /// Creates a notifier that syncs state with SwiftData.
+    @MainActor
     public static func create<T: Sendable>(
         initialState: T,
         context: ModelContext
     ) -> AsyncNotifierProvider<SwiftDataNotifier<T>, T> {
-        return AsyncNotifierProvider { ref in
-            SwiftDataNotifier(initialState: initialState, context: context, ref: ref)
+        return AsyncNotifierProvider {
+            SwiftDataNotifier(initialState: initialState, context: context)
         }
     }
 }
 
 /// Notifier that maintains SwiftData synchronization.
-final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, Sendable {
-    let initialState: T
-    let context: ModelContext
-    let ref: ProviderRef
+public final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, @unchecked Sendable {
+    private let initialState: T
+    private let context: ModelContext
 
-    init(initialState: T, context: ModelContext, ref: ProviderRef) {
+    public init(initialState: T, context: ModelContext) {
         self.initialState = initialState
         self.context = context
-        self.ref = ref
+        super.init()
+    }
+
+    public override func build() async throws -> T {
+        return initialState
     }
 
     /// Updates state and persists to SwiftData.
-    nonisolated func updateAndPersist(_ update: @escaping (inout T) -> Void) async {
-        var current = initialState
+    @MainActor
+    public func updateAndPersist(_ update: (inout T) -> Void) async {
+        var current = state.value ?? initialState
         update(&current)
+        state = .data(current)
 
         // Persist to SwiftData
         do {
@@ -132,6 +138,7 @@ final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, Sendable {
 /// FutureProvider that queries SwiftData models.
 public struct SwiftDataQueryProvider {
     /// Creates a provider that queries SwiftData for specific model type.
+    @MainActor
     public static func query<T: PersistentModel>(
         type: T.Type,
         in context: ModelContext,

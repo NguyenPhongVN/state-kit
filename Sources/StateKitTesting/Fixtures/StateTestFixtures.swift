@@ -344,7 +344,7 @@ public struct FixtureAssertion {
     public static func assertEqual<T: Equatable & Sendable>(
         _ lhs: T,
         _ rhs: T,
-        file: StaticString = #filePath,
+        file: StaticString = #file,
         line: UInt = #line
     ) {
         guard lhs == rhs else {
@@ -360,7 +360,7 @@ public struct FixtureAssertion {
     public static func assert<T: Sendable>(
         _ fixture: T,
         _ condition: (T) -> Bool,
-        file: StaticString = #filePath,
+        file: StaticString = #file,
         line: UInt = #line
     ) {
         guard condition(fixture) else {

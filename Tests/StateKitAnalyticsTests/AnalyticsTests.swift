@@ -1,6 +1,7 @@
 import XCTest
 import StateKitAnalytics
 
+@MainActor
 final class AnalyticsTests: XCTestCase {
     // MARK: - Event Tracker Tests
 

@@ -47,7 +47,7 @@ public protocol StateHistory {
     ///   - before: The state before the change
     ///   - after: The state after the change
     ///   - computeTime: How long the computation took in milliseconds
-    func record(action: String?, before: AnyCodable, after: AnyCodable, computeTime: Double)
+    mutating func record(action: String?, before: AnyCodable, after: AnyCodable, computeTime: Double)
 
     /// Moves back one step in history.
     ///
@@ -177,7 +177,7 @@ public indirect enum JSONValue: Codable, Sendable, Equatable {
     }
 
     /// Converts a Codable value to JSONValue.
-    public static func from<T: Encodable>(_ value: T) -> JSONValue? {
+    public static func from(_ value: Any) -> JSONValue? {
         do {
             let data = try JSONEncoder().encode(AnyCodable(value))
             return try JSONDecoder().decode(JSONValue.self, from: data)
@@ -193,7 +193,7 @@ public indirect enum JSONValue: Codable, Sendable, Equatable {
 public struct AnyCodable: Codable {
     public let value: Any
 
-    public init<T: Codable>(_ value: T) {
+    public init(_ value: Any) {
         self.value = value
     }
 
@@ -225,7 +225,7 @@ public struct AnyCodable: Codable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
-        if let value = value as? NSNull {
+        if value is NSNull {
             try container.encodeNil()
         } else if let value = value as? Bool {
             try container.encode(value)

@@ -206,7 +206,7 @@ public struct StateVerification {
     /// Verifies that action completes within timeout.
     public static func verifyWithinTimeout<T: Sendable>(
         timeout: TimeInterval = 5.0,
-        action: @escaping () async -> T
+        action: @escaping @Sendable () async -> T
     ) async -> T? {
         let task = Task {
             await action()

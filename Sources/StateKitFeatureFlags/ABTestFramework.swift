@@ -200,16 +200,25 @@ public struct StatisticalTest {
         variantA: (successes: Int, total: Int),
         variantB: (successes: Int, total: Int)
     ) -> Double {
-        let n = variantA.total + variantB.total
-        let pA = Double(variantA.successes) / Double(variantA.total)
-        let pB = Double(variantB.successes) / Double(variantB.total)
-        let p = Double(variantA.successes + variantB.successes) / Double(n)
-
-        let expected_A = Double(variantA.total) * p
-        let expected_B = Double(variantB.total) * p
-
-        let chi2 = pow(Double(variantA.successes) - expected_A, 2) / expected_A +
-                   pow(Double(variantB.successes) - expected_B, 2) / expected_B
+        let nA = Double(variantA.total)
+        let nB = Double(variantB.total)
+        let sA = Double(variantA.successes)
+        let sB = Double(variantB.successes)
+        let fA = nA - sA
+        let fB = nB - sB
+        
+        let p = (sA + sB) / (nA + nB)
+        let q = 1 - p
+        
+        let expected_sA = nA * p
+        let expected_fA = nA * q
+        let expected_sB = nB * p
+        let expected_fB = nB * q
+        
+        let chi2 = pow(sA - expected_sA, 2) / expected_sA +
+                   pow(fA - expected_fA, 2) / expected_fA +
+                   pow(sB - expected_sB, 2) / expected_sB +
+                   pow(fB - expected_fB, 2) / expected_fB
 
         return chi2
     }
