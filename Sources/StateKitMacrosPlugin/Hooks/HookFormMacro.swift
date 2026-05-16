@@ -23,7 +23,6 @@ public struct HookFormMacro: PeerMacro {
 
         var bindingProps: [String] = []
         var errorProps: [String] = []
-        var initParams: [String] = []
         var useBindingCalls: [String] = []
         var useErrorBindingCalls: [String] = []
 
@@ -32,13 +31,14 @@ public struct HookFormMacro: PeerMacro {
             let typeName = prop.typeName
             let defaultVal = prop.defaultValue ?? "nil"
 
-            bindingProps.append("    var \(propName): Binding<\(typeName)>")
-            errorProps.append("    var \(propName)Error: Binding<String>")
+            bindingProps.append("    public var \(propName): Binding<\(typeName)>")
+            errorProps.append("    public var \(propName)Error: Binding<String>")
 
-            initParams.append("\(propName): Binding<\(typeName)>,\n        \(propName)Error: Binding<String>")
             useBindingCalls.append("        \(propName): useBinding(\(defaultVal))")
             useErrorBindingCalls.append("        \(propName)Error: useBinding(\"\")")
         }
+
+        let errorChecks = properties.map { "\($0.name)Error.wrappedValue.isEmpty" }.joined(separator: " && ")
 
         let hookStruct: DeclSyntax = """
         public struct \(raw: hookStructName) {
@@ -46,16 +46,20 @@ public struct HookFormMacro: PeerMacro {
         \(raw: errorProps.joined(separator: "\n"))
 
             public var isValid: Bool {
-                !usernameError.wrappedValue.isEmpty == false
+                \(raw: errorChecks)
             }
 
             @discardableResult
             public func validate() -> Bool {
-                true
+                // Basic validation: all fields must not be empty if they are Strings
+                var allValid = true
+        \(raw: properties.filter { $0.typeName == "String" }.map { "        if \($0.name).wrappedValue.isEmpty { \($0.name)Error.wrappedValue = \"Required\"; allValid = false }" }.joined(separator: "\n"))
+                return allValid
             }
 
             public func reset() {
         \(raw: properties.map { "        \($0.name).wrappedValue = \($0.defaultValue ?? "nil")" }.joined(separator: "\n"))
+        \(raw: properties.map { "        \($0.name)Error.wrappedValue = \"\"" }.joined(separator: "\n"))
             }
         }
         """

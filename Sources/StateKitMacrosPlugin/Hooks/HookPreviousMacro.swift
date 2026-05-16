@@ -28,11 +28,13 @@ public struct HookPreviousMacro: PeerMacro {
         let hookFunction: DeclSyntax = """
         @MainActor
         public func \(raw: hookName)(\(raw: paramList)) -> \(raw: prop.typeName)? {
-            let (prev, _) = useMemo(initial: nil) {
-                return \(raw: prop.name)
-            } dependencies: [\(raw: prop.name)]
-
-            return prev
+            let ref = useRef(\(raw: prop.typeName)?.none)
+            let previous = ref.value
+            useEffect(updateStrategy: .preserved(by: \(raw: prop.name))) {
+                ref.value = \(raw: prop.name)
+                return nil
+            }
+            return previous
         }
         """
 

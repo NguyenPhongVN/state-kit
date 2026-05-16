@@ -15,7 +15,13 @@ public struct DebounceMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
-        let debounceMs = "300"  // Default, can be overridden via attribute
+        var debounceMs = "300"
+        
+        if let attribute = node.as(AttributeSyntax.self),
+           let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
+           let msArg = arguments.first(where: { $0.label?.text == "milliseconds" }) {
+            debounceMs = msArg.expression.description
+        }
 
         let debouncedFunction: DeclSyntax = """
         @MainActor
