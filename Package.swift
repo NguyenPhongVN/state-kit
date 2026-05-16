@@ -83,13 +83,19 @@ let package = Package(
             ],
             exclude: ["README.md"]
         ),
-        PackageDescription.Target.target(name: "StateKitTesting", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.target(name: "StateKitTesting", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "StateKit"),
+            PackageDescription.Target.Dependency.byName(name: "Riverpods")
+        ]),
         PackageDescription.Target.target(name: "StateKitSupport", dependencies: [
             PackageDescription.Target.Dependency.byName(name: "StateKit"),
             PackageDescription.Target.Dependency.byName(name: "StateKitCore"),
             PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
         ]),
-        PackageDescription.Target.target(name: "StateKitDevTools", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.target(name: "StateKitDevTools", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "StateKit"),
+            PackageDescription.Target.Dependency.byName(name: "Riverpods")
+        ]),
         PackageDescription.Target.target(name: "StateKitPersistence", dependencies: [
             PackageDescription.Target.Dependency.byName(name: "Riverpods"),
             PackageDescription.Target.Dependency.byName(name: "StateKit"),

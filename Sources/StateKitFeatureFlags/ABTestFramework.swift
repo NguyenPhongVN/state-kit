@@ -23,7 +23,7 @@ public struct ABTest<T: Sendable>: Sendable {
     public let name: String
     public let variants: [ABTestVariant<T>]
     public let trafficPercentage: Int
-    public let userKey: (String) -> String
+    public let userKey: @Sendable (String) -> String
     public let isActive: Bool
 
     public init(
@@ -31,7 +31,7 @@ public struct ABTest<T: Sendable>: Sendable {
         name: String,
         variants: [ABTestVariant<T>],
         trafficPercentage: Int = 100,
-        userKey: @escaping (String) -> String = { $0 },
+        userKey: @escaping @Sendable (String) -> String = { $0 },
         isActive: Bool = true
     ) {
         self.id = id

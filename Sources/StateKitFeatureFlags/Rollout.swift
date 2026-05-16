@@ -16,9 +16,9 @@ public protocol RolloutStrategy: Sendable {
 /// Enables feature for a percentage of users.
 public struct PercentageRollout: RolloutStrategy {
     public let percentage: Int
-    private let userHasher: (String) -> Int
+    private let userHasher: @Sendable (String) -> Int
 
-    public init(percentage: Int, userHasher: @escaping (String) -> Int = defaultHasher) {
+    public init(percentage: Int, userHasher: @escaping @Sendable (String) -> Int = { djb2Hash($0) }) {
         self.percentage = max(0, min(100, percentage))
         self.userHasher = userHasher
     }
@@ -28,10 +28,6 @@ public struct PercentageRollout: RolloutStrategy {
         let hash = userHasher(userId)
         let bucket = hash % 100
         return bucket < percentage
-    }
-
-    private static func defaultHasher(_ userId: String) -> Int {
-        djb2Hash(userId)
     }
 }
 
@@ -112,14 +108,14 @@ public struct CanaryRollout: RolloutStrategy {
     public let endPercentage: Int
     public let startDate: Date
     public let endDate: Date
-    private let userHasher: (String) -> Int
+    private let userHasher: @Sendable (String) -> Int
 
     public init(
         startPercentage: Int = 1,
         endPercentage: Int = 100,
         startDate: Date,
         endDate: Date,
-        userHasher: @escaping (String) -> Int = defaultHasher
+        userHasher: @escaping @Sendable (String) -> Int = { djb2Hash($0) }
     ) {
         self.startPercentage = max(0, min(100, startPercentage))
         self.endPercentage = max(0, min(100, endPercentage))
@@ -149,7 +145,7 @@ public struct CanaryRollout: RolloutStrategy {
         return bucket < percentage
     }
 
-    private static func defaultHasher(_ userId: String) -> Int {
+    private static let defaultHasher: @Sendable (String) -> Int = { userId in
         djb2Hash(userId)
     }
 }
@@ -189,8 +185,8 @@ public final class RolloutManager: Sendable {
 /// Rollout stages: internal → beta → general.
 public struct StagedRollout: RolloutStrategy {
     public enum Stage: String, Sendable {
-        case internal   // Internal team only
-        case beta       // Beta users
+        case team   // Internal team only
+        case beta   // Beta users
         case general    // All users
     }
 
@@ -214,7 +210,7 @@ public struct StagedRollout: RolloutStrategy {
     /// Checks if user can access based on stage.
     public func isEnabled(for userId: String) -> Bool {
         switch stage {
-        case .internal:
+        case .team:
             return internalUsers.contains(userId)
         case .beta:
             return internalUsers.contains(userId) || betaUsers.contains(userId)

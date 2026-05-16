@@ -149,7 +149,7 @@ public struct MockProviderBuilder<T: Sendable> {
     }
 
     /// Sets an error to throw.
-    public mutating func throws(_ error: Error) -> Self {
+    public mutating func withError(_ error: Error) -> Self {
         self.error = error
         return self
     }
