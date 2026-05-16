@@ -52,11 +52,10 @@ public final class LeastRecentlyUsedCache<Key: Hashable & Sendable, Value: Senda
 
         // Evict LRU if over capacity
         while cache.count > capacity, let lru = accessOrder.first {
-            cache.removeValue(forKey: lru)
-            accessOrder.removeFirst()
-            if let value = cache[lru] {
+            if let value = cache.removeValue(forKey: lru) {
                 onEvict?(lru, value, .capacityExceeded)
             }
+            accessOrder.removeFirst()
         }
     }
 

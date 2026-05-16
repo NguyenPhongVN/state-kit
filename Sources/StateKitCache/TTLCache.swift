@@ -129,7 +129,7 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: C
     // MARK: - Background Cleanup
 
     private func startBackgroundCleanup() {
-        cleanupTask = Task {
+        cleanupTask = Task { @MainActor in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(ttl * 1_000_000_000 / 2))  // Cleanup every half TTL
 
@@ -157,11 +157,17 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
     private var misses = 0
     private let ttl: TimeInterval
     private var onEvict: CacheEvictionCallback<Key, Value>?
+    private var cleanupTask: Task<Void, Never>?
 
     /// Creates sliding window TTL cache.
     public init(ttl: TimeInterval = 300, onEvict: CacheEvictionCallback<Key, Value>? = nil) {
         self.ttl = max(1, ttl)
         self.onEvict = onEvict
+        startBackgroundCleanup()
+    }
+
+    deinit {
+        cleanupTask?.cancel()
     }
 
     /// Retrieves value and resets TTL.
@@ -220,6 +226,20 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
         for key in expired {
             if let entry = cache.removeValue(forKey: key) {
                 onEvict?(key, entry.value, .expired)
+            }
+        }
+    }
+
+    // MARK: - Background Cleanup
+
+    private func startBackgroundCleanup() {
+        cleanupTask = Task { @MainActor in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(ttl * 1_000_000_000 / 2))  // Cleanup every half TTL
+
+                if !Task.isCancelled {
+                    cleanup()
+                }
             }
         }
     }

@@ -27,10 +27,10 @@ public final class UserJourneyTracker: Sendable {
     }
 
     /// Starts new session.
-    public func startNewSession(properties: [String: AnyCodable] = [:]) {
+    public func startNewSession(userId: String? = nil, properties: [String: AnyCodable] = [:]) {
         let session = Session(
             id: UUID().uuidString,
-            userId: UUID().uuidString,
+            userId: userId ?? UUID().uuidString,
             startTime: Date(),
             endTime: nil,
             eventCount: 0,
@@ -42,11 +42,17 @@ public final class UserJourneyTracker: Sendable {
 
     /// Ends current session.
     public func endSession() {
-        guard var session = currentSession else { return }
+        guard let session = currentSession else { return }
 
-        var updated = session
-        // Can't modify property directly, would need a different approach
-        sessions[session.id] = updated
+        let endedSession = Session(
+            id: session.id,
+            userId: session.userId,
+            startTime: session.startTime,
+            endTime: Date(),
+            eventCount: journeys[session.id]?.count ?? 0,
+            properties: session.properties
+        )
+        sessions[session.id] = endedSession
         currentSession = nil
     }
 
@@ -210,7 +216,7 @@ public struct CohortAnalyzer: Sendable {
     private func weekStart(for date: Date) -> Date {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.weekOfYear, .yearForWeekOfYear], from: date)
-        return calendar.dateFromComponents(components) ?? date
+        return calendar.date(from: components) ?? date
     }
 
     private func calculateRetention(_ users: Set<String>, from: Date, in events: [AnalyticsEvent]) -> [Double] {

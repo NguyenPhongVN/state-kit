@@ -133,5 +133,8 @@ let package = Package(
             PackageDescription.Target.Dependency.byName(name: "Riverpods"),
             PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
         ]),
+        PackageDescription.Target.testTarget(name: "StateKitCacheTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitCache")]),
+        PackageDescription.Target.testTarget(name: "StateKitFeatureFlagsTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitFeatureFlags")]),
+        PackageDescription.Target.testTarget(name: "StateKitAnalyticsTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitAnalytics")]),
     ]
 )

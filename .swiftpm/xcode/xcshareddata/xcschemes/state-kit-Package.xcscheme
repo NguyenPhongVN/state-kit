@@ -292,6 +292,36 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitAnalyticsTests"
+               BuildableName = "StateKitAnalyticsTests"
+               BlueprintName = "StateKitAnalyticsTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitCacheTests"
+               BuildableName = "StateKitCacheTests"
+               BlueprintName = "StateKitCacheTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitFeatureFlagsTests"
+               BuildableName = "StateKitFeatureFlagsTests"
+               BlueprintName = "StateKitFeatureFlagsTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

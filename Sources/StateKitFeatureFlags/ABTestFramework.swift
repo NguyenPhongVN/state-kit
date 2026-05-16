@@ -52,7 +52,7 @@ public struct ABTest<T: Sendable>: Sendable {
 
         guard assigned < trafficPercentage else { return nil }
 
-        let variantIndex = (assigned / (trafficPercentage / variants.count))
+        let variantIndex = (assigned * variants.count) / trafficPercentage
         return variants[min(variantIndex, variants.count - 1)]
     }
 
@@ -72,11 +72,7 @@ public struct ABTest<T: Sendable>: Sendable {
     }
 
     private func hashString(_ str: String) -> Int {
-        var hash = 5381
-        for char in str {
-            hash = ((hash << 5) &+ hash) &+ Int(char.asciiValue ?? 0)
-        }
-        return abs(hash)
+        djb2Hash(str)
     }
 }
 

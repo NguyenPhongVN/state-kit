@@ -96,11 +96,18 @@ public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
         self.targetSize = targetSize
     }
 
-    /// Handles memory pressure by clearing to target size.
+    /// Handles memory pressure by trimming cache to target size.
+    /// Removes oldest items first (LRU eviction policy).
     public func handleMemoryPressure() {
-        // For LRU, oldest items are automatically evicted
-        // This would be called by system when memory warning occurs
-        cache.clear()
+        // Remove oldest items until we reach target size
+        let keys = cache.keys
+        let itemsToRemove = max(0, keys.count - targetSize)
+
+        for i in 0..<itemsToRemove {
+            if i < keys.count {
+                cache.remove(keys[i])
+            }
+        }
     }
 }
 

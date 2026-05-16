@@ -31,11 +31,7 @@ public struct PercentageRollout: RolloutStrategy {
     }
 
     private static func defaultHasher(_ userId: String) -> Int {
-        var hash = 5381
-        for char in userId {
-            hash = ((hash << 5) &+ hash) &+ Int(char.asciiValue ?? 0)
-        }
-        return abs(hash)
+        djb2Hash(userId)
     }
 }
 
@@ -99,10 +95,12 @@ public struct GeolocationRollout: RolloutStrategy {
     }
 
     /// Checks if region is allowed.
+    /// - Note: This implementation requires additional context to determine user region.
+    /// You must resolve the user's region (via IP geolocation, user preferences, etc.)
+    /// and check against `allowedRegions` manually, or override this method
+    /// in a subclass that has access to location data.
     public func isEnabled(for userId: String) -> Bool {
-        // Would need user's region information
-        // For now, always enabled in allowed regions
-        true
+        false
     }
 }
 
@@ -152,11 +150,7 @@ public struct CanaryRollout: RolloutStrategy {
     }
 
     private static func defaultHasher(_ userId: String) -> Int {
-        var hash = 5381
-        for char in userId {
-            hash = ((hash << 5) &+ hash) &+ Int(char.asciiValue ?? 0)
-        }
-        return abs(hash)
+        djb2Hash(userId)
     }
 }
 
@@ -165,7 +159,7 @@ public struct CanaryRollout: RolloutStrategy {
 /// Manages feature rollouts.
 @MainActor
 public final class RolloutManager: Sendable {
-    private var rollouts: [String: Any] = [:]
+    private var rollouts: [String: RolloutStrategy] = [:]
 
     public init() {}
 
@@ -176,35 +170,12 @@ public final class RolloutManager: Sendable {
 
     /// Checks if feature is enabled for user.
     public func isEnabled(_ featureId: String, for userId: String) -> Bool {
-        if let rollout = rollouts[featureId] as? PercentageRollout {
-            return rollout.isEnabled(for: userId)
-        }
-        if let rollout = rollouts[featureId] as? CohortRollout {
-            return rollout.isEnabled(for: userId)
-        }
-        if let rollout = rollouts[featureId] as? TimeBasedRollout {
-            return rollout.isEnabled(for: userId)
-        }
-        if let rollout = rollouts[featureId] as? CanaryRollout {
-            return rollout.isEnabled(for: userId)
-        }
-        return false
+        rollouts[featureId]?.isEnabled(for: userId) ?? false
     }
 
     /// Gets rollout percentage.
     public func percentage(for featureId: String) -> Int {
-        if let rollout = rollouts[featureId] as? PercentageRollout {
-            return rollout.percentage
-        }
-        if let rollout = rollouts[featureId] as? CanaryRollout {
-            return rollout.percentage
-        }
-        if let rollout = rollouts[featureId] {
-            if let strategy = rollout as? RolloutStrategy {
-                return strategy.percentage
-            }
-        }
-        return 0
+        rollouts[featureId]?.percentage ?? 0
     }
 
     /// Gets all registered rollouts.

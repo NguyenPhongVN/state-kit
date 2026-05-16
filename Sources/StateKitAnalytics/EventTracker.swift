@@ -24,14 +24,15 @@ public final class EventTracker: Sendable {
     public func track(_ event: AnalyticsEvent) {
         guard config.enabled else { return }
 
-        var mutableEvent = event
-        // Ensure session/user ID from config if not set
-        if mutableEvent.userId == nil {
-            // Note: Can't modify let properties directly, would need mutable event
-        }
+        let trackedEvent = AnalyticsEvent(
+            name: event.name,
+            properties: event.properties,
+            userId: event.userId ?? config.userId,
+            sessionId: event.sessionId
+        )
 
-        events.append(mutableEvent)
-        batch.append(mutableEvent)
+        events.append(trackedEvent)
+        batch.append(trackedEvent)
 
         if batch.count >= config.batchSize {
             flush()

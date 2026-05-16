@@ -97,7 +97,17 @@
 			<key>primary</key>
 			<true/>
 		</dict>
+		<key>StateKitAnalytics</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>StateKitAtoms</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>StateKitCache</key>
 		<dict>
 			<key>primary</key>
 			<true/>
@@ -113,6 +123,11 @@
 			<true/>
 		</dict>
 		<key>StateKitDevTools</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>StateKitFeatureFlags</key>
 		<dict>
 			<key>primary</key>
 			<true/>
