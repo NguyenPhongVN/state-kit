@@ -11,7 +11,7 @@ import Foundation
 /// if let data = cache.get("key1") { }  // Returns nil if expired
 /// ```
 @MainActor
-public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: CacheProtocol, Sendable {
+public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @preconcurrency CacheProtocol, Sendable {
     private struct Entry: Sendable {
         let value: Value
         let expiresAt: Date
@@ -145,7 +145,7 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: C
 
 /// TTL cache with sliding window: TTL resets on access.
 @MainActor
-public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendable>: CacheProtocol, Sendable {
+public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendable>: @preconcurrency CacheProtocol, Sendable {
     private struct Entry: Sendable {
         let value: Value
         var lastAccessedAt: Date
