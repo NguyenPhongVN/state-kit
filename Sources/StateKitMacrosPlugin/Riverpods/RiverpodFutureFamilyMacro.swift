@@ -22,7 +22,7 @@ public struct RiverpodFutureFamilyMacro: PeerMacro {
         let providerName = functionName + "Family"
 
         let futureProvider: DeclSyntax = """
-        public final \(raw: providerName) = FutureProvider.family(\(raw: functionName))
+        public let \(raw: providerName) = FutureProvider.family(\(raw: functionName))
         """
 
         return [futureProvider]

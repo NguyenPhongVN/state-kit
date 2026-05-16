@@ -19,45 +19,65 @@
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
-		<key>StateKitAtoms.xcscheme_^#shared#^_</key>
+		<key>StateKitAnalytics.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>4</integer>
 		</dict>
-		<key>StateKitCombine.xcscheme_^#shared#^_</key>
+		<key>StateKitAtoms.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>5</integer>
 		</dict>
-		<key>StateKitCore.xcscheme_^#shared#^_</key>
+		<key>StateKitCache.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>6</integer>
 		</dict>
-		<key>StateKitDevTools.xcscheme_^#shared#^_</key>
+		<key>StateKitCombine.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>7</integer>
 		</dict>
-		<key>StateKitMacros.xcscheme_^#shared#^_</key>
+		<key>StateKitCore.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>8</integer>
 		</dict>
-		<key>StateKitSupport.xcscheme_^#shared#^_</key>
+		<key>StateKitDevTools.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>9</integer>
 		</dict>
-		<key>StateKitTesting.xcscheme_^#shared#^_</key>
+		<key>StateKitFeatureFlags.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>10</integer>
 		</dict>
-		<key>StateKitUI.xcscheme_^#shared#^_</key>
+		<key>StateKitMacros.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>11</integer>
+		</dict>
+		<key>StateKitPersistence.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>12</integer>
+		</dict>
+		<key>StateKitSupport.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>13</integer>
+		</dict>
+		<key>StateKitTesting.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>14</integer>
+		</dict>
+		<key>StateKitUI.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>15</integer>
 		</dict>
 		<key>state-kit-Package.xcscheme_^#shared#^_</key>
 		<dict>
@@ -98,6 +118,11 @@
 			<true/>
 		</dict>
 		<key>StateKitMacros</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>StateKitPersistence</key>
 		<dict>
 			<key>primary</key>
 			<true/>

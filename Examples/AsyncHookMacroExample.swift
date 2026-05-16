@@ -25,17 +25,17 @@ struct DataFetcher {
 
 // MARK: - Usage in SwiftUI/View Code
 
-struct ContentView: View {
+struct ContentView: StateView {
     @State var data: Data?
 
-    var body: some View {
+    var stateBody: some View {
+        // Hook called at top level
+        useDataFetcher(url: URL(string: "https://api.example.com/data")!)
+
         VStack {
             if let data = data {
                 Text("Loaded \(data.count) bytes")
             }
-        }
-        .task {
-            await useDataFetcher(url: URL(string: "https://api.example.com/data")!)
         }
     }
 }

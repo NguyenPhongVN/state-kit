@@ -26,7 +26,7 @@ public struct RiverpodSelectorMacro: PeerMacro {
         let providerName = functionName + "Provider"
 
         let selectorProvider: DeclSyntax = """
-        public final \(raw: providerName) = Provider(\(raw: functionName))
+        public let \(raw: providerName) = Provider(\(raw: functionName))
         """
 
         return [selectorProvider]

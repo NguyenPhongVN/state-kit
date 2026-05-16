@@ -22,6 +22,9 @@ let package = Package(
         .library(name: "StateKitTesting", targets: ["StateKitTesting"]),
         .library(name: "StateKitDevTools", targets: ["StateKitDevTools"]),
         .library(name: "StateKitPersistence", targets: ["StateKitPersistence"]),
+        .library(name: "StateKitCache", targets: ["StateKitCache"]),
+        .library(name: "StateKitFeatureFlags", targets: ["StateKitFeatureFlags"]),
+        .library(name: "StateKitAnalytics", targets: ["StateKitAnalytics"]),
         .library(name: "StateKitAtoms", targets: ["StateKitAtoms"]),
         .library(name: "Riverpods", targets: ["Riverpods"]),
         .library(name: "StateConcurrency", targets: ["StateConcurrency"]),
@@ -92,6 +95,9 @@ let package = Package(
             PackageDescription.Target.Dependency.byName(name: "StateKit"),
             PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
         ]),
+        PackageDescription.Target.target(name: "StateKitCache", dependencies: [PackageDescription.Target.Dependency.byName(name: "Riverpods")]),
+        PackageDescription.Target.target(name: "StateKitFeatureFlags", dependencies: []),
+        PackageDescription.Target.target(name: "StateKitAnalytics", dependencies: [PackageDescription.Target.Dependency.byName(name: "Riverpods")]),
         PackageDescription.Target.target(name: "StateKitAtoms", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")], exclude: ["README.md"]),
         PackageDescription.Target.target(name: "Riverpods", dependencies: [
             PackageDescription.Target.Dependency.byName(name: "StateKit"),

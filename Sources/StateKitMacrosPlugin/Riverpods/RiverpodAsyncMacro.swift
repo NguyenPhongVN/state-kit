@@ -26,9 +26,9 @@ public struct RiverpodAsyncMacro: PeerMacro {
         let providerName = functionName + "Provider"
 
         let asyncProvider: DeclSyntax = """
-        public final \(raw: providerName) = FutureProvider(
-            \(raw: functionName),
-        )
+        public let \(raw: providerName) = FutureProvider { ref in
+            try await \(raw: functionName)()
+        }
         """
 
         return [asyncProvider]
