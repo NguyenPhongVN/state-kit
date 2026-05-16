@@ -111,7 +111,7 @@ public struct TestDataBuilder<T: Sendable> {
     }
 
     /// Applies custom modifications.
-    public mutating func modify(_ closure: (inout T) -> Void) -> Self {
+    public mutating func modify(_ closure: @escaping (inout T) -> Void) -> Self {
         var copy = self
         copy.modifications.append(closure)
         return copy

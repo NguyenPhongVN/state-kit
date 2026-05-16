@@ -184,7 +184,7 @@ public final class DevToolsObserver: ProviderObserver {
     ///
     /// - Returns: The state at the previous position
     @discardableResult
-    public mutating func goBack() -> AnyCodable? {
+    public func goBack() -> AnyCodable? {
         history.goBack()
     }
 
@@ -192,7 +192,7 @@ public final class DevToolsObserver: ProviderObserver {
     ///
     /// - Returns: The state at the next position
     @discardableResult
-    public mutating func goForward() -> AnyCodable? {
+    public func goForward() -> AnyCodable? {
         history.goForward()
     }
 
@@ -201,7 +201,7 @@ public final class DevToolsObserver: ProviderObserver {
     /// - Parameter index: The history entry index
     /// - Returns: The state at that point
     @discardableResult
-    public mutating func jumpToHistoryIndex(_ index: Int) -> AnyCodable? {
+    public func jumpToHistoryIndex(_ index: Int) -> AnyCodable? {
         history.jumpTo(index: index)
     }
 

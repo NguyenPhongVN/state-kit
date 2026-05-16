@@ -115,9 +115,9 @@ extension Provider {
     public static func compose<P1: ProviderProtocol, P2: ProviderProtocol, Result: Sendable>(
         _ p1: P1,
         _ p2: P2,
-        transform: @escaping (P1.State, P2.State) -> Result
+        transform: @escaping @Sendable (P1.State, P2.State) -> Result
     ) -> Provider<Result> {
-        Provider { ref in
+        Provider<Result> { @MainActor ref in
             let value1 = ref.watch(p1)
             let value2 = ref.watch(p2)
             return transform(value1, value2)
@@ -134,9 +134,9 @@ extension Provider {
         _ p1: P1,
         _ p2: P2,
         _ p3: P3,
-        transform: @escaping (P1.State, P2.State, P3.State) -> Result
+        transform: @escaping @Sendable (P1.State, P2.State, P3.State) -> Result
     ) -> Provider<Result> {
-        Provider { ref in
+        Provider<Result> { @MainActor ref in
             let value1 = ref.watch(p1)
             let value2 = ref.watch(p2)
             let value3 = ref.watch(p3)
@@ -156,9 +156,9 @@ extension Provider {
         _ p2: P2,
         _ p3: P3,
         _ p4: P4,
-        transform: @escaping (P1.State, P2.State, P3.State, P4.State) -> Result
+        transform: @escaping @Sendable (P1.State, P2.State, P3.State, P4.State) -> Result
     ) -> Provider<Result> {
-        Provider { ref in
+        Provider<Result> { @MainActor ref in
             let value1 = ref.watch(p1)
             let value2 = ref.watch(p2)
             let value3 = ref.watch(p3)
@@ -181,9 +181,9 @@ extension Provider {
         _ p3: P3,
         _ p4: P4,
         _ p5: P5,
-        transform: @escaping (P1.State, P2.State, P3.State, P4.State, P5.State) -> Result
+        transform: @escaping @Sendable (P1.State, P2.State, P3.State, P4.State, P5.State) -> Result
     ) -> Provider<Result> {
-        Provider { ref in
+        Provider<Result> { @MainActor ref in
             let value1 = ref.watch(p1)
             let value2 = ref.watch(p2)
             let value3 = ref.watch(p3)

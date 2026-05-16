@@ -85,6 +85,7 @@ public final class IntegrationTestEnvironment {
 /// ```
 open class MultiFeatureTestSuite {
     /// The test environment for this suite.
+    @MainActor
     public var testEnvironment: IntegrationTestEnvironment {
         IntegrationTestEnvironment()
     }
@@ -96,6 +97,7 @@ open class MultiFeatureTestSuite {
     open func tearDown() async {}
 
     /// Helper to assert state consistency across features.
+    @MainActor
     public func assertStateConsistency<T: Sendable & Equatable>(
         provider: Provider<T>,
         expectedValue: T,
@@ -189,6 +191,7 @@ public struct StateVerification {
     }
 
     /// Verifies that multiple providers update consistently.
+    @MainActor
     public static func verifyConsistency<A: Sendable, B: Sendable>(
         provider1: Provider<A>,
         provider2: Provider<B>,
@@ -327,6 +330,7 @@ public struct TestScenarioBuilder {
     }
 
     /// Runs the scenario.
+    @MainActor
     public func run() async {
         var env = IntegrationTestEnvironment()
 

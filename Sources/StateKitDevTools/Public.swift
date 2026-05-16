@@ -1,27 +1,8 @@
 @_exported import Foundation
 
-// MARK: - State History
-
-public typealias StateHistory = History.StateHistory
-public typealias InMemoryStateHistory = History.InMemoryStateHistory
-public typealias HistoryEntry = History.HistoryEntry
-public typealias JSONValue = History.JSONValue
-public typealias AnyCodable = History.AnyCodable
-
-// MARK: - Performance Metrics
-
-public typealias PerformanceMetrics = Performance.PerformanceMetrics
-public typealias InMemoryPerformanceMetrics = Performance.InMemoryPerformanceMetrics
-public typealias PerformanceData = Performance.PerformanceData
-
-// MARK: - Observers
-
-public typealias DevToolsObserver = Observers.DevToolsObserver
-public typealias ConsoleLoggerObserver = Observers.ConsoleLoggerObserver
-
 // MARK: - Module Namespace
 
-enum StateKitDevTools {
+public enum StateKitDevTools {
     public static let version = "2.2.0-beta"
 
     /// Creates a new DevTools observer for time-travel debugging.
@@ -37,11 +18,10 @@ enum StateKitDevTools {
     public static func createConsoleLogger() -> ConsoleLoggerObserver {
         ConsoleLoggerObserver()
     }
-}
 
-// Namespace reorganization for cleaner imports
-extension StateKitDevTools {
-    enum History {
+    // MARK: - State History
+
+    public enum History {
         public typealias StateHistory = Foundation.StateHistory
         public typealias InMemoryStateHistory = Foundation.InMemoryStateHistory
         public typealias HistoryEntry = Foundation.HistoryEntry
@@ -49,14 +29,31 @@ extension StateKitDevTools {
         public typealias AnyCodable = Foundation.AnyCodable
     }
 
-    enum Performance {
+    // MARK: - Performance Metrics
+
+    public enum Performance {
         public typealias PerformanceMetrics = Foundation.PerformanceMetrics
         public typealias InMemoryPerformanceMetrics = Foundation.InMemoryPerformanceMetrics
         public typealias PerformanceData = Foundation.PerformanceData
     }
 
-    enum Observers {
+    // MARK: - Observers
+
+    public enum Observers {
         public typealias DevToolsObserver = Foundation.DevToolsObserver
         public typealias ConsoleLoggerObserver = Foundation.ConsoleLoggerObserver
     }
 }
+
+// MARK: - Public Convenience Typealiases
+
+public typealias StateHistory = StateKitDevTools.History.StateHistory
+public typealias InMemoryStateHistory = StateKitDevTools.History.InMemoryStateHistory
+public typealias HistoryEntry = StateKitDevTools.History.HistoryEntry
+public typealias JSONValue = StateKitDevTools.History.JSONValue
+public typealias AnyCodable = StateKitDevTools.History.AnyCodable
+public typealias PerformanceMetrics = StateKitDevTools.Performance.PerformanceMetrics
+public typealias InMemoryPerformanceMetrics = StateKitDevTools.Performance.InMemoryPerformanceMetrics
+public typealias PerformanceData = StateKitDevTools.Performance.PerformanceData
+public typealias DevToolsObserver = StateKitDevTools.Observers.DevToolsObserver
+public typealias ConsoleLoggerObserver = StateKitDevTools.Observers.ConsoleLoggerObserver

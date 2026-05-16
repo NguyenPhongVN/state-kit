@@ -146,7 +146,8 @@ public struct AnalyticsConfig: Sendable {
 // MARK: - Analytics Provider Observer
 
 /// Observes provider changes and records as analytics events.
-public struct AnalyticsProviderObserver: ProviderObserver & Sendable {
+@MainActor
+public final class AnalyticsProviderObserver: ProviderObserver {
     private let tracker: EventTracker
     private let includeValues: Bool
 
@@ -155,16 +156,16 @@ public struct AnalyticsProviderObserver: ProviderObserver & Sendable {
         self.includeValues = includeValues
     }
 
-    /// Observes provider state change.
-    public func onChange<T: Sendable>(
-        provider: any ProviderProtocol,
-        newValue: T,
-        previousValue: T?
+    public func didUpdateProvider<P: ProviderProtocol>(
+        _ provider: P,
+        oldValue: P.State,
+        newValue: P.State,
+        container: ProviderContainer
     ) {
         let event = AnalyticsEvent(
             name: "state_changed",
             properties: [
-                "provider": .string(String(describing: provider)),
+                "provider": .string(String(describing: type(of: provider))),
                 "includes_value": .bool(includeValues),
             ]
         )
