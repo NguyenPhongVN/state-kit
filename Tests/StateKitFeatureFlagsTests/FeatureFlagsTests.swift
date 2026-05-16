@@ -1,6 +1,7 @@
 import XCTest
 import StateKitFeatureFlags
 
+@MainActor
 final class FeatureFlagsTests: XCTestCase {
     // MARK: - Feature Flag Registry Tests
 
@@ -148,15 +149,12 @@ final class FeatureFlagsTests: XCTestCase {
     // MARK: - Statistical Test Tests
 
     func testStatisticalSignificance() {
-        let test = StatisticalTest(
-            controlConversions: 45,
-            controlTotal: 1000,
-            treatmentConversions: 62,
-            treatmentTotal: 1000
-        )
+        let controlGroup = (successes: 45, total: 1000)
+        let treatmentGroup = (successes: 62, total: 1000)
 
-        // This improvement should be statistically significant
-        let isSignificant = test.isSignificant(alpha: 0.05)
+        let chi2 = StatisticalTest.chiSquareTest(variantA: controlGroup, variantB: treatmentGroup)
+        let isSignificant = StatisticalTest.isSignificant(chi2)
+
         XCTAssertTrue(isSignificant)
     }
 }
