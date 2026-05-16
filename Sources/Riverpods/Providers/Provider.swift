@@ -25,16 +25,33 @@ public struct Provider<T: Sendable>: ProviderProtocol, @unchecked Sendable {
     private let _create: @MainActor (ProviderRef) -> T
     private let _id: AnyHashable
     public let autoDispose: Bool
+    public let cacheTime: TimeInterval
+    public let name: String?
     
-    public init(autoDispose: Bool = true, _ create: @escaping @MainActor (ProviderRef) -> T) {
+    public init(
+        autoDispose: Bool = true,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        _ create: @escaping @MainActor (ProviderRef) -> T
+    ) {
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
         self._id = UUID()
     }
     
-    internal init(id: AnyHashable, autoDispose: Bool, create: @escaping @MainActor (ProviderRef) -> T) {
+    internal init(
+        id: AnyHashable,
+        autoDispose: Bool,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        create: @escaping @MainActor (ProviderRef) -> T
+    ) {
         self._id = id
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
     }
     

@@ -21,15 +21,39 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     @ObservationIgnored
     private var onResumeCallbacks: [() -> Void] = []
     
+    @ObservationIgnored
+    private var onAddListenerCallbacks: [() -> Void] = []
+    
+    @ObservationIgnored
+    private var onRemoveListenerCallbacks: [() -> Void] = []
+    
     // Nodes that depend on this node
     public var dependents: Set<ProviderID> = []
     
     // Number of SwiftUI views or external listeners
     public private(set) var listenersCount: Int = 0
     
+    // External listeners added via listen()
+    @ObservationIgnored
+    private var externalListeners: [UUID: (P.State?, P.State) -> Void] = [:]
+    
+    // Keep alive count
+    @ObservationIgnored
+    private var keepAliveLinksCount = 0
+    
+    // Dispose delay task
+    @ObservationIgnored
+    private var disposeDelayTask: Task<Void, Never>?
+    
+    public var isKeepAlive: Bool { keepAliveLinksCount > 0 }
+    
     public func incrementListeners() {
+        disposeDelayTask?.cancel()
+        disposeDelayTask = nil
+        
         listenersCount += 1
         if listenersCount == 1 {
+            onAddListenerCallbacks.forEach { $0() }
             notifyResume()
         }
     }
@@ -41,14 +65,31 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     public func decrementListeners() {
         guard listenersCount > 0 else { return }
         listenersCount -= 1
+        onRemoveListenerCallbacks.forEach { $0() }
+        
         if listenersCount == 0 {
             onCancelCallbacks.forEach { $0() }
+            
+            // Bắt đầu đếm ngược hủy nếu có cacheTime
+            if provider.autoDispose && provider.cacheTime > 0 {
+                disposeDelayTask = Task { @MainActor in
+                    do {
+                        try await Task.sleep(nanoseconds: UInt64(provider.cacheTime * 1_000_000_000))
+                        if Task.isCancelled { return }
+                        self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
+                    } catch {}
+                }
+            }
         }
     }
     
     // Nodes that this node depends on
     @ObservationIgnored
-    private var dependencies: Set<ProviderID> = []
+    var dependencies: Set<ProviderID> = []
+    
+    // Listeners managed by this provider (via ref.listen)
+    @ObservationIgnored
+    private var internalSubscriptions: [ProviderSubscription] = []
     
     public init(provider: P, container: ProviderContainer) {
         self.provider = provider
@@ -81,14 +122,25 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         container.recomputePath.append(id)
         defer { container.recomputePath.removeLast() }
         
+        let oldState = stateBox?.value
+        
         runDisposeCallbacks()
         
         let newState = providerCreate()
         
         if let box = stateBox {
+            let actualOldState = box.value
             box.value = newState
+            container.notifyProviderUpdated(provider: provider, oldValue: actualOldState, newValue: newState)
         } else {
             stateBox = StateBox(newState)
+        }
+        
+        // Notify external listeners
+        if let oldState = oldState {
+            for listener in externalListeners.values {
+                listener(oldState, newState)
+            }
         }
         
         return stateBox!.value
@@ -106,6 +158,8 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     
     public func performUpdate() {
         recompute()
+        
+        // notifyDependents is handled by container batching or manual call
         notifyDependents()
     }
     
@@ -127,6 +181,10 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             }
         }
         dependencies.removeAll()
+        
+        internalSubscriptions.forEach { $0.close() }
+        internalSubscriptions.removeAll()
+        
         stateBox = nil
     }
     
@@ -135,6 +193,8 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         onDisposeCallbacks.removeAll()
         onCancelCallbacks.removeAll()
         onResumeCallbacks.removeAll()
+        onAddListenerCallbacks.removeAll()
+        onRemoveListenerCallbacks.removeAll()
     }
     
     // MARK: - ProviderRef
@@ -153,6 +213,15 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         return container.read(depProvider)
     }
     
+    public func listen<Dep: ProviderProtocol>(
+        _ depProvider: Dep,
+        fireImmediately: Bool = false,
+        listener: @escaping (Dep.State?, Dep.State) -> Void
+    ) {
+        let subscription = container.listen(depProvider, fireImmediately: fireImmediately, listener: listener)
+        internalSubscriptions.append(subscription)
+    }
+
     public func onDispose(_ cleanup: @escaping () -> Void) {
         onDisposeCallbacks.append(cleanup)
     }
@@ -163,6 +232,42 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     
     public func onResume(_ callback: @escaping () -> Void) {
         onResumeCallbacks.append(callback)
+    }
+    
+    public func onAddListener(_ callback: @escaping () -> Void) {
+        onAddListenerCallbacks.append(callback)
+    }
+    
+    public func onRemoveListener(_ callback: @escaping () -> Void) {
+        onRemoveListenerCallbacks.append(callback)
+    }
+    
+    public func keepAlive() -> KeepAliveLink {
+        keepAliveLinksCount += 1
+        return KeepAliveLink { [weak self] in
+            guard let self = self else { return }
+            self.keepAliveLinksCount -= 1
+            self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
+        }
+    }
+    
+    // MARK: - Internal Listener Management
+    
+    func addListener(fireImmediately: Bool, listener: @escaping (P.State?, P.State) -> Void) -> ProviderSubscription {
+        let listenerID = UUID()
+        externalListeners[listenerID] = listener
+        incrementListeners()
+        
+        if fireImmediately {
+            listener(nil, getState())
+        }
+        
+        return ProviderSubscription { [weak self] in
+            guard let self = self else { return }
+            self.externalListeners.removeValue(forKey: listenerID)
+            self.decrementListeners()
+            self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
+        }
     }
 }
 

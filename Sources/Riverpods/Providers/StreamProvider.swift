@@ -14,14 +14,18 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
                     case .finished:
                         break 
                     case .failure(let error):
-                        self.stateBox?.value = .error(error)
+                        let oldState = self.stateBox?.value
+                        self.stateBox?.value = .error(error, previousData: oldState?.value)
                         self.notifyDependents()
+                        self.container.notifyProviderUpdated(provider: self.provider, oldValue: oldState ?? .loading(), newValue: .error(error, previousData: oldState?.value))
                     }
                 }
             } receiveValue: { value in
                 Task { @MainActor in
+                    let oldState = self.stateBox?.value
                     self.stateBox?.value = .data(value)
                     self.notifyDependents()
+                    self.container.notifyProviderUpdated(provider: self.provider, oldValue: oldState ?? .loading(), newValue: .data(value))
                 }
             }
         
@@ -32,7 +36,7 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
         if let lastValue = stateBox?.value.value {
             return .refreshing(lastValue)
         }
-        return .loading
+        return .loading()
     }
 }
 
@@ -45,16 +49,33 @@ public struct StreamProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
     private let _create: @MainActor (ProviderRef) -> AnyPublisher<T, Error>
     private let _id: AnyHashable
     public let autoDispose: Bool
+    public let cacheTime: TimeInterval
+    public let name: String?
     
-    public init(autoDispose: Bool = true, _ create: @escaping @MainActor (ProviderRef) -> AnyPublisher<T, Error>) {
+    public init(
+        autoDispose: Bool = true,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        _ create: @escaping @MainActor (ProviderRef) -> AnyPublisher<T, Error>
+    ) {
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
         self._id = UUID()
     }
     
-    internal init(id: AnyHashable, autoDispose: Bool, create: @escaping @MainActor (ProviderRef) -> AnyPublisher<T, Error>) {
+    internal init(
+        id: AnyHashable,
+        autoDispose: Bool,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        create: @escaping @MainActor (ProviderRef) -> AnyPublisher<T, Error>
+    ) {
         self._id = id
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
     }
     

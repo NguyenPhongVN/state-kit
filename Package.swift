@@ -39,6 +39,10 @@ let package = Package(
             dependencies: [
                 Target.Dependency.product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
                 Target.Dependency.product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-suppress-warnings"], .when(configuration: .debug)),
+                .unsafeFlags(["-suppress-warnings"], .when(configuration: .release))
             ]
         ),
         Target.target(
@@ -46,7 +50,10 @@ let package = Package(
             dependencies: [
                 Target.Dependency.byName(name: "StateKitMacrosPlugin"),
                 Target.Dependency.byName(name: "StateKitAtoms"),
-                Target.Dependency.byName(name: "Riverpods")
+                Target.Dependency.byName(name: "Riverpods"),
+                Target.Dependency.product(name: "SwiftSyntax", package: "swift-syntax"),
+                Target.Dependency.product(name: "SwiftSyntaxBuilder", package: "swift-syntax"),
+                Target.Dependency.product(name: "SwiftSyntaxMacros", package: "swift-syntax")
             ]
         ),
         PackageDescription.Target.target(
@@ -59,7 +66,8 @@ let package = Package(
                 PackageDescription.Target.Dependency.byName(name: "StateKit"),
                 PackageDescription.Target.Dependency.product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
                 PackageDescription.Target.Dependency.product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
-            ]
+            ],
+            exclude: ["README.md"]
         ),
         PackageDescription.Target.target(
             name: "StateKitUI",
@@ -68,7 +76,8 @@ let package = Package(
                 PackageDescription.Target.Dependency.byName(name: "StateKitCore"),
                 PackageDescription.Target.Dependency.byName(name: "StateKitAtoms"),
                 PackageDescription.Target.Dependency.byName(name: "StateKitSupport")
-            ]
+            ],
+            exclude: ["README.md"]
         ),
         PackageDescription.Target.target(name: "StateKitTesting", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
         PackageDescription.Target.target(name: "StateKitSupport", dependencies: [
@@ -77,8 +86,11 @@ let package = Package(
             PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
         ]),
         PackageDescription.Target.target(name: "StateKitDevTools", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
-        PackageDescription.Target.target(name: "StateKitAtoms", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
-        PackageDescription.Target.target(name: "Riverpods", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.target(name: "StateKitAtoms", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")], exclude: ["README.md"]),
+        PackageDescription.Target.target(name: "Riverpods", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "StateKit"),
+            PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
+        ]),
         PackageDescription.Target.testTarget(
             name: "StateKitTests",
             dependencies: [
@@ -105,6 +117,9 @@ let package = Package(
                 PackageDescription.Target.Dependency.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
         ),
-        PackageDescription.Target.testTarget(name: "RiverpodsTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "Riverpods")]),
+        PackageDescription.Target.testTarget(name: "RiverpodsTests", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "Riverpods"),
+            PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
+        ]),
     ]
 )

@@ -119,6 +119,34 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateConcurrency"
+               BuildableName = "StateConcurrency"
+               BlueprintName = "StateConcurrency"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitMacros"
+               BuildableName = "StateKitMacros"
+               BlueprintName = "StateKitMacros"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -145,6 +173,66 @@
                BlueprintIdentifier = "StateKitAtomsTests"
                BuildableName = "StateKitAtomsTests"
                BlueprintName = "StateKitAtomsTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "RiverpodsTests"
+               BuildableName = "RiverpodsTests"
+               BlueprintName = "RiverpodsTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateConcurrencyTests"
+               BuildableName = "StateConcurrencyTests"
+               BlueprintName = "StateConcurrencyTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitCoreTests"
+               BuildableName = "StateKitCoreTests"
+               BlueprintName = "StateKitCoreTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitUITests"
+               BuildableName = "StateKitUITests"
+               BlueprintName = "StateKitUITests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitSupportTests"
+               BuildableName = "StateKitSupportTests"
+               BlueprintName = "StateKitSupportTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "StateKitMacrosTests"
+               BuildableName = "StateKitMacrosTests"
+               BlueprintName = "StateKitMacrosTests"
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>

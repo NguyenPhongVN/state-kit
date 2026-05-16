@@ -5,6 +5,7 @@ import Foundation
 public protocol AnyProviderElement: AnyObject {
     var dependents: Set<ProviderID> { get set }
     var listenersCount: Int { get }
+    var isKeepAlive: Bool { get }
     func incrementListeners()
     func decrementListeners()
     func invalidate()

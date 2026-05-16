@@ -7,22 +7,36 @@ public protocol ProviderProtocol: Hashable, Sendable {
     /// Quyết định xem Provider có tự hủy khi không dùng hay không.
     var autoDispose: Bool { get }
     
+    /// Thời gian chờ (giây) trước khi thực sự hủy provider sau khi không còn ai lắng nghe.
+    var cacheTime: TimeInterval { get }
+    
+    /// Tên gợi nhớ của Provider để phục vụ việc Debug và Logging.
+    var name: String? { get }
+    
     @MainActor
     func createElement(container: ProviderContainer) -> AnyProviderElement
 }
 
-/// Một bản ghi để ghi đè giá trị của một Provider.
+/// Một bản ghi để ghi đè giá trị hoặc logic của một Provider.
 public struct ProviderOverride: @unchecked Sendable {
     let providerID: ProviderID
-    let value: Any
+    let value: Any?
+    let providerOverride: (any ProviderProtocol)?
 }
 
 extension ProviderProtocol {
     public var autoDispose: Bool { true }
+    public var cacheTime: TimeInterval { 0 }
+    public var name: String? { nil }
     
     /// Tạo một bản ghi ghi đè giá trị cho Provider này.
     public func overrideWith(_ value: State) -> ProviderOverride {
-        ProviderOverride(providerID: ProviderID(self), value: value)
+        ProviderOverride(providerID: ProviderID(self), value: value, providerOverride: nil)
+    }
+    
+    /// Ghi đè Provider này bằng một logic của một Provider khác.
+    public func overrideWithProvider<P: ProviderProtocol>(_ provider: P) -> ProviderOverride where P.State == State {
+        ProviderOverride(providerID: ProviderID(self), value: nil, providerOverride: provider)
     }
     
     /// Chọn một phần của state để theo dõi. View sẽ chỉ re-render khi phần này thay đổi.

@@ -41,6 +41,11 @@ open class Notifier<State: Sendable> {
         self._state = newState
         return newState
     }
+    
+    /// Cập nhật state hiện tại bằng một closure.
+    public func update(_ transform: (State) -> State) {
+        state = transform(state)
+    }
 }
 
 // MARK: - Notifier Element
@@ -93,16 +98,33 @@ public struct NotifierProvider<N: Notifier<T>, T: Sendable>: ProviderProtocol, @
     private let _create: @MainActor () -> N
     private let _id: AnyHashable
     public let autoDispose: Bool
+    public let cacheTime: TimeInterval
+    public let name: String?
     
-    public init(autoDispose: Bool = true, _ create: @escaping @MainActor () -> N) {
+    public init(
+        autoDispose: Bool = true,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        _ create: @escaping @MainActor () -> N
+    ) {
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
         self._id = UUID()
     }
     
-    internal init(id: AnyHashable, autoDispose: Bool, create: @escaping @MainActor () -> N) {
+    internal init(
+        id: AnyHashable,
+        autoDispose: Bool,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        create: @escaping @MainActor () -> N
+    ) {
         self._id = id
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
     }
     

@@ -1,10 +1,56 @@
-import SwiftSyntaxMacros
 import SwiftCompilerPlugin
+import SwiftSyntax
+import SwiftSyntaxMacros
 
 @main
-struct StateKitMacroPlugin: CompilerPlugin {
+struct StateKitMacrosPlugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
+        StateAtomMacro.self,
+        ValueAtomMacro.self,
+        TaskAtomMacro.self,
+        PublisherAtomMacro.self,
         AtomMacro.self,
-        NotifierProviderMacro.self
+        AtomFamilyMacro.self,
+        SelectorFamilyMacro.self,
+        AsyncTaskFamilyMacro.self,
+        AtomReducerMacro.self,
+        ComputedMacro.self,
+        SelectorAtomMacro.self,
+        FilteredAtomMacro.self,
+        MappedAtomMacro.self,
+        CombineAtomMacro.self,
+        DistinctAtomMacro.self,
+        FlatMapAtomMacro.self,
+        HookViewMacro.self,
+        StateViewMacro.self,
+        AsyncViewMacro.self,
+        ObservableStateMacro.self,
+        HookMacro.self,
+        HookStateMacro.self,
+        HookRefMacro.self,
+        HookEffectMacro.self,
+        AsyncHookMacro.self,
+        DebounceMacro.self,
+        ThrottleMacro.self,
+        HookPreviousMacro.self,
+        HookToggleMacro.self,
+        HookIntervalMacro.self,
+        HookMemoMacro.self,
+        HookCallbackMacro.self,
+        HookReducerMacro.self,
+        HookContextMacro.self,
+        HookFormMacro.self,
+        CustomHookMacro.self,
+        RiverpodNotifierMacro.self,
+        StateProviderMacro.self,
+        ProviderMacro.self,
+        FutureProviderMacro.self,
+        StreamProviderMacro.self,
+        ProviderFamilyMacro.self,
+        RiverpodFamilyMacro.self,
+        RiverpodSelectorMacro.self,
+        RiverpodFutureFamilyMacro.self,
+        RiverpodStreamFamilyMacro.self,
+        RiverpodAsyncMacro.self,
     ]
 }

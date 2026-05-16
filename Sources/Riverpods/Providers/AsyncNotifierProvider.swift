@@ -20,11 +20,44 @@ open class AsyncNotifier<State: Sendable> {
     @ObservationIgnored
     private var task: Task<Void, Never>?
     
+    @ObservationIgnored
+    private var _futureContinuation: [CheckedContinuation<State, Error>] = []
+    
     public var state: AsyncValue<State> {
         get { _state! }
         set {
             _state = newValue
             onUpdate?()
+            
+            // Resolve future if data or error
+            switch newValue {
+            case .data(let val):
+                let continuations = _futureContinuation
+                _futureContinuation.removeAll()
+                continuations.forEach { $0.resume(returning: val) }
+            case .error(let err, _):
+                let continuations = _futureContinuation
+                _futureContinuation.removeAll()
+                continuations.forEach { $0.resume(throwing: err) }
+            default:
+                break
+            }
+        }
+    }
+    
+    public var future: State {
+        get async throws {
+            if let _state = _state {
+                switch _state {
+                case .data(let val): return val
+                case .error(let err, _): throw err
+                default: break
+                }
+            }
+            
+            return try await withCheckedThrowingContinuation { continuation in
+                _futureContinuation.append(continuation)
+            }
         }
     }
     
@@ -43,11 +76,13 @@ open class AsyncNotifier<State: Sendable> {
     internal func _recompute() {
         task?.cancel()
         
+        let previousData = _state?.value
+        
         // Nếu đã có dữ liệu, chuyển sang trạng thái refreshing
-        if let current = _state?.value {
+        if let current = previousData {
             _state = .refreshing(current)
         } else {
-            _state = .loading
+            _state = .loading()
         }
         onUpdate?()
         
@@ -55,14 +90,17 @@ open class AsyncNotifier<State: Sendable> {
             do {
                 let newValue = try await build()
                 if Task.isCancelled { return }
-                _state = .data(newValue)
-                onUpdate?()
+                state = .data(newValue)
             } catch {
                 if Task.isCancelled { return }
-                _state = .error(error)
-                onUpdate?()
+                state = .error(error, previousData: previousData)
             }
         }
+    }
+    
+    /// Cập nhật data bên trong AsyncValue bằng một closure.
+    public func update(_ transform: (State) -> State) {
+        state = state.update(transform)
     }
 }
 
@@ -105,11 +143,25 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
     private let _create: @MainActor () -> N
     private let _id: AnyHashable
     public let autoDispose: Bool
+    public let cacheTime: TimeInterval
+    public let name: String?
     
-    public init(autoDispose: Bool = true, _ create: @escaping @MainActor () -> N) {
+    public init(
+        autoDispose: Bool = true,
+        cacheTime: TimeInterval = 0,
+        name: String? = nil,
+        _ create: @escaping @MainActor () -> N
+    ) {
         self.autoDispose = autoDispose
+        self.cacheTime = cacheTime
+        self.name = name
         self._create = create
         self._id = UUID()
+    }
+    
+    /// Truy cập future của notifier.
+    public var future: AsyncNotifierFutureProvider<N, T> {
+        AsyncNotifierFutureProvider(provider: self)
     }
     
     @MainActor
@@ -128,5 +180,36 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
     
     public static func == (lhs: AsyncNotifierProvider, rhs: AsyncNotifierProvider) -> Bool {
         lhs._id == rhs._id
+    }
+}
+
+/// Một Provider phụ trợ để await giá trị từ AsyncNotifier.
+public struct AsyncNotifierFutureProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderProtocol, @unchecked Sendable {
+    public typealias State = Task<T, Error>
+    public let provider: AsyncNotifierProvider<N, T>
+    public var autoDispose: Bool { provider.autoDispose }
+    
+    public func createElement(container: ProviderContainer) -> AnyProviderElement {
+        AsyncNotifierFutureElement(provider: self, container: container)
+    }
+    
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(provider)
+    }
+    
+    public static func == (lhs: AsyncNotifierFutureProvider, rhs: AsyncNotifierFutureProvider) -> Bool {
+        lhs.provider == rhs.provider
+    }
+}
+
+@MainActor
+final class AsyncNotifierFutureElement<N: AsyncNotifier<T>, T: Sendable>: ProviderElement<AsyncNotifierFutureProvider<N, T>> {
+    override func providerCreate() -> Task<T, Error> {
+        let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
+        _ = parentElement.getState()
+        
+        return Task { @MainActor in
+            try await parentElement.notifier!.future
+        }
     }
 }
