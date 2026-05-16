@@ -17,7 +17,7 @@ struct RiverpodFutureView: View {
                 case .refreshing(let condition):
                     LabeledContent("Refreshing...", value: condition)
                         .opacity(0.6)
-                case .error(let error):
+                case .error(let error, _):
                     Text("Error: \(error.localizedDescription)")
                 }
                 
@@ -36,7 +36,7 @@ struct RiverpodFutureView: View {
                 case .refreshing(let time):
                     LabeledContent("Reconnecting...", value: time)
                         .opacity(0.6)
-                case .error(let error):
+                case .error(let error, _):
                     Text("Connection Lost: \(error.localizedDescription)")
                 }
             }

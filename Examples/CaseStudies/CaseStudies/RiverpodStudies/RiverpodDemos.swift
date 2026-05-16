@@ -41,7 +41,7 @@ class UserProfileNotifier: AsyncNotifier<String> {
     }
     
     func updateName(_ newName: String) async {
-        state = .loading
+        state = .loading()
         try? await Task.sleep(nanoseconds: 500_000_000)
         state = .data(newName)
     }

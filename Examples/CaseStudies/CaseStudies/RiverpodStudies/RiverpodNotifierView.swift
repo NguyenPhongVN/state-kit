@@ -5,10 +5,12 @@ struct RiverpodNotifierView: View {
     // Notifier example
     @Watch(todoListProvider) var todos
     @Watch(todoListProvider.notifier) var todoNotifier
-    
+
     // AsyncNotifier example
     @Watch(userProfileProvider) var profileValue
     @Watch(userProfileProvider.notifier) var profileNotifier
+
+    @Environment(\.providerContainer) var container
     
     var body: some View {
         Form {
@@ -39,19 +41,20 @@ struct RiverpodNotifierView: View {
                         Spacer()
                         ProgressView().scaleEffect(0.8)
                     }
-                case .error(let error):
+                case .error(let error, _):
                     Text("Error: \(error.localizedDescription)")
                         .foregroundStyle(.red)
                 }
                 
                 Button("Randomize Name") {
                     Task {
-                        await profileNotifier.updateName("User \(Int.random(in: 100...999))")
+                        let newName = "User \(Int.random(in: 100...999))"
+                        try await profileNotifier.updateName(newName)
                     }
                 }
-                
+
                 Button("Refresh (Seamless)") {
-                    profileNotifier.invalidate()
+                    container.refresh(userProfileProvider)
                 }
             }
         }

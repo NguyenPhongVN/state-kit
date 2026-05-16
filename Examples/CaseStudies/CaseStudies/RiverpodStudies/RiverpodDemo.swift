@@ -1,6 +1,5 @@
 import SwiftUI
 import Riverpods
-import StateKitAtoms
 
 // MARK: - Models
 
@@ -10,19 +9,10 @@ struct Product: Identifiable, Sendable, Codable {
     let price: Double
 }
 
-// MARK: - Atoms (Ecosystem Bridge Demo)
-
-struct UserBalanceAtom: SKStateAtom, Hashable {
-    typealias Value = Double
-    func defaultValue(context: SKAtomTransactionContext) -> Double { 1000.0 }
-}
-
 // MARK: - Providers
 
 /// Provider quản lý danh sách sản phẩm từ API
 class ProductNotifier: AsyncNotifier<[Product]> {
-    override var name: String? { "ProductListProvider" }
-    
     override func build() async throws -> [Product] {
         // Giả lập gọi API
         try await Task.sleep(nanoseconds: 1_000_000_000)
@@ -35,19 +25,22 @@ class ProductNotifier: AsyncNotifier<[Product]> {
     
     func refresh() async {
         state = .loading(previousData: state.value)
-        state = await AsyncValue.guard {
-            try await build()
+        state = await AsyncValue.guard { [weak self] in
+            guard let self = self else { throw CancellationError() }
+            return try await self.build()
         }
     }
 }
 
-let productsProvider = AsyncNotifierProvider(cacheTime: 10.0) { ProductNotifier() }
+let productsProvider = AsyncNotifierProvider(cacheTime: 10.0, name: "ProductListProvider") { ProductNotifier() }
 
-/// Provider tính toán tổng giá trị giỏ hàng, lắng nghe cả Atom và Provider khác
+/// Provider tính toán tổng giá trị giỏ hàng
 let cartSummaryProvider = Provider(name: "CartSummary") { ref in
     let products = ref.watch(productsProvider).value ?? []
-    let balance = ref.watch(UserBalanceAtom()) // Lắng nghe từ Atom hệ thống
-    
+
+    // Giá trị mặc định cho số dư tài khoản
+    let balance = 1000.0
+
     let total = products.reduce(0) { $0 + $1.price }
     return "Total: $\(total) | Remaining: $\(balance - total)"
 }
@@ -80,12 +73,12 @@ struct RiverpodDemoView: View {
                             }
                         }
                     },
-                    error: { error, prevData in
+                    error: { err, prevData in
                         VStack(alignment: .leading) {
                             if let products = prevData {
                                 ForEach(products) { Text($0.name).opacity(0.5) }
                             }
-                            Text("Error: \(error.localizedDescription)")
+                            Text("Error: \(err.localizedDescription)")
                                 .foregroundColor(.red)
                         }
                     },
@@ -104,7 +97,8 @@ struct RiverpodDemoView: View {
         .toolbar {
             Button("Refresh") {
                 Task {
-                    await container.refresh(productsProvider).notifier?.refresh()
+                    let notifier = container.read(productsProvider.notifier)
+                    await notifier.refresh()
                 }
             }
         }

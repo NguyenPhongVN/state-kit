@@ -544,7 +544,7 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
         self._id = UUID()
     }
 
-    // MARK: - Awaitable Access
+    // MARK: - Instance & Awaitable Access
 
     /// Returns a provider that allows awaiting the async notifier's result.
     ///
@@ -561,6 +561,28 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
     /// - Returns: An AsyncNotifierFutureProvider for awaiting the result
     public var future: AsyncNotifierFutureProvider<N, T> {
         AsyncNotifierFutureProvider(provider: self)
+    }
+
+    /// Returns a provider that gives access to the async notifier instance itself.
+    ///
+    /// Use this when you need to call methods on the notifier or access it directly
+    /// from within SwiftUI views or other reactive code.
+    ///
+    /// **Example: Access Notifier Instance**
+    /// ```swift
+    /// @Watch(userProfileProvider.notifier) var profileNotifier
+    ///
+    /// // Access the notifier to call methods
+    /// Button("Update") {
+    ///     Task {
+    ///         try await profileNotifier.updateProfile(newData)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Returns: An AsyncNotifierInstanceProvider for accessing the notifier instance
+    public var notifier: AsyncNotifierInstanceProvider<N, T> {
+        AsyncNotifierInstanceProvider(provider: self)
     }
 
     // MARK: - Internal Methods
@@ -587,6 +609,97 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
     /// Two AsyncNotifierProviders are equal if they have the same identifier
     public static func == (lhs: AsyncNotifierProvider, rhs: AsyncNotifierProvider) -> Bool {
         lhs._id == rhs._id
+    }
+}
+
+// MARK: - AsyncNotifierInstanceProvider
+
+/// A provider that gives direct access to an AsyncNotifier instance.
+///
+/// `AsyncNotifierInstanceProvider` wraps an `AsyncNotifierProvider` and exposes
+/// the notifier instance itself (rather than just its state). This allows you to
+/// call methods on the notifier from SwiftUI views.
+///
+/// **Usage:**
+/// Created internally by calling `.notifier` on an `AsyncNotifierProvider`.
+///
+/// **Example:**
+/// ```swift
+/// let userProvider = AsyncNotifierProvider { UserNotifier() }
+/// let userInstanceProvider = userProvider.notifier  // Returns AsyncNotifierInstanceProvider
+/// ```
+///
+/// **Thread Safety:**
+/// Confined to the MainActor.
+///
+/// - Note: This provider is created automatically via the `.notifier` property.
+public struct AsyncNotifierInstanceProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderProtocol, @unchecked Sendable {
+
+    // MARK: - Type Definition
+
+    /// The state type is the notifier instance itself
+    public typealias State = N
+
+    // MARK: - Properties
+
+    /// The wrapped AsyncNotifierProvider
+    public let provider: AsyncNotifierProvider<N, T>
+
+    /// Inherits auto-dispose setting from the wrapped provider
+    public var autoDispose: Bool { provider.autoDispose }
+
+    // MARK: - Initialization
+
+    /// Creates an instance provider for an AsyncNotifierProvider.
+    ///
+    /// - Parameter provider: The AsyncNotifierProvider to wrap
+    init(provider: AsyncNotifierProvider<N, T>) {
+        self.provider = provider
+    }
+
+    // MARK: - ProviderProtocol Conformance
+
+    /// Creates an element that provides the notifier instance
+    public func createElement(container: ProviderContainer) -> AnyProviderElement {
+        AsyncNotifierInstanceElement(provider: self, container: container)
+    }
+
+    /// Hashes using the wrapped provider
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(provider)
+    }
+
+    /// Two AsyncNotifierInstanceProviders are equal if they wrap the same provider
+    public static func == (lhs: AsyncNotifierInstanceProvider, rhs: AsyncNotifierInstanceProvider) -> Bool {
+        lhs.provider == rhs.provider
+    }
+}
+
+// MARK: - AsyncNotifierInstanceElement
+
+/// Internal element providing access to an AsyncNotifier instance.
+///
+/// `AsyncNotifierInstanceElement` creates a "view" of the notifier instance
+/// (rather than just its state). This allows watching the notifier directly
+/// to get both its state management capabilities and callable methods.
+///
+/// **Thread Safety:**
+/// Confined to the MainActor.
+///
+/// - Note: This is an internal implementation detail. Use .notifier to access the instance.
+@MainActor
+public final class AsyncNotifierInstanceElement<N: AsyncNotifier<T>, T: Sendable>: ProviderElement<AsyncNotifierInstanceProvider<N, T>> {
+
+    /// Creates and returns the notifier instance.
+    ///
+    /// Ensures the parent AsyncNotifierProvider element exists and returns its notifier instance.
+    ///
+    /// - Returns: The notifier instance
+    public override func providerCreate() -> N {
+        let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
+        // Ensure the notifier and its state exist
+        _ = parentElement.getState()
+        return parentElement.notifier!
     }
 }
 
