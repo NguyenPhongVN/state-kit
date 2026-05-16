@@ -81,7 +81,7 @@ public func useMemo<T>(
     _ compute: () -> T
 ) -> T {
     guard let context = StateRuntime.current else {
-        fatalError("Hooks must be used inside StateRuntime")
+        fatalError("\(#function) must be used inside StateRuntime")
     }
 
     let index = context.nextIndex()

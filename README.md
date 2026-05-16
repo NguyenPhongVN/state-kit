@@ -23,7 +23,8 @@ targets: [
         dependencies: [
             .product(name: "StateKit", package: "state-kit"),
             .product(name: "StateKitAtoms", package: "state-kit"),
-            .product(name: "Riverpods", package: "state-kit")
+            .product(name: "Riverpods", package: "state-kit"),
+            .product(name: "StateKitMacros", package: "state-kit")
         ]
     )
 ]
@@ -57,6 +58,8 @@ targets: [
 | `StateConcurrency` | `SCTask` (Retry, Timeout, Gather), `AsyncCurrentValueStream`, `AsyncPassthroughStream` |
 | `StateKitTesting` | `StateTest` harness for unit-testing hooks |
 | `StateKitDevTools` | `StateDevScope` — debug overlay for hook scopes |
+| `StateKitMacros` | Swift Macros — `@Atom`, `@Provider` to reduce boilerplate |
+| `StateKitCombine` | Combine Bridge — `SKCombineAtom`, `asPhase()`, `asPublisher()` |
 
 ### Architecture
 
@@ -69,6 +72,7 @@ StateKitCore          ← no SwiftUI, no Combine
         ├── StateKitSupport   ← @HState, @HMemo, @HRef
         ├── StateKitTesting   ← StateTest harness
         ├── StateKitDevTools  ← debug overlay
+        ├── StateKitMacros    ← @Atom, @Provider macros
         └── StateKitCombine   ← Combine bridge
 
 StateConcurrency      ← SCTask + standalone async sequence utilities

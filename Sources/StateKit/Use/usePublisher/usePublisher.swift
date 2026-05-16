@@ -127,7 +127,7 @@ public func usePublisher<P: Publisher>(
     _ publisher: @escaping () -> P
 ) -> PublisherPhase<P.Output> {
     guard let context = StateRuntime.current else {
-        fatalError("Hooks must be used inside StateRuntime")
+        fatalError("\(#function) must be used inside StateRuntime")
     }
 
     let index = context.nextIndex()

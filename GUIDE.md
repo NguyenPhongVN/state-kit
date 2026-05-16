@@ -11,8 +11,9 @@ Comprehensive guide for StateKit, StateKitAtoms, and Riverpods.
 4. [StateKitAtoms](#statekitatoms)
 5. [StateConcurrency](#stateconcurrency)
 6. [StateKitSupport](#statekitsupport)
-7. [Testing](#testing)
-8. [Best Practices](#best-practices)
+7. [Macros](#macros)
+8. [Testing](#testing)
+9. [Best Practices](#best-practices)
 
 ---
 
@@ -135,15 +136,50 @@ Syntactic sugar for Hooks and Atoms.
 
 ---
 
+## Macros
+
+StateKit provides Swift Macros to drastically reduce boilerplate code for Atoms and Providers.
+
+### `@Atom`
+Generates a full `SKStateAtom` struct and a shared instance from a simple variable declaration.
+
+```swift
+@Atom var counter: Int = 0
+
+// Usage
+@SKState(counterAtom) var count
+```
+
+### `@Provider`
+Generates a `NotifierProvider` for a `Notifier` class automatically.
+
+```swift
+@Provider 
+class CounterNotifier: Notifier<Int> {
+    override func build() -> Int { 0 }
+    func increment() { state += 1 }
+}
+
+// Usage
+@Watch(counterNotifierProvider) var count
+```
+
+---
+
 ## Testing
 
 Use `StateKitTesting` for isolated hook tests.
 ```swift
-@Test func testCounter() async {
-    let test = StateTest(0) { useState($0) }
-    #expect(test.value.0 == 0)
-    test.value.1(5)
-    #expect(test.value.0 == 5)
+@Suite struct MyTests {
+    @Test func testCounter() async {
+        let h = StateTest()
+        let (count, setCount) = h.render { useState(0) }
+        #expect(count == 0)
+        
+        setCount(5)
+        let (newCount, _) = h.render { useState(0) }
+        #expect(newCount == 5)
+    }
 }
 ```
 

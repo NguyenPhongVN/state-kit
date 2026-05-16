@@ -44,7 +44,7 @@
 public func useRef<T>(_ initial: T) -> StateRef<T> {
 
     guard let context = StateRuntime.current else {
-        fatalError("Hooks must be used inside StateRuntime")
+        fatalError("\(#function) must be used inside StateRuntime")
     }
 
     let index = context.nextIndex()

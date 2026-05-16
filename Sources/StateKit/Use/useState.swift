@@ -28,7 +28,7 @@ import SwiftUI
 private func _useState<T>(_ initial: T) -> StateSignal<T> {
 
     guard let context = StateRuntime.current else {
-        fatalError("Hooks must be used inside StateRuntime")
+        fatalError("\(#function) must be used inside StateRuntime")
     }
 
     let index = context.nextIndex()

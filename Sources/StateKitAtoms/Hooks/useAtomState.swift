@@ -158,9 +158,9 @@ public func useAtomBinding<A: SKStateAtom>(_ atom: A) -> Binding<A.Value> {
 /// ```
 ///
 /// - Parameter atom: The mutable atom to reset.
-/// - Returns: A `() -> Void` closure that restores `atom` to its default.
+/// - Returns: A `@MainActor () -> Void` closure that restores `atom` to its default.
 @MainActor
-public func useAtomReset<A: SKStateAtom>(_ atom: A) -> () -> Void {
+public func useAtomReset<A: SKStateAtom>(_ atom: A) -> @MainActor () -> Void {
     let store = useEnvironment(\.skAtomStore)
     return { store.resetStateValue(for: atom) }
 }

@@ -1,7 +1,10 @@
-import Combine
+@preconcurrency import Combine
 import Testing
 import StateKitTesting
 import StateKitCombine
+import StateKitAtoms
+import StateKit
+import Foundation
 
 @MainActor
 @Suite("StateKitCombine")
@@ -63,6 +66,24 @@ struct StateKitCombineTests {
         _ = cancellable
 
         #expect(phases == [.value("ready")])
+    }
+
+    @Test("Publisher.asAtom bridges into a task atom")
+    func testAsAtom() async throws {
+        let store = SKAtomStore()
+        let subject = CurrentValueSubject<Int, Never>(10)
+
+        let atom = subject.asAtom(identifier: "test-atom")
+
+        // Initial state should be loading
+        let phase1 = atom._getOrCreateBox(in: store).value
+        #expect(phase1 == .loading)
+
+        // Wait for it to resolve (CurrentValueSubject emits immediately)
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        let phase2 = atom._getOrCreateBox(in: store).value
+        #expect(phase2 == .success(10))
     }
 }
 

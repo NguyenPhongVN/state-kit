@@ -2,58 +2,29 @@
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
+import CompilerPluginSupport
 
 let package = Package(
     name: "state-kit",
     platforms: [
-        .iOS(.v17),        // iOS 17.0+ for latest SwiftUI features
-        .macOS(.v14),      // macOS 14.0+ for latest system APIs
-        .tvOS(.v17),       // tvOS 17.0+ for latest tvOS features
-        .watchOS(.v10),    // watchOS 10.0+ for latest watchOS capabilities
-        .visionOS(.v1)     // visionOS 1.0+ for visionOS support
+        .iOS(.v17),
+        .macOS(.v14),
+        .tvOS(.v17),
+        .watchOS(.v10),
+        .visionOS(.v1)
     ],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
-        .library(
-            name: "StateKitCore",
-            targets: ["StateKitCore"]
-        ),
-        .library(
-            name: "StateKit",
-            targets: ["StateKit"]
-        ),
-        .library(
-            name: "StateKitCombine",
-            targets: ["StateKitCombine"]
-        ),
-        .library(
-            name: "StateKitUI",
-            targets: ["StateKitUI"]
-        ),
-        .library(
-            name: "StateKitSupport",
-            targets: ["StateKitSupport"]
-        ),
-        .library(
-            name: "StateKitTesting",
-            targets: ["StateKitTesting"]
-        ),
-        .library(
-            name: "StateKitDevTools",
-            targets: ["StateKitDevTools"]
-        ),
-        .library(
-            name: "StateKitAtoms",
-            targets: ["StateKitAtoms"]
-        ),
-        .library(
-            name: "Riverpods",
-            targets: ["Riverpods"]
-        ),
-        .library(
-            name: "StateConcurrency",
-            targets: ["StateConcurrency"]
-        ),
+        .library(name: "StateKitCore", targets: ["StateKitCore"]),
+        .library(name: "StateKit", targets: ["StateKit"]),
+        .library(name: "StateKitCombine", targets: ["StateKitCombine"]),
+        .library(name: "StateKitUI", targets: ["StateKitUI"]),
+        .library(name: "StateKitSupport", targets: ["StateKitSupport"]),
+        .library(name: "StateKitTesting", targets: ["StateKitTesting"]),
+        .library(name: "StateKitDevTools", targets: ["StateKitDevTools"]),
+        .library(name: "StateKitAtoms", targets: ["StateKitAtoms"]),
+        .library(name: "Riverpods", targets: ["Riverpods"]),
+        .library(name: "StateConcurrency", targets: ["StateConcurrency"]),
+        .library(name: "StateKitMacros", targets: ["StateKitMacros"]),
     ],
     dependencies: [
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "603.0.0"),
@@ -61,99 +32,79 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay", from: "1.4.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
-        .target(
-            name: "StateKitCore"
-        ),
-        .target(
-            name: "StateKit",
+        PackageDescription.Target.target(name: "StateKitCore"),
+        PackageDescription.Target.target(name: "StateKit", dependencies: ["StateKitCore"]),
+        Target.macro(
+            name: "StateKitMacrosPlugin",
             dependencies: [
-                "StateKitCore",
+                Target.Dependency.product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
+                Target.Dependency.product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
-        .target(
+        Target.target(
             name: "StateKitMacros",
             dependencies: [
-                .product(name: "SwiftSyntaxMacros", package: "swift-syntax"),
-                .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
+                Target.Dependency.byName(name: "StateKitMacrosPlugin"),
+                Target.Dependency.byName(name: "StateKitAtoms"),
+                Target.Dependency.byName(name: "Riverpods")
             ]
         ),
-        .target(
+        PackageDescription.Target.target(
             name: "StateKitCombine",
-            dependencies: [
-                "StateKit"
-            ]
+            dependencies: ["StateKit", "StateKitAtoms"]
         ),
-        .target(
+        PackageDescription.Target.target(
             name: "StateConcurrency",
             dependencies: [
-                "StateKit",
-                .product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
-                .product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
+                PackageDescription.Target.Dependency.byName(name: "StateKit"),
+                PackageDescription.Target.Dependency.product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
+                PackageDescription.Target.Dependency.product(name: "IssueReporting", package: "xctest-dynamic-overlay"),
             ]
         ),
-        .target(
+        PackageDescription.Target.target(
             name: "StateKitUI",
             dependencies: [
-                "StateKit",
-                "StateKitCore",
-                "StateKitAtoms",
-                "StateKitSupport",
+                PackageDescription.Target.Dependency.byName(name: "StateKit"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitCore"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitAtoms"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitSupport")
             ]
         ),
-        .target(
-            name: "StateKitTesting"
-            ,
-            dependencies: [
-                "StateKit"
-            ]
-        ),
-        .target(
-            name: "StateKitSupport",
-            dependencies: [
-                "StateKit",
-                "StateKitCore",
-                "StateKitAtoms",
-            ]
-        ),
-        .target(
-            name: "StateKitDevTools",
-            dependencies: [
-                "StateKit"
-            ]
-        ),
-        .target(
-            name: "StateKitAtoms",
-            dependencies: [
-                "StateKit",
-            ]
-        ),
-        .target(
-            name: "Riverpods",
-            dependencies: [
-                "StateKit",
-            ]
-        ),
-        .testTarget(
+        PackageDescription.Target.target(name: "StateKitTesting", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.target(name: "StateKitSupport", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "StateKit"),
+            PackageDescription.Target.Dependency.byName(name: "StateKitCore"),
+            PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")
+        ]),
+        PackageDescription.Target.target(name: "StateKitDevTools", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.target(name: "StateKitAtoms", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.target(name: "Riverpods", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKit")]),
+        PackageDescription.Target.testTarget(
             name: "StateKitTests",
             dependencies: [
-                "StateKit",
-                "StateKitCombine",
-                "StateKitTesting"
+                PackageDescription.Target.Dependency.byName(name: "StateKit"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitCombine"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitTesting")
             ]
         ),
-        .testTarget(
-            name: "StateKitAtomsTests",
+        PackageDescription.Target.testTarget(name: "StateKitCoreTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitCore")]),
+        PackageDescription.Target.testTarget(name: "StateKitUITests", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "StateKitUI"),
+            PackageDescription.Target.Dependency.byName(name: "StateKitTesting")
+        ]),
+        PackageDescription.Target.testTarget(name: "StateKitSupportTests", dependencies: [
+            PackageDescription.Target.Dependency.byName(name: "StateKitSupport"),
+            PackageDescription.Target.Dependency.byName(name: "StateKitTesting")
+        ]),
+        PackageDescription.Target.testTarget(name: "StateConcurrencyTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateConcurrency")]),
+        PackageDescription.Target.testTarget(name: "StateKitAtomsTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitAtoms")]),
+        PackageDescription.Target.testTarget(
+            name: "StateKitMacrosTests",
             dependencies: [
-                "StateKitAtoms",
+                PackageDescription.Target.Dependency.byName(name: "StateKitMacrosPlugin"),
+                PackageDescription.Target.Dependency.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]
         ),
-        .testTarget(
-            name: "RiverpodsTests",
-            dependencies: [
-                "Riverpods",
-            ]
-        ),
+        PackageDescription.Target.testTarget(name: "RiverpodsTests", dependencies: [PackageDescription.Target.Dependency.byName(name: "Riverpods")]),
     ]
 )

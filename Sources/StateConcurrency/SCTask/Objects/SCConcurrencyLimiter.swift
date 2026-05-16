@@ -8,7 +8,7 @@ import Foundation
 public actor SCConcurrencyLimiter {
     private let maxConcurrentTasks: Int
     private var activeTasks = 0
-    private var waitingTasks: [UUID: CheckedContinuation<Void, Never>] = [:]
+    private var waitingTasks: [UUID: CheckedContinuation<Bool, Never>] = [:]
     private var waitingOrder: [UUID] = []
     
     /// Initializes a new concurrency limiter.
