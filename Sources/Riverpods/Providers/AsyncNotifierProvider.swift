@@ -1,91 +1,274 @@
 import Foundation
 import Observation
 
-// MARK: - AsyncNotifier
+// MARK: - AsyncNotifier Base Class
 
-/// Một class quản lý trạng thái bất đồng bộ phức tạp.
+/// A base class for managing complex asynchronous state with full lifecycle control.
 ///
-/// Tương đương với `AsyncNotifier` trong Riverpod của Flutter.
+/// `AsyncNotifier` is an async-capable version of `Notifier` that manages state which
+/// requires async initialization or async updates. It's ideal for:
+/// - Complex async logic (API calls with local state management)
+/// - State that needs both async initialization and sync updates
+/// - Lifecycle management with async setup/cleanup
+/// - Stateful async operations with side effect management
+/// - Mixing async and sync state transitions
+///
+/// **Key Features:**
+/// - **Async-capable**: `build()` is async and can throw
+/// - **State tracking**: Manages loading/data/error/refreshing states
+/// - **Cancellable**: Automatically cancels operations when dependencies change
+/// - **Awaitable**: Can await the future value directly
+/// - **Observable**: Conforms to Observation for SwiftUI integration
+/// - **Thread-safe**: Confined to the MainActor
+///
+/// **Key Differences from Notifier:**
+/// - `build()` is async and can throw (vs sync in Notifier)
+/// - State wraps values in AsyncValue (vs raw values in Notifier)
+/// - Can track loading/error states automatically
+/// - Supports awaitable futures via `.future` property
+/// - Automatically cancels pending operations on dependency changes
+///
+/// **Lifecycle:**
+/// 1. Created: Notifier instance instantiated
+/// 2. Setup: `_setup()` called to provide ref and callbacks
+/// 3. Build: `build()` called asynchronously to compute initial state
+/// 4. Recompute: `build()` called again when dependencies change (previous operation cancelled)
+/// 5. Update: State can be changed via `state` property or `update()` method
+/// 6. Dispose: Provider disposed when no longer needed
+///
+/// **State Progression:**
+/// ```
+/// .loading()
+///   ↓
+/// .data(T)  ← Successfully loaded
+///   ↓
+/// (When dependencies change or invalidated)
+/// .refreshing(T)  ← Reloading with previous value
+///   ↓
+/// .data(T)  or  .error(Error, T?)
+/// ```
+///
+/// **Thread Safety:**
+/// Confined to the MainActor. All operations must occur on the main thread.
+///
+/// **Usage Pattern:**
+/// ```swift
+/// @Notifier
+/// class UserNotifier extends AsyncNotifier<User> {
+///     override func build() async throws -> User {
+///         let userId = ref.watch(userIdProvider)
+///         return try await fetchUser(userId)
+///     }
+///
+///     func updateName(_ name: String) async throws {
+///         update { user in
+///             var updated = user
+///             updated.name = name
+///             return updated
+///         }
+///     }
+/// }
+/// ```
+///
+/// - Important: Always override the `build()` method to compute initial state asynchronously.
+/// - Note: The `ref` property is set internally and should not be modified directly.
+/// - Warning: Do not access `state` before `build()` has completed.
 @MainActor
 @Observable
 open class AsyncNotifier<State: Sendable> {
+
+    // MARK: - Properties
+
+    /// The provider reference for dependency tracking and lifecycle callbacks
     public internal(set) var ref: ProviderRef!
-    
+
+    /// The current async state value, stored privately
     @ObservationIgnored
     private var _state: AsyncValue<State>?
-    
+
+    /// The callback invoked when state changes
     @ObservationIgnored
     private var onUpdate: (() -> Void)?
-    
+
+    /// The task running the async build operation
     @ObservationIgnored
     private var task: Task<Void, Never>?
-    
+
+    /// Continuations waiting for the async operation to complete
     @ObservationIgnored
     private var _futureContinuation: [CheckedContinuation<State, Error>] = []
-    
+
+    // MARK: - State Management
+
+    /// The current async state value.
+    ///
+    /// **Getting:**
+    /// - Returns the current AsyncValue (loading, data, error, refreshing)
+    /// - Triggers observation in SwiftUI views
+    ///
+    /// **Setting:**
+    /// - Updates the async state value
+    /// - Resolves any waiting futures with the new value (if data/error)
+    /// - Automatically notifies all dependent providers
+    /// - Triggers view refreshes if observing
+    ///
+    /// **Example:**
+    /// ```swift
+    /// // Direct replacement
+    /// notifier.state = .data(newValue)
+    ///
+    /// // Functional update
+    /// notifier.update { user in
+    ///     var updated = user
+    ///     updated.name = "New Name"
+    ///     return updated
+    /// }
+    /// ```
     public var state: AsyncValue<State> {
         get { _state! }
         set {
             _state = newValue
             onUpdate?()
-            
-            // Resolve future if data or error
+
+            // Resolve futures when value is determined
             switch newValue {
             case .data(let val):
                 let continuations = _futureContinuation
                 _futureContinuation.removeAll()
                 continuations.forEach { $0.resume(returning: val) }
+
             case .error(let err, _):
                 let continuations = _futureContinuation
                 _futureContinuation.removeAll()
                 continuations.forEach { $0.resume(throwing: err) }
+
             default:
+                // .loading and .refreshing don't resolve futures
                 break
             }
         }
     }
-    
+
+    // MARK: - Awaitable Access
+
+    /// Waits for the async operation to complete and returns the result.
+    ///
+    /// If the state is already .data or .error, returns/throws immediately.
+    /// If the state is .loading or .refreshing, suspends until completion.
+    ///
+    /// **Example:**
+    /// ```swift
+    /// let user = try await notifier.future
+    /// ```
+    ///
+    /// - Returns: The state value when available
+    /// - Throws: Any error from the async operation
     public var future: State {
         get async throws {
+            // Check current state
             if let _state = _state {
                 switch _state {
-                case .data(let val): return val
-                case .error(let err, _): throw err
-                default: break
+                case .data(let val):
+                    return val
+                case .error(let err, _):
+                    throw err
+                default:
+                    break
                 }
             }
-            
+
+            // Wait for operation to complete
             return try await withCheckedThrowingContinuation { continuation in
                 _futureContinuation.append(continuation)
             }
         }
     }
-    
+
+    // MARK: - Initialization
+
+    /// Initializes a new AsyncNotifier instance.
+    ///
+    /// Override this to perform custom initialization if needed.
+    /// However, most initialization should be done in `build()` instead.
     public init() {}
-    
-    /// Khởi tạo state ban đầu một cách bất đồng bộ.
+
+    // MARK: - State Computation
+
+    /// Computes the initial state asynchronously.
+    ///
+    /// Called:
+    /// - When the notifier is first created
+    /// - When a watched dependency changes (previous operation cancelled)
+    /// - When explicitly requested via recomputation
+    ///
+    /// Override this to compute the initial state asynchronously.
+    /// This is where you:
+    /// - Perform async initialization (API calls, database queries)
+    /// - Watch other providers via `ref.watch()`
+    /// - Register cleanup callbacks via `ref.onDispose()`
+    /// - Set up listeners via `ref.listen()`
+    ///
+    /// **Example: Async Initialization**
+    /// ```swift
+    /// override func build() async throws -> User {
+    ///     let userId = ref.watch(userIdProvider)
+    ///     return try await api.fetchUser(userId)
+    /// }
+    /// ```
+    ///
+    /// **Example: With Error Handling**
+    /// ```swift
+    /// override func build() async throws -> Data {
+    ///     do {
+    ///         return try await fetchDataWithRetry()
+    ///     } catch {
+    ///         throw CustomError.fetchFailed(error)
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Important: Must be overridden in subclasses.
+    /// - Warning: Do not call directly; the framework manages this.
+    /// - Note: If an operation is in progress when dependencies change, it's automatically cancelled.
     open func build() async throws -> State {
-        fatalError("Phải override hàm build()")
+        fatalError("Must override build() method")
     }
-    
+
+    // MARK: - Internal Framework Methods
+
+    /// Sets up the notifier with its provider reference and update callback.
+    ///
+    /// - Parameters:
+    ///   - ref: The provider reference for dependency tracking
+    ///   - onUpdate: Callback invoked when state changes
+    ///
+    /// - Note: This is called internally by the framework. Do not call directly.
     internal func _setup(ref: ProviderRef, onUpdate: @escaping () -> Void) {
         self.ref = ref
         self.onUpdate = onUpdate
     }
-    
+
+    /// Recomputes the state asynchronously.
+    ///
+    /// Cancels any in-progress operation, updates to loading/refreshing state,
+    /// and starts a new async operation.
+    ///
+    /// - Note: This is called internally when dependencies change. Do not call directly.
     internal func _recompute() {
+        // Cancel previous operation
         task?.cancel()
-        
+
         let previousData = _state?.value
-        
-        // Nếu đã có dữ liệu, chuyển sang trạng thái refreshing
+
+        // Update to appropriate loading state
         if let current = previousData {
             _state = .refreshing(current)
         } else {
             _state = .loading()
         }
         onUpdate?()
-        
+
+        // Start new async operation
         task = Task { @MainActor in
             do {
                 let newValue = try await build()
@@ -97,37 +280,105 @@ open class AsyncNotifier<State: Sendable> {
             }
         }
     }
-    
-    /// Cập nhật data bên trong AsyncValue bằng một closure.
+
+    // MARK: - State Updates
+
+    /// Updates the state using a transform function.
+    ///
+    /// This is a convenience method for functional state updates.
+    /// It extracts the current value, applies the transform, and updates to .data.
+    ///
+    /// - Parameter transform: A function that takes the current state and returns a new state
+    ///
+    /// **Example: Increment or Modify**
+    /// ```swift
+    /// notifier.update { $0 + 1 }
+    ///
+    /// notifier.update { user in
+    ///     var updated = user
+    ///     updated.name = "New Name"
+    ///     return updated
+    /// }
+    /// ```
+    ///
+    /// - Note: This automatically triggers dependent provider updates.
+    /// - Warning: Only call this when you have a current state value (not in loading/error).
     public func update(_ transform: (State) -> State) {
         state = state.update(transform)
     }
 }
 
-// MARK: - AsyncNotifier Element
+// MARK: - AsyncNotifierProviderElement
 
+/// Internal element managing an AsyncNotifierProvider's notifier instance and async state.
+///
+/// `AsyncNotifierProviderElement` is responsible for:
+/// - Creating and managing the async notifier instance
+/// - Starting and managing async operations
+/// - Tracking loading/data/error/refreshing states
+/// - Recomputing state when dependencies change (with cancellation)
+/// - Bridging state updates to the provider system
+/// - Cleanup when the provider is disposed
+///
+/// **Lifecycle:**
+/// 1. Created: Element instantiated for the provider
+/// 2. Build: Notifier instance created, `build()` called asynchronously
+/// 3. Loading: State = .loading() while operation runs
+/// 4. Complete: State = .data() or .error() when operation finishes
+/// 5. Dependencies: When watched providers change, previous operation cancelled and build() called again
+/// 6. Disposed: Notifier released, pending operations cancelled, cleanup functions called
+///
+/// **Thread Safety:**
+/// Confined to the MainActor. All operations occur on the main thread.
+///
+/// - Note: This is an internal implementation detail. Use AsyncNotifierProvider macro to create async notifier-based providers.
 @MainActor
 public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable>: ProviderElement<AsyncNotifierProvider<N, T>> {
+
+    // MARK: - Properties
+
+    /// The async notifier instance being managed
     public var notifier: N?
-    
+
+    // MARK: - Value Creation
+
+    /// Creates or recomputes the async notifier's state.
+    ///
+    /// **First call:**
+    /// - Creates a new notifier instance
+    /// - Sets up the notifier with provider reference
+    /// - Starts async operation via `build()`
+    ///
+    /// **Subsequent calls:**
+    /// - Cancels any in-progress operation
+    /// - Calls `build()` again to recompute async state
+    ///
+    /// - Returns: The notifier's current AsyncValue state
     public override func providerCreate() -> AsyncValue<T> {
         if let n = notifier {
+            // Dependencies changed, recompute the state (cancels previous operation)
             n._recompute()
             return n.state
         }
-        
+
+        // Initial setup - create the notifier instance
         let n = provider.createNotifier()
         notifier = n
+
+        // Set up the notifier with provider reference and update callback
         n._setup(ref: self) { [weak self] in
             if let self, let newState = self.notifier?.state {
                 self.stateBox?.value = newState
                 self.notifyDependents()
             }
         }
+
+        // Start async computation and return initial state
         n._recompute()
         return n.state
     }
-    
+
+    /// Disposes the notifier and cleans up resources
     public override func dispose() {
         super.dispose()
         notifier = nil
@@ -136,16 +387,150 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
 
 // MARK: - AsyncNotifierProvider
 
-/// Provider dùng để sử dụng một AsyncNotifier.
+/// A provider that manages complex asynchronous state using an AsyncNotifier instance.
+///
+/// `AsyncNotifierProvider` wraps an `AsyncNotifier` and exposes its async state as a provider.
+/// Use AsyncNotifierProvider when you need:
+/// - Complex async logic (API calls, database operations)
+/// - Class-based async state management
+/// - Encapsulation of related async behavior and state
+/// - Lifecycle management with async setup/cleanup
+/// - Cancellable operations that recompute when dependencies change
+/// - Mixed async and sync state transitions
+///
+/// **Key Characteristics:**
+/// - **Async-capable**: State computed asynchronously via `build()`
+/// - **Cancellable**: Previous operations cancelled when dependencies change
+/// - **State-aware**: Tracks loading/data/error/refreshing states
+/// - **Observable**: The notifier conforms to Observation for SwiftUI
+/// - **Encapsulated**: Complex logic grouped in the notifier
+/// - **Flexible**: Mix imperative updates with reactive dependencies
+///
+/// **Thread Safety:**
+/// Confined to the MainActor. All operations occur on the main thread.
+///
+/// **When to Use:**
+/// - Async initialization with complex logic
+/// - API/database calls with local state management
+/// - Long-lived async operations (WebSocket, streams in notifier)
+/// - State that needs both async init and sync updates
+/// - Lifecycle management with async setup/cleanup
+///
+/// **When NOT to Use:**
+/// - Simple one-shot async operations (use `FutureProvider`)
+/// - Continuous streams of data (use `StreamProvider`)
+/// - Simple mutable state (use `StateProvider`)
+/// - Simple sync values (use `Provider`)
+///
+/// **State Progression:**
+/// ```
+/// loading()
+///   ↓ (operation completes)
+/// data(T)  or  error(Error)
+///   ↓ (dependencies change)
+/// refreshing(T)  (reloading with previous data)
+///   ↓
+/// data(T)  or  error(Error)
+/// ```
+///
+/// **Example: User with Async Initialization**
+/// ```swift
+/// @Notifier
+/// class UserNotifier extends AsyncNotifier<User> {
+///     override func build() async throws -> User {
+///         let userId = ref.watch(userIdProvider)
+///         return try await fetchUser(userId)
+///     }
+///
+///     func updateEmail(_ email: String) throws {
+///         update { user in
+///             var updated = user
+///             updated.email = email
+///             return updated
+///         }
+///     }
+/// }
+/// ```
+///
+/// **Example: Complex Async Initialization**
+/// ```swift
+/// @Notifier
+/// class AppStateNotifier extends AsyncNotifier<AppState> {
+///     override func build() async throws -> AppState {
+///         let user = try await loadUser()
+///         let settings = try await loadSettings()
+///         let permissions = try await requestPermissions()
+///
+///         ref.onDispose {
+///             closeConnections()
+///         }
+///
+///         return AppState(user, settings, permissions)
+///     }
+/// }
+/// ```
+///
+/// **Example: With Error Recovery**
+/// ```swift
+/// @Notifier
+/// class DataNotifier extends AsyncNotifier<[Data]> {
+///     override func build() async throws -> [Data] {
+///         do {
+///             return try await fetchDataWithTimeout()
+///         } catch {
+///             // Fall back to cached data if available
+///             if let cached = ref.read(cachedDataProvider) {
+///                 return cached
+///             }
+///             throw error
+///         }
+///     }
+/// }
+/// ```
+///
+/// - Important: The notifier instance persists across view rebuilds; only the state updates refresh views.
+/// - Note: When dependencies change, any in-progress operation is automatically cancelled.
+/// - Warning: Do not assume build() will complete in any particular time; use the async states.
 public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderProtocol, @unchecked Sendable {
+
+    // MARK: - Type Definition
+
+    /// The state type is AsyncValue tracking the async operation's lifecycle
     public typealias State = AsyncValue<T>
-    
+
+    // MARK: - Properties
+
+    /// The closure that creates the notifier instance
     private let _create: @MainActor () -> N
+
+    /// Unique identifier for this provider instance
     private let _id: AnyHashable
+
+    /// Whether to automatically dispose when no longer listened to
     public let autoDispose: Bool
+
+    /// Time in seconds before the state value is invalidated
     public let cacheTime: TimeInterval
+
+    /// Human-readable name for debugging
     public let name: String?
-    
+
+    // MARK: - Initialization
+
+    /// Creates a new AsyncNotifierProvider with explicit configuration.
+    ///
+    /// - Parameters:
+    ///   - autoDispose: Whether to automatically dispose when unused (default: true)
+    ///   - cacheTime: How long to cache the state in seconds (default: 0)
+    ///   - name: Optional debug name
+    ///   - create: The closure that creates the async notifier instance
+    ///
+    /// **Example: Simple Async Notifier**
+    /// ```swift
+    /// let userProvider = AsyncNotifierProvider {
+    ///     UserNotifier()
+    /// }
+    /// ```
     public init(
         autoDispose: Bool = true,
         cacheTime: TimeInterval = 0,
@@ -158,56 +543,125 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
         self._create = create
         self._id = UUID()
     }
-    
-    /// Truy cập future của notifier.
+
+    // MARK: - Awaitable Access
+
+    /// Returns a provider that allows awaiting the async notifier's result.
+    ///
+    /// Use this to directly await the notifier's async state from within other async code.
+    ///
+    /// **Example: Await in Another Notifier**
+    /// ```swift
+    /// override func build() async throws -> ProcessedData {
+    ///     let data = try await ref.watch(dataProvider.future)
+    ///     return try process(data)
+    /// }
+    /// ```
+    ///
+    /// - Returns: An AsyncNotifierFutureProvider for awaiting the result
     public var future: AsyncNotifierFutureProvider<N, T> {
         AsyncNotifierFutureProvider(provider: self)
     }
-    
+
+    // MARK: - Internal Methods
+
+    /// Creates a new notifier instance
     @MainActor
     func createNotifier() -> N {
         _create()
     }
-    
+
+    // MARK: - ProviderProtocol Conformance
+
+    /// Creates an element to manage the async notifier
     @MainActor
     public func createElement(container: ProviderContainer) -> AnyProviderElement {
         AsyncNotifierProviderElement(provider: self, container: container)
     }
-    
+
+    /// Hashes this provider using its unique identifier
     public func hash(into hasher: inout Hasher) {
         hasher.combine(_id)
     }
-    
+
+    /// Two AsyncNotifierProviders are equal if they have the same identifier
     public static func == (lhs: AsyncNotifierProvider, rhs: AsyncNotifierProvider) -> Bool {
         lhs._id == rhs._id
     }
 }
 
-/// Một Provider phụ trợ để await giá trị từ AsyncNotifier.
+// MARK: - AsyncNotifierFutureProvider
+
+/// A provider that returns an awaitable Task for an AsyncNotifier's result.
+///
+/// `AsyncNotifierFutureProvider` allows awaiting an AsyncNotifier's async state
+/// directly from within other async code.
+///
+/// **Thread Safety:**
+/// Confined to the MainActor.
+///
+/// **Example: Await in Async Code**
+/// ```swift
+/// let result = try await ref.watch(notifierProvider.future)
+/// ```
+///
+/// - Note: This provider automatically inherits the autoDispose setting from the wrapped provider.
 public struct AsyncNotifierFutureProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderProtocol, @unchecked Sendable {
+
+    // MARK: - Type Definition
+
+    /// The state type is a Task that can be awaited
     public typealias State = Task<T, Error>
+
+    // MARK: - Properties
+
+    /// The AsyncNotifierProvider whose result this provider wraps
     public let provider: AsyncNotifierProvider<N, T>
+
+    /// Inherits auto-dispose setting from the wrapped provider
     public var autoDispose: Bool { provider.autoDispose }
-    
+
+    // MARK: - ProviderProtocol Conformance
+
+    /// Creates an element that provides an awaitable task
     public func createElement(container: ProviderContainer) -> AnyProviderElement {
         AsyncNotifierFutureElement(provider: self, container: container)
     }
-    
+
+    /// Hashes using the wrapped provider
     public func hash(into hasher: inout Hasher) {
         hasher.combine(provider)
     }
-    
+
+    /// Two AsyncNotifierFutureProviders are equal if they wrap the same provider
     public static func == (lhs: AsyncNotifierFutureProvider, rhs: AsyncNotifierFutureProvider) -> Bool {
         lhs.provider == rhs.provider
     }
 }
 
+// MARK: - AsyncNotifierFutureElement
+
+/// Internal element that creates awaitable tasks for AsyncNotifiers.
+///
+/// `AsyncNotifierFutureElement` manages the task creation and lifecycle
+/// for AsyncNotifierFutureProvider.
+///
+/// **Thread Safety:**
+/// Confined to the MainActor.
+///
+/// - Note: This is an internal implementation detail.
 @MainActor
 final class AsyncNotifierFutureElement<N: AsyncNotifier<T>, T: Sendable>: ProviderElement<AsyncNotifierFutureProvider<N, T>> {
+
+    /// Creates an awaitable task for the async notifier.
+    ///
+    /// - Returns: A Task that completes when the notifier's async operation completes
     override func providerCreate() -> Task<T, Error> {
+        // Ensure the parent AsyncNotifierProvider element exists
         let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
         _ = parentElement.getState()
-        
+
+        // Create a task that awaits the future
         return Task { @MainActor in
             try await parentElement.notifier!.future
         }
