@@ -28,7 +28,7 @@ public struct SwiftDataProvider<T: Sendable> {
 }
 
 /// Reference type for SwiftData provider context.
-public final class SwiftDataProviderRef: Sendable {
+public final class SwiftDataProviderRef: @preconcurrency Sendable {
     public let modelContext: ModelContext
 
     public init(modelContext: ModelContext) {
@@ -94,20 +94,20 @@ public struct SwiftDataNotifierProvider {
     public static func create<T: Sendable>(
         initialState: T,
         context: ModelContext
-    ) -> AsyncNotifierProvider<T> {
-        return AsyncNotifierProvider { ref -> SwiftDataNotifier<T> in
+    ) -> AsyncNotifierProvider<SwiftDataNotifier<T>, T> {
+        return AsyncNotifierProvider { ref in
             SwiftDataNotifier(initialState: initialState, context: context, ref: ref)
         }
     }
 }
 
 /// Notifier that maintains SwiftData synchronization.
-final class SwiftDataNotifier<T: Sendable>: AsyncNotifier, Sendable {
+final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, Sendable {
     let initialState: T
     let context: ModelContext
-    let ref: AsyncNotifierProviderRef
+    let ref: ProviderRef
 
-    init(initialState: T, context: ModelContext, ref: AsyncNotifierProviderRef) {
+    init(initialState: T, context: ModelContext, ref: ProviderRef) {
         self.initialState = initialState
         self.context = context
         self.ref = ref
@@ -156,7 +156,7 @@ public struct SwiftDataQueryProvider {
 
 extension PersistentModel where Self: Sendable {
     /// Syncs this model's changes to StateKit state.
-    public func syncToState<S: Sendable>(
+    public func syncToState(
         in context: ModelContext
     ) async throws -> Self {
         try context.save()

@@ -233,7 +233,6 @@ public final class TestExecutionRecord {
 ///
 /// Ensures all async operations complete in a predictable sequence,
 /// essential for reproducible testing.
-@MainActor
 public actor DeterministicAsyncExecutor {
     private var queue: [(id: UInt64, operation: () async -> Void)] = []
     private var nextId: UInt64 = 0

@@ -119,10 +119,10 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
 /// Security level for Keychain items.
 public enum KeychainAccessibility: String, Sendable {
     /// Item is inaccessible after device restart until user unlocks device.
-    case afterFirstUnlock = "com.apple.keychain.when-unlocked"
+    case afterFirstUnlock = "com.apple.keychain.after-first-unlock"
 
     /// Item is inaccessible after device restart, and while device is locked.
-    case afterFirstUnlockThisDeviceOnly = "com.apple.keychain.when-unlocked-this-device-only"
+    case afterFirstUnlockThisDeviceOnly = "com.apple.keychain.after-first-unlock-this-device-only"
 
     /// Item is always accessible (least secure).
     case always = "com.apple.keychain.always"
@@ -166,7 +166,7 @@ public struct KeychainNotifierProvider {
         key: String,
         initial: T,
         accessibility: KeychainAccessibility = .whenUnlocked
-    ) -> NotifierProvider<KeychainNotifier<T>> {
+    ) -> NotifierProvider<KeychainNotifier<T>, T> {
         return NotifierProvider { ref in
             let provider = KeychainStateProvider<T>(key: key, accessibility: accessibility)
             return KeychainNotifier(provider: provider, initial: initial, ref: ref)
@@ -175,14 +175,14 @@ public struct KeychainNotifierProvider {
 }
 
 /// Notifier that maintains Keychain synchronization.
-public final class KeychainNotifier<T: Sendable & Codable>: Notifier, Sendable {
+public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, Sendable {
     private let provider: KeychainStateProvider<T>
     private var cachedValue: T
 
     public init(
         provider: KeychainStateProvider<T>,
         initial: T,
-        ref: NotifierProviderRef
+        ref: ProviderRef
     ) {
         self.provider = provider
 

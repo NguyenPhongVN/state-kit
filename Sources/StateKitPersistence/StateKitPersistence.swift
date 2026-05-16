@@ -18,6 +18,4 @@ public enum StateKitPersistence {
 }
 
 // Re-export main integration types
-public typealias SwiftDataSyncProvider = SwiftDataProvider
-public typealias PersistentAtom = UserDefaultsAtom
 public typealias SecureStateProvider = KeychainStateProvider
