@@ -49,7 +49,7 @@ struct RiverpodNotifierView: View {
                 Button("Randomize Name") {
                     Task {
                         let newName = "User \(Int.random(in: 100...999))"
-                        try await profileNotifier.updateName(newName)
+                        await profileNotifier.updateName(newName)
                     }
                 }
 
