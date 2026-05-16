@@ -12,7 +12,7 @@ public struct AtomFamilyMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
         guard !properties.isEmpty else {
             throw MacroError.invalidAtomFamily("Atom family requires at least one stored property as ID parameter")
         }
@@ -20,23 +20,38 @@ public struct AtomFamilyMacro: PeerMacro {
         let structName = structDecl.name.text
         let factoryName = structName.prefix(1).lowercased() + structName.dropFirst()
 
-        var paramList: [String] = []
-        var structInit: [String] = []
+        if properties.count == 1 {
+            let prop = properties[0]
+            return ["""
+            public let \(raw: factoryName) = atomFamily { (\(raw: prop.name): \(raw: prop.typeName)) in
+                \(raw: structName)(\(raw: prop.name): \(raw: prop.name))
+            }
+            """]
+        } else {
+            let idStructName = structName + "ID"
+            let idStruct: DeclSyntax = """
+            public struct \(raw: idStructName): Hashable, Sendable {
+                \(raw: properties.map { "public let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
+                public init(\(raw: properties.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) {
+                    \(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n        "))
+                }
+            }
+            """
 
-        for prop in properties {
-            paramList.append("\(prop.name): \(prop.typeName)")
-            structInit.append("    \(prop.name): \(prop.name)")
+            let internalFactoryName = "_" + factoryName + "Family"
+            let internalFactory: DeclSyntax = """
+            private let \(raw: internalFactoryName) = atomFamily { (id: \(raw: idStructName)) in
+                \(raw: structName)(\(raw: properties.map { "\($0.name): id.\($0.name)" }.joined(separator: ", ")))
+            }
+            """
+
+            let wrapperFunction: DeclSyntax = """
+            public func \(raw: factoryName)(\(raw: properties.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) -> some SKStateAtom {
+                \(raw: internalFactoryName)(\(raw: idStructName)(\(raw: properties.map { "\($0.name): \($0.name)" }.joined(separator: ", "))))
+            }
+            """
+
+            return [idStruct, internalFactory, wrapperFunction]
         }
-
-        let params = paramList.joined(separator: ", ")
-        let initCode = structInit.isEmpty ? "()" : "(\n" + structInit.joined(separator: ",\n") + "\n    )"
-
-        let factoryFunction: DeclSyntax = """
-        public let \(raw: factoryName) = atomFamily { (\(raw: params)) in
-            \(raw: structName)\(raw: initCode)
-        }
-        """
-
-        return [factoryFunction]
     }
 }

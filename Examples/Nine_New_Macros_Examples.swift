@@ -45,35 +45,53 @@ struct UserPostsAtom {
 
 // MARK: - HOOK MACROS (3 New)
 
-// 4. @HookPrevious - Track previous value
-@HookPrevious
-struct PreviousCountHook {
-    let count: Int
-}
-
-// Usage: let previousCount = usePreviousCountHook(count: 5)
-// Returns: Optional<Int> - the previous value
-
-// Useful for:
-// - Detecting if value increased/decreased
-// - Animations (animate from previous to current)
-// - Change comparisons
-
----
-
-// 5. @HookToggle - Boolean toggle helper
-@HookToggle
-struct IsMenuOpenHook {
-    // Generates: useIsMenuOpen() -> (Bool, () -> Void)
+// 4. @Debounce - Delayed execution
+struct SearchController {
+    @Debounce(milliseconds: 500)
+    func performSearch() async {
+        // API call logic
+    }
 }
 
 // Usage:
-// let (isOpen, toggle) = useIsMenuOpen()
-// Button("Toggle") { toggle() }
+// let controller = SearchController()
+// controller.performSearch_debounced() // Called multiple times, only runs once after 500ms
 
-// Replaces:
-// let (state, setState) = useState(false)
-// let toggle = { setState(!state) }
+---
+
+// 5. @HookForm - Form state & validation
+@HookForm
+struct LoginForm {
+    var email: String = ""
+    var password: String = ""
+}
+
+/*
+Generates:
+useLoginForm() -> LoginFormHook
+LoginFormHook has:
+- email: Binding<String>
+- password: Binding<String>
+- emailError: Binding<String>
+- passwordError: Binding<String>
+- isValid: Bool
+- validate() -> Bool
+- reset()
+*/
+
+// Usage in View:
+/*
+let form = useLoginForm()
+TextField("Email", text: form.email)
+if !form.emailError.wrappedValue.isEmpty {
+    Text(form.emailError.wrappedValue).foregroundColor(.red)
+}
+Button("Login") {
+    if form.validate() {
+        // Submit
+    }
+}
+*/
 
 ---
 

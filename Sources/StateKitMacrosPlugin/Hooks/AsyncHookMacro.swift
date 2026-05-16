@@ -22,7 +22,7 @@ public struct AsyncHookMacro: PeerMacro {
             throw MacroError.custom("@AsyncHook requires a 'run()' method marked with 'async'")
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
         let structName = structDecl.name.text
         let hookName = "use" + structName
 

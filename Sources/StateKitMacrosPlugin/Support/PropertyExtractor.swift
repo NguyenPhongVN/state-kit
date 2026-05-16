@@ -7,18 +7,20 @@ struct PropertyInfo {
 }
 
 enum PropertyExtractor {
-    static func storedVars(from decl: DeclGroupSyntax) -> [PropertyInfo] {
+    static func storedProperties(from decl: DeclGroupSyntax) -> [PropertyInfo] {
         var properties: [PropertyInfo] = []
 
         for member in decl.memberBlock.members {
             guard let varDecl = member.decl.as(VariableDeclSyntax.self) else { continue }
-            guard varDecl.bindingSpecifier.text == "var" else { continue }
+            // Allow both let and var
+            let specifier = varDecl.bindingSpecifier.text
+            guard specifier == "var" || specifier == "let" else { continue }
 
             for binding in varDecl.bindings {
                 guard let pattern = binding.pattern.as(IdentifierPatternSyntax.self) else { continue }
 
                 let name = pattern.identifier.text
-                let typeName = binding.typeAnnotation?.type.description ?? "Unknown"
+                let typeName = binding.typeAnnotation?.type.description.trimmingCharacters(in: .whitespaces) ?? "Unknown"
                 let defaultValue = binding.initializer?.value.description
 
                 properties.append(PropertyInfo(

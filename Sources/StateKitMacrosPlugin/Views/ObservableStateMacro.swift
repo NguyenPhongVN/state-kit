@@ -15,7 +15,7 @@ public struct ObservableStateMacro: MemberMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
 
         if properties.isEmpty {
             throw MacroError.custom("@ObservableState requires at least one stored property")

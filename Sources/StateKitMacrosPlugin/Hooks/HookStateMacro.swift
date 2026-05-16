@@ -12,7 +12,7 @@ public struct HookStateMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
         guard !properties.isEmpty else {
             throw MacroError.methodNotFound("stored properties")
         }

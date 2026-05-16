@@ -12,7 +12,7 @@ public struct StateProviderMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
         guard let initialProp = properties.first(where: { $0.name == "initial" }) else {
             throw MacroError.methodNotFound("struct must have 'initial' property")
         }

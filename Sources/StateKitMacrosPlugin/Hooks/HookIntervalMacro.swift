@@ -18,7 +18,7 @@ public struct HookIntervalMacro: PeerMacro {
             throw MacroError.custom("@HookInterval requires a 'tick()' method")
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
         let structName = structDecl.name.text
         let hookName = "use" + structName
 

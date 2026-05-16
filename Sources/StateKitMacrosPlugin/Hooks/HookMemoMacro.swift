@@ -20,7 +20,7 @@ public struct HookMemoMacro: PeerMacro {
             throw MacroError.invalidReturnType
         }
 
-        let properties = PropertyExtractor.storedVars(from: structDecl)
+        let properties = PropertyExtractor.storedProperties(from: structDecl)
         let structName = structDecl.name.text
         let hookName = "use" + structName + "Memo"
 
