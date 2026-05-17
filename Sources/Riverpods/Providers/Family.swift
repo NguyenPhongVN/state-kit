@@ -239,8 +239,8 @@ extension NotifierProvider {
     ///
     /// **Example: User Manager Notifier**
     /// ```swift
-    /// @Notifier
-    /// class UserManagerNotifier extends Notifier<UserState> {
+    /// @riverpodNotifier
+    /// final class UserManagerNotifier: Notifier<UserState> {
     ///     let userId: Int
     ///
     ///     init(userId: Int) {
@@ -267,8 +267,8 @@ extension NotifierProvider {
     ///
     /// **Example: Document Editor**
     /// ```swift
-    /// @Notifier
-    /// class DocumentNotifier extends Notifier<Document> {
+    /// @riverpodNotifier
+    /// final class DocumentNotifier: Notifier<Document> {
     ///     let documentId: String
     ///
     ///     init(documentId: String) {

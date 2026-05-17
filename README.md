@@ -1,8 +1,8 @@
 # StateKit
 
-A React Hooks-inspired state management library for Swift and SwiftUI. StateKit provides a lightweight hook runtime for scoped local state, a global atom store (Recoil/Jotai style), and a powerful, feature-complete implementation of Riverpod for Swift.
+StateKit is a modular state management toolkit for Swift and SwiftUI. It combines React-style hooks for local state, an atom-based global store (Recoil/Jotai style), and a feature-complete Riverpod implementation for Swift.
 
-For a comprehensive guide on how to use all features, see [GUIDE.md](GUIDE.md).
+For a comprehensive guide on how to use all features, see [GUIDE.md](docs/GUIDE.md).
 
 ## Installation
 

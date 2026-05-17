@@ -92,6 +92,13 @@ struct ContentView: View {
                 category: .riverpod,
                 keywords: ["family", "stream", "selector", "performance"]
             ) { RiverpodAdvancedView() },
+            CaseStudy(
+                id: "rpMacros",
+                title: "Riverpod: Macros",
+                summary: "Macro-only patterns for notifier, provider, future provider, and selector APIs.",
+                category: .riverpod,
+                keywords: ["macro", "riverpodNotifier", "Provider", "FutureProvider"]
+            ) { RiverpodMacrosGuideView() },
 
             CaseStudy(
                 id: "useState",

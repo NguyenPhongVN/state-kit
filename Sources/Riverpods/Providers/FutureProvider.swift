@@ -225,14 +225,13 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 ///     return try await fetchData()
 /// }
 ///
-/// @Notifier
-/// class RefreshNotifier extends AsyncNotifier<Void> {
-///     @override
-///     Future<Void> build() async {
-///         ref.onAddListener(() {
-///             // Refresh data when view appears
+/// @riverpodNotifier
+/// final class RefreshNotifier: AsyncNotifier<Void> {
+///     override func build() async throws -> Void {
+///         ref.onAddListener {
 ///             ref.invalidate(dataProvider)
-///         })
+///         }
+///         return ()
 ///     }
 /// }
 /// ```
@@ -320,10 +319,9 @@ public struct FutureProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
     ///
     /// **Example: Await in Notifier**
     /// ```swift
-    /// @Notifier
-    /// class DataNotifier extends AsyncNotifier<Data> {
-    ///     @override
-    ///     Future<Data> build() async {
+    /// @riverpodNotifier
+    /// final class DataNotifier: AsyncNotifier<Data> {
+    ///     override func build() async throws -> Data {
     ///         return try await dataProvider.future // Await the future
     ///     }
     /// }
@@ -399,10 +397,9 @@ public struct FutureProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
 ///
 /// **Example: In AsyncNotifier**
 /// ```swift
-/// @Notifier
-/// class ProcessingNotifier extends AsyncNotifier<ProcessedData> {
-///     @override
-///     Future<ProcessedData> build() async {
+/// @riverpodNotifier
+/// final class ProcessingNotifier: AsyncNotifier<ProcessedData> {
+///     override func build() async throws -> ProcessedData {
 ///         // Get the data via future
 ///         let data = try await ref.watch(dataProvider.future)
 ///         // Process it

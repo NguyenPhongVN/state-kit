@@ -256,4 +256,3 @@ Week 19+:   Phase 6 (Advanced)
 4. Release v2.0
 
 **Then immediately start Phase 2** (Architecture framework).
-
