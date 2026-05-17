@@ -5,8 +5,7 @@ import SwiftSyntaxMacros
 public struct HookViewMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,
-        providingMembersOf declaration: DeclGroupSyntax,
-        conformingTo protocols: [IdentifierTypeSyntax],
+        providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         // Check that stateBody exists

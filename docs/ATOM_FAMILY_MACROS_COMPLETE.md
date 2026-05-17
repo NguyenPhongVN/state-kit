@@ -229,7 +229,7 @@ struct CounterReducer {
 - **4 Atom Family Macros** (NEW): @AtomFamily, @SelectorFamily, @AsyncTaskFamily, @AtomReducer
 - **10 Hook Macros**: @Hook, @HookState, @HookRef, @HookEffect, @HookMemo, @HookCallback, @HookReducer, @HookContext, @HookForm, @CustomHook
 - **1 View Macro**: @HookView
-- **1 Riverpod Macro**: @riverpodNotifier
+- **1 Riverpod Macro**: @RiverpodNotifier
 
 ---
 

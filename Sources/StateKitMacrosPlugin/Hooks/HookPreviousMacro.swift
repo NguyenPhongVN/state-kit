@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @HookPrevious: Tracks the previous value of a state
-/// Useful for animations, comparisons, and detecting changes
 public struct HookPreviousMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -15,19 +13,21 @@ public struct HookPreviousMacro: PeerMacro {
         }
 
         let properties = PropertyExtractor.storedProperties(from: structDecl)
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
-
-        guard !properties.isEmpty else {
-            throw MacroError.custom("@HookPrevious requires at least one stored property (the value to track)")
+        guard properties.count == 1 else {
+            throw MacroError.custom("HookPrevious requires exactly one stored property")
         }
 
         let prop = properties[0]
-        let paramList = "\(prop.name): \(prop.typeName)"
+        let className = structDecl.name.text
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        let hookFunction: DeclSyntax = """
+        let hookDecl: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)(\(raw: paramList)) -> \(raw: prop.typeName)? {
+        \(raw: staticKeyword)func \(raw: hookName)(\(raw: prop.name): \(raw: prop.typeName)) -> \(raw: prop.typeName)? {
             let ref = useRef(\(raw: prop.typeName)?.none)
             let previous = ref.value
             useEffect(updateStrategy: .preserved(by: \(raw: prop.name))) {
@@ -38,6 +38,6 @@ public struct HookPreviousMacro: PeerMacro {
         }
         """
 
-        return [hookFunction]
+        return [hookDecl]
     }
 }

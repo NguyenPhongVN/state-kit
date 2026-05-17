@@ -50,23 +50,26 @@ public struct HookFormMacro: PeerMacro {
             }
 
             @discardableResult
-            public func validate() -> Bool {
+            func validate() -> Bool {
                 // Basic validation: all fields must not be empty if they are Strings
                 var allValid = true
         \(raw: properties.filter { $0.typeName == "String" }.map { "        if \($0.name).wrappedValue.isEmpty { \($0.name)Error.wrappedValue = \"Required\"; allValid = false }" }.joined(separator: "\n"))
                 return allValid
             }
 
-            public func reset() {
+            func reset() {
         \(raw: properties.map { "        \($0.name).wrappedValue = \($0.defaultValue ?? "nil")" }.joined(separator: "\n"))
         \(raw: properties.map { "        \($0.name)Error.wrappedValue = \"\"" }.joined(separator: "\n"))
             }
         }
         """
 
+        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
+        let staticModifier = isStatic ? "static " : ""
+
         let hookFunction: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)() -> \(raw: hookStructName) {
+        \(raw: staticModifier)func \(raw: hookName)() -> \(raw: hookStructName) {
             \(raw: hookStructName)(
         \(raw: useBindingCalls.joined(separator: ",\n")),
         \(raw: useErrorBindingCalls.joined(separator: ",\n"))

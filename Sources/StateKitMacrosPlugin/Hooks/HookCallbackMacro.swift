@@ -12,45 +12,39 @@ public struct HookCallbackMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let callFn = PropertyExtractor.function(in: structDecl, named: "call")
-            ?? PropertyExtractor.function(in: structDecl, named: "handle")
+        let className = structDecl.name.text
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        guard let callFn = callFn else {
-            throw MacroError.methodNotFound("call() or handle() method")
+        // Find call or handle method
+        var methodName = "call"
+        var paramList = ""
+        var argList = ""
+
+        if let fn = PropertyExtractor.function(in: structDecl, named: "handle") {
+            methodName = "handle"
+            let params = fn.signature.parameterClause.parameters.map { $0.description.trimmingCharacters(in: .whitespaces) }
+            paramList = params.joined(separator: ", ")
+            argList = fn.signature.parameterClause.parameters.map { $0.firstName.text }.joined(separator: ", ")
+        } else if let fn = PropertyExtractor.function(in: structDecl, named: "call") {
+            methodName = "call"
+            let params = fn.signature.parameterClause.parameters.map { $0.description.trimmingCharacters(in: .whitespaces) }
+            paramList = params.joined(separator: ", ")
+            argList = fn.signature.parameterClause.parameters.map { $0.firstName.text }.joined(separator: ", ")
         }
 
-        guard let returnType = callFn.signature.returnClause?.type else {
-            throw MacroError.invalidReturnType
-        }
-
-        let properties = PropertyExtractor.storedProperties(from: structDecl)
-        let structName = structDecl.name.text
-        let hookName = "use" + structName + "Callback"
-        let methodName = callFn.name.text
-
-        var paramList: [String] = []
-        var depsList: [String] = []
-        var instanceInit: [String] = []
-
-        for prop in properties {
-            paramList.append("\(prop.name): \(prop.typeName)")
-            depsList.append(prop.name)
-            instanceInit.append("    \(prop.name): \(prop.name)")
-        }
-
-        let params = paramList.joined(separator: ", ")
-        let deps = depsList.isEmpty ? ".once" : ".preserved(by: \(depsList.joined(separator: ", ")))"
-        let initCode = instanceInit.isEmpty ? "()" : "(\n" + instanceInit.joined(separator: ",\n") + "\n    )"
-
-        let hookFunction: DeclSyntax = """
+        let hookDecl: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)(\(raw: params)) -> \(returnType) {
-            useCallback(updateStrategy: \(raw: deps)) {
-                \(raw: structName)\(raw: initCode).\(raw: methodName)
+        \(raw: staticKeyword)func \(raw: hookName)() -> (\(raw: paramList)) -> Void {
+            useCallback(updateStrategy: .once) { (\(raw: paramList)) in
+                \(raw: className)().\(raw: methodName)(\(raw: argList))
             }
         }
         """
 
-        return [hookFunction]
+        return [hookDecl]
     }
 }

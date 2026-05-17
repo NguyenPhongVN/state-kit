@@ -12,27 +12,42 @@ public struct ProviderMacro: PeerMacro {
             throw MacroError.onlyApplicableToFunctions
         }
 
-        let funcName = funcDecl.name.text
-        guard !funcName.isEmpty else {
-            throw MacroError.invalidHookName(funcName)
-        }
+        let functionName = funcDecl.name.text
+        let providerName = functionName + "Provider"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        // Extract return type
         guard let returnType = funcDecl.signature.returnClause?.type else {
             throw MacroError.invalidReturnType
         }
 
         // Find parameters (expect 'ref: ProviderRef')
-        var params: [String] = []
+        var paramDecls: [String] = []
+        var callArgs: [String] = []
+
         for param in funcDecl.signature.parameterClause.parameters {
-            params.append(param.description.trimmingCharacters(in: .whitespaces))
+            let typeStr = param.type.trimmedDescription
+            let label = param.firstName.text
+            let internalName = param.secondName?.text ?? label
+            
+            paramDecls.append("\(label): \(typeStr)")
+
+            if label == "_" {
+                callArgs.append(internalName)
+            } else {
+                callArgs.append("\(label): \(internalName)")
+            }
         }
 
-        let paramList = params.isEmpty ? "ref" : params.joined(separator: ", ")
+        let paramList = paramDecls.isEmpty ? "ref" : paramDecls.joined(separator: ", ")
+        let argList = callArgs.isEmpty ? "ref" : callArgs.joined(separator: ", ")
 
         let providerDecl: DeclSyntax = """
-        public let \(raw: funcName) = Provider { (\(raw: paramList)) -> \(returnType) in
-            await \(raw: funcName)(\(raw: paramList))
+        @MainActor
+        \(raw: staticKeyword)let \(raw: providerName) = Provider { (\(raw: paramList)) -> \(raw: returnType.trimmedDescription) in
+            \(raw: functionName)(\(raw: argList))
         }
         """
 

@@ -23,7 +23,7 @@ enum MacroError: Error, CustomStringConvertible {
         case .onlyApplicableToStructs:
             return "@StateAtom, @ValueAtom, @TaskAtom, @ThrowingTaskAtom, @PublisherAtom, and @Atom can only be applied to structs"
         case .onlyApplicableToClasses:
-            return "@riverpodNotifier can only be applied to classes"
+            return "@RiverpodNotifier can only be applied to classes"
         case .onlyApplicableToFunctions:
             return "@Hook and @CustomHook can only be applied to functions"
         case .methodNotFound(let name):

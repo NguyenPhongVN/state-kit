@@ -20,8 +20,8 @@ enum PropertyExtractor {
                 guard let pattern = binding.pattern.as(IdentifierPatternSyntax.self) else { continue }
 
                 let name = pattern.identifier.text
-                let typeName = binding.typeAnnotation?.type.description.trimmingCharacters(in: .whitespaces) ?? "Unknown"
-                let defaultValue = binding.initializer?.value.description
+                let typeName = binding.typeAnnotation?.type.trimmedDescription ?? "Unknown"
+                let defaultValue = binding.initializer?.value.trimmedDescription
 
                 properties.append(PropertyInfo(
                     name: name,
@@ -40,7 +40,7 @@ enum PropertyExtractor {
         for member in decl.memberBlock.members {
             guard let typeAlias = member.decl.as(TypeAliasDeclSyntax.self) else { continue }
             let name = typeAlias.name.text
-            let type = typeAlias.initializer.value.description
+            let type = typeAlias.initializer.value.trimmedDescription
             result[name] = type
         }
 

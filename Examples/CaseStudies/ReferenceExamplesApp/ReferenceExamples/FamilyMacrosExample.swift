@@ -1,18 +1,32 @@
 import SwiftUI
 import StateKitAtoms
 import StateKitUI
+import StateKitMacros
 
-private let familyScoreAtom = atomFamily { (id: Int) in id * 10 }
-private let familyLabelAtom = selectorFamily { (id: Int, context: SKAtomTransactionContext) in
-    let score = context.watch(familyScoreAtom(id))
-    return "Member \(id): \(score)"
+@AtomFamily
+private struct FamilyScoreAtom {
+    let id: Int
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> Int {
+        return id * 10
+    }
+}
+
+@SelectorFamily
+private struct FamilyLabelAtom {
+    let id: Int
+    @MainActor
+    func value(context: SKAtomTransactionContext) -> String {
+        let score = context.watch(FamilyScoreAtom.family(id))
+        return "Member \(id): \(score)"
+    }
 }
 
 struct FamilyMacrosExampleView: View {
     var body: some View {
         Form {
             Section("atomFamily + selectorFamily") {
-                ForEach(1...3, id: \.self) { memberID in
+                ForEach([1, 2, 3], id: \.self) { memberID in
                     FamilyRow(memberID: memberID)
                 }
             }
@@ -26,8 +40,8 @@ private struct FamilyRow: View {
 
     var body: some View {
         SKAtomScopeView {
-            let score = useAtomBinding(familyScoreAtom(memberID))
-            let label = useAtomValue(familyLabelAtom(memberID))
+            let score = useAtomBinding(FamilyScoreAtom.family(memberID))
+            let label = useAtomValue(FamilyLabelAtom.family(memberID))
 
             HStack {
                 Text(label)

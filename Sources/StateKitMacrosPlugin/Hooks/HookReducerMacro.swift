@@ -12,28 +12,37 @@ public struct HookReducerMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let typealiases = PropertyExtractor.typealiases(from: structDecl)
-        guard let stateType = typealiases["State"], let actionType = typealiases["Action"] else {
-            throw MacroError.methodNotFound("typealias State and typealias Action")
+        let className = structDecl.name.text
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        // Extract State and Action typealiases (Trimming trivia to avoid comment leakage)
+        var stateType: String = "Any"
+        var actionType: String = "Any"
+
+        for member in structDecl.memberBlock.members {
+            if let typealiasDecl = member.decl.as(TypeAliasDeclSyntax.self) {
+                if typealiasDecl.name.text == "State" {
+                    stateType = typealiasDecl.initializer.value.trimmedDescription
+                } else if typealiasDecl.name.text == "Action" {
+                    actionType = typealiasDecl.initializer.value.trimmedDescription
+                }
+            }
         }
 
-        guard PropertyExtractor.function(in: structDecl, named: "reduce") != nil else {
-            throw MacroError.missingReduceMethod
-        }
-
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
-
-        let hookFunction: DeclSyntax = """
+        let hookDecl: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)(initial: \(raw: stateType) = \(raw: stateType)()) -> (\(raw: stateType), (\(raw: actionType)) -> Void) {
-            let reducer = \(raw: structName)()
+        \(raw: staticKeyword)func \(raw: hookName)(initial: \(raw: stateType) = \(raw: stateType)()) -> (\(raw: stateType), (\(raw: actionType)) -> Void) {
+            let reducer = \(raw: className)()
             return useReducer(initial) { state, action in
                 reducer.reduce(&state, action: action)
             }
         }
         """
 
-        return [hookFunction]
+        return [hookDecl]
     }
 }

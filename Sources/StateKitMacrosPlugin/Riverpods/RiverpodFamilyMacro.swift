@@ -2,12 +2,10 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @RiverpodFamily: Generates a family provider from a Notifier/AsyncNotifier subclass
-/// with parameterized build method
-public struct RiverpodFamilyMacro: PeerMacro {
+public struct RiverpodFamilyMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,
-        providingPeersOf declaration: some DeclSyntaxProtocol,
+        providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard let classDecl = declaration.as(ClassDeclSyntax.self) else {
@@ -15,18 +13,25 @@ public struct RiverpodFamilyMacro: PeerMacro {
         }
 
         let className = classDecl.name.text
-        let lowerCaseClassName = className.prefix(1).lowercased() + className.dropFirst()
 
-        guard PropertyExtractor.function(in: classDecl, named: "build") != nil else {
-            throw MacroError.custom("@RiverpodFamily requires a 'build(param)' method")
+        // Find the build method and its parameters
+        var argType = "String"
+        for member in classDecl.memberBlock.members {
+            if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
+               funcDecl.name.text == "build" {
+                if let firstParam = funcDecl.signature.parameterClause.parameters.first {
+                    argType = firstParam.type.trimmedDescription
+                }
+            }
         }
 
-        let providerDeclaration: DeclSyntax = """
-        public let \(raw: lowerCaseClassName)Family = NotifierProvider.family(
-            \(raw: className).new,
-        )
+        let familyDecl: DeclSyntax = """
+        @MainActor
+        public static let family = NotifierProvider.family { (arg: \(raw: argType)) in
+            \(raw: className)()
+        }
         """
 
-        return [providerDeclaration]
+        return [familyDecl]
     }
 }

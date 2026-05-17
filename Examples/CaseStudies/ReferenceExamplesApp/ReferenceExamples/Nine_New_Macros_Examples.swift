@@ -1,109 +1,122 @@
 import SwiftUI
 import StateKitAtoms
 import StateKitUI
+import StateKitMacros
 
-// MARK: - 1. Base Atom Macros: @StateAtom, @ValueAtom
+// MARK: - Core Atoms - Show atom type variety
 
-private struct TodoFilterAtom: SKStateAtom, Hashable {
-    typealias Value = String
-    func defaultValue(context: SKAtomTransactionContext) -> String { "" }
-}
-
-private struct TodosAtom: SKStateAtom, Hashable {
-    typealias Value = [String]
+@StateAtom
+private struct TodosAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> [String] {
-        ["Buy milk", "Read documentation", "Review macros"]
+        ["Buy milk", "Read StateKit docs", "Master macros"]
     }
 }
 
-// MARK: - 2. @ValueAtom: Derived/Computed State
+@StateAtom
+private struct FilterAtom {
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> String { "" }
+}
 
-private struct FilteredTodosAtom: SKValueAtom, Hashable {
-    typealias Value = [String]
-    func value(context: SKAtomTransactionContext) -> [String] {
-        let todos = context.watch(TodosAtom())
-        let filter = context.watch(TodoFilterAtom())
+// MARK: - Computed Atoms with derivation
 
-        if filter.isEmpty {
-            return todos
-        }
+@Computed
+private struct FilteredTodosAtom {
+    @MainActor
+    func compute(context: SKAtomTransactionContext) -> [String] {
+        let todos = context.watch(TodosAtom.shared)
+        let filter = context.watch(FilterAtom.shared)
+        if filter.isEmpty { return todos }
         return todos.filter { $0.localizedCaseInsensitiveContains(filter) }
     }
 }
 
-private struct TodoCountAtom: SKValueAtom, Hashable {
-    typealias Value = Int
-    func value(context: SKAtomTransactionContext) -> Int {
-        context.watch(FilteredTodosAtom()).count
+@Computed
+private struct TodoCountAtom {
+    @MainActor
+    func compute(context: SKAtomTransactionContext) -> Int {
+        context.watch(FilteredTodosAtom.shared).count
     }
 }
 
-// MARK: - 3. @AtomFamily: Parameterized State
+// MARK: - Macro 1: atomFamily - Parameterized state factory
 
-private let todoCompletedAtom = atomFamily { (todo: String) in
-    false
+@AtomFamily
+private struct TodoCompletedAtom {
+    let todo: String
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> Bool { false }
 }
 
-// MARK: - 4. @SelectorFamily: Parameterized Computed Values
+// MARK: - Macro 2: selectorFamily - Parameterized computed values
 
-private let todoDisplayAtom = selectorFamily { (todo: String, context: SKAtomTransactionContext) in
-    let isCompleted = context.watch(todoCompletedAtom(todo))
-    let prefix = isCompleted ? "✓" : "○"
-    return "\(prefix) \(todo)"
+@SelectorFamily
+private struct TodoDisplayAtom {
+    let todo: String
+    @MainActor
+    func value(context: SKAtomTransactionContext) -> String {
+        let isCompleted = context.watch(TodoCompletedAtom.family(todo))
+        return isCompleted ? "✓ \(todo)" : "○ \(todo)"
+    }
 }
+
+// MARK: - Main View
 
 struct NineNewMacrosExamplesView: View {
-    @SKState(TodoFilterAtom()) private var filter
-    @SKState(TodosAtom()) private var todos
-    @SKValue(FilteredTodosAtom()) private var filteredTodos
-    @SKValue(TodoCountAtom()) private var count
+    @SKState(FilterAtom.shared) private var filter
+    @SKState(TodosAtom.shared) private var todos
+    @SKValue(FilteredTodosAtom.shared) private var filteredTodos
+    @SKValue(TodoCountAtom.shared) private var count
 
     var body: some View {
-        Form {
-            Section("Search & Filter") {
-                TextField("Filter todos", text: $filter)
-                    .placeholder(when: filter.isEmpty) {
-                        Text("Search...").foregroundColor(.gray)
-                    }
-            }
-
-            Section("Results (\(count))") {
-                if filteredTodos.isEmpty {
-                    Text("No todos match the filter")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(filteredTodos, id: \.self) { todo in
-                        TodoRow(todo: todo)
-                    }
-                }
-            }
-
-            Section("Add New") {
-                HStack {
-                    TextField("New todo", text: Binding(
-                        get: { "" },
-                        set: { newTodo in
-                            if !newTodo.isEmpty {
-                                todos.append(newTodo)
-                            }
+        NavigationStack {
+            Form {
+                Section("Search (atomFamily demo)") {
+                    TextField("Filter todos...", text: $filter)
+                        .placeholder(when: filter.isEmpty) {
+                            Text("Type to search").foregroundColor(.gray)
                         }
-                    ))
+                }
+
+                Section("Results (\(count))") {
+                    if filteredTodos.isEmpty {
+                        Text("No todos match").foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredTodos, id: \.self) { todo in
+                            TodoItemView(todo: todo)
+                        }
+                    }
+                }
+
+                Section("Add new") {
+                    HStack {
+                        TextField("New todo", text: Binding(
+                            get: { "" },
+                            set: { newTodo in
+                                if !newTodo.isEmpty {
+                                    todos.append(newTodo)
+                                }
+                            }
+                        ))
+                    }
                 }
             }
+            .navigationTitle("Full Macros Demo")
         }
-        .navigationTitle("Macro Examples")
     }
 }
 
-// MARK: - Todo Item Row with Completion Toggle
+// MARK: - Todo Item View using StateScope hooks
 
-private struct TodoRow: View {
+private struct TodoItemView: View {
     let todo: String
 
     var body: some View {
         SKAtomScopeView {
-            let display = useAtomValue(todoDisplayAtom(todo))
-            let isCompleted = useAtomBinding(todoCompletedAtom(todo))
+            // Using StateScope hooks pattern
+            let display = useAtomValue(TodoDisplayAtom.family(todo))
+            let isCompleted = useAtomBinding(TodoCompletedAtom.family(todo))
 
             HStack {
                 Button(action: { isCompleted.wrappedValue.toggle() }) {
@@ -120,12 +133,10 @@ private struct TodoRow: View {
 }
 
 #Preview {
-    NavigationStack {
-        NineNewMacrosExamplesView()
-    }
+    NineNewMacrosExamplesView()
 }
 
-// MARK: - Helper Extensions
+// MARK: - Helper Extension
 
 extension View {
     func placeholder<Content: View>(

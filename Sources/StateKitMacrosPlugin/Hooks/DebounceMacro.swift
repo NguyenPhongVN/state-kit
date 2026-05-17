@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @Debounce: Delays execution of a function until interval elapses with no new calls
-/// Useful for search, auto-save, etc.
 public struct DebounceMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -15,22 +13,32 @@ public struct DebounceMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
-        var debounceMs = "300"
+        let debouncedName = functionName + "_debounced"
         
-        if let attribute = node.as(AttributeSyntax.self),
-           let arguments = attribute.arguments?.as(LabeledExprListSyntax.self),
-           let msArg = arguments.first(where: { $0.label?.text == "milliseconds" }) {
-            debounceMs = msArg.expression.description
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        // Extract milliseconds argument
+        var milliseconds: Int = 0
+        if let args = node.arguments?.as(LabeledExprListSyntax.self),
+           let firstArg = args.first?.expression.as(IntegerLiteralExprSyntax.self) {
+            milliseconds = Int(firstArg.literal.text) ?? 0
         }
 
-        let debouncedFunction: DeclSyntax = """
+        let taskName = "_\(functionName)Task"
+        
+        let taskDecl: DeclSyntax = """
         @MainActor
-        private var _\(raw: functionName)Task: Task<Void, Never>?
+        \(raw: staticKeyword)private var \(raw: taskName): Task<Void, Never>?
+        """
 
-        public func \(raw: functionName)_debounced() {
-            _\(raw: functionName)Task?.cancel()
-            _\(raw: functionName)Task = Task {
-                try? await Task.sleep(nanoseconds: UInt64(\(raw: debounceMs)) * 1_000_000)
+        let debouncedFunc: DeclSyntax = """
+        @MainActor
+        \(raw: staticKeyword)func \(raw: debouncedName)() {
+            \(raw: taskName)?.cancel()
+            \(raw: taskName) = Task {
+                try? await Task.sleep(nanoseconds: UInt64(\(raw: milliseconds)) * 1_000_000)
                 if !Task.isCancelled {
                     await \(raw: functionName)()
                 }
@@ -38,6 +46,6 @@ public struct DebounceMacro: PeerMacro {
         }
         """
 
-        return [debouncedFunction]
+        return [taskDecl, debouncedFunc]
     }
 }

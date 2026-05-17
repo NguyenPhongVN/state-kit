@@ -12,16 +12,17 @@ public struct FutureProviderMacro: PeerMacro {
             throw MacroError.onlyApplicableToFunctions
         }
 
-        let funcName = funcDecl.name.text
-
-        // Extract return type from async function
-        guard let returnType = funcDecl.signature.returnClause?.type else {
-            throw MacroError.invalidReturnType
-        }
+        let functionName = funcDecl.name.text
+        let providerName = functionName + "Provider"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
         let providerDecl: DeclSyntax = """
-        public let \(raw: funcName) = FutureProvider { _ in
-            await \(raw: funcName)()
+        @MainActor
+        \(raw: staticKeyword)let \(raw: providerName) = FutureProvider { _ in
+            await \(raw: functionName)()
         }
         """
 

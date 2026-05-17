@@ -1,24 +1,32 @@
 import SwiftUI
 import StateKitAtoms
 import StateKitUI
+import StateKitMacros
 
-private struct FSNameAtom: SKStateAtom, Hashable {
-    typealias Value = String
+@StateAtom
+private struct FSNameAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> String { "StateKit" }
 }
-private struct FSCountAtom: SKStateAtom, Hashable {
-    typealias Value = Int
+
+@StateAtom
+private struct FSCountAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> Int { 0 }
 }
-private struct FSBadgeAtom: SKValueAtom, Hashable {
-    typealias Value = String
-    func value(context: SKAtomTransactionContext) -> String { "\(context.watch(FSNameAtom())) • \(context.watch(FSCountAtom()))" }
+
+@ValueAtom
+private struct FSBadgeAtom {
+    @MainActor
+    func value(context: SKAtomTransactionContext) -> String {
+        "\(context.watch(FSNameAtom.shared)) • \(context.watch(FSCountAtom.shared))"
+    }
 }
 
 struct StateKitFullShowcaseView: View {
-    @SKState(FSNameAtom()) private var name
-    @SKState(FSCountAtom()) private var count
-    @SKValue(FSBadgeAtom()) private var badge
+    @SKState(FSNameAtom.shared) private var name
+    @SKState(FSCountAtom.shared) private var count
+    @SKValue(FSBadgeAtom.shared) private var badge
 
     var body: some View {
         Form {
@@ -29,5 +37,11 @@ struct StateKitFullShowcaseView: View {
             }
         }
         .navigationTitle("StateKit Showcase")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        StateKitFullShowcaseView()
     }
 }

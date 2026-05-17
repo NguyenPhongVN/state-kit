@@ -1,32 +1,50 @@
 import SwiftUI
-import Riverpods
+import StateKitAtoms
+import StateKitUI
+import StateKitMacros
 
 private let allItems = (1...500).map { "Item-\($0)" }
-private let queryProvider = StateProvider { _ in "" }
-private let filteredProvider = Provider { ref in
-    let q = ref.watch(queryProvider)
-    guard !q.isEmpty else { return Array(allItems.prefix(30)) }
-    return allItems.filter { $0.localizedCaseInsensitiveContains(q) }.prefix(30).map { $0 }
+
+@StateAtom
+private struct QueryAtom {
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> String { "" }
+}
+
+@Computed
+private struct FilteredItemsAtom {
+    @MainActor
+    func compute(context: SKAtomTransactionContext) -> [String] {
+        let query = context.watch(QueryAtom.shared)
+        guard !query.isEmpty else {
+            return Array(allItems.prefix(30))
+        }
+        return Array(allItems.filter { $0.localizedCaseInsensitiveContains(query) }.prefix(30))
+    }
 }
 
 struct PerformanceOptimizationExampleView: View {
-    @Watch(queryProvider) var query
-    @Watch(filteredProvider) var filtered
-    @Environment(\.providerContainer) var container
+    @SKState(QueryAtom.shared) private var query
+    @SKValue(FilteredItemsAtom.shared) private var filtered
 
     var body: some View {
         Form {
             Section("Filter") {
-                TextField("Type to filter 500 items", text: Binding(
-                    get: { query },
-                    set: { container.read(queryProvider.notifier).state = $0 }
-                ))
+                TextField("Type to filter 500 items", text: $query)
                 LabeledContent("Rendered", value: "\(filtered.count)")
             }
             Section("Results") {
-                ForEach(filtered, id: \.self) { Text($0).font(.footnote.monospaced()) }
+                ForEach(filtered, id: \.self) {
+                    Text($0).font(.footnote.monospaced())
+                }
             }
         }
         .navigationTitle("Performance")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        PerformanceOptimizationExampleView()
     }
 }

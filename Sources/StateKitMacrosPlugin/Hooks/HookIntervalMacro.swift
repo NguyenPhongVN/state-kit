@@ -33,13 +33,16 @@ public struct HookIntervalMacro: PeerMacro {
         }
 
         let params = paramList.joined(separator: ", ")
-        let deps = depsList.isEmpty ? "" : ".preserved(by: \(depsList.joined(separator: ", ")))"
+        let depsArg = depsList.isEmpty ? ".once" : ".preserved(by: \(depsList.joined(separator: ", ")))"
         let initCode = instanceInit.isEmpty ? "()" : "(\n" + instanceInit.joined(separator: ",\n") + "\n    )"
+
+        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
+        let staticModifier = isStatic ? "static " : ""
 
         let hookFunction: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)(\(raw: params)) {
-            useEffect(updateStrategy: \(raw: deps)) {
+        \(raw: staticModifier)func \(raw: hookName)(\(raw: params)) {
+            useEffect(updateStrategy: \(raw: depsArg)) {
                 let instance = \(raw: structName)\(raw: initCode)
                 let task = Task {
                     while !Task.isCancelled {

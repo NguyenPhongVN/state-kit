@@ -3,9 +3,9 @@ import SwiftUI
 struct RiverpodMacrosGuideView: View {
     private let snippets: [(String, String)] = [
         (
-            "@riverpodNotifier",
+            "@RiverpodNotifier",
             """
-            @riverpodNotifier
+            @RiverpodNotifier
             final class CounterNotifier: Notifier<Int> {
                 override func build() -> Int { 0 }
                 func increment() { update { $0 + 1 } }

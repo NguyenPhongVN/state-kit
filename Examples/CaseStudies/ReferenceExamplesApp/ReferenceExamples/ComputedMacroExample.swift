@@ -1,38 +1,43 @@
 import SwiftUI
 import StateKitAtoms
 import StateKitUI
+import StateKitMacros
 
-private struct ComputedCountAtom: SKStateAtom, Hashable {
-    typealias Value = Int
+@StateAtom
+private struct ComputedCountAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> Int { 1 }
 }
 
-private struct ComputedNameAtom: SKStateAtom, Hashable {
-    typealias Value = String
+@StateAtom
+private struct ComputedNameAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> String { "StateKit" }
 }
 
-private struct ComputedDoubleAtom: SKValueAtom, Hashable {
-    typealias Value = Int
-    func value(context: SKAtomTransactionContext) -> Int {
-        context.watch(ComputedCountAtom()) * 2
+@Computed
+private struct ComputedDoubleAtom {
+    @MainActor
+    func compute(context: SKAtomTransactionContext) -> Int {
+        context.watch(ComputedCountAtom.shared) * 2
     }
 }
 
-private struct ComputedSummaryAtom: SKValueAtom, Hashable {
-    typealias Value = String
-    func value(context: SKAtomTransactionContext) -> String {
-        let name = context.watch(ComputedNameAtom())
-        let count = context.watch(ComputedCountAtom())
+@Computed
+private struct ComputedSummaryAtom {
+    @MainActor
+    func compute(context: SKAtomTransactionContext) -> String {
+        let name = context.watch(ComputedNameAtom.shared)
+        let count = context.watch(ComputedCountAtom.shared)
         return "\(name): \(count)"
     }
 }
 
 struct ComputedMacroExampleView: View {
-    @SKState(ComputedCountAtom()) private var count
-    @SKState(ComputedNameAtom()) private var name
-    @SKValue(ComputedDoubleAtom()) private var doubled
-    @SKValue(ComputedSummaryAtom()) private var summary
+    @SKState(ComputedCountAtom.shared) private var count
+    @SKState(ComputedNameAtom.shared) private var name
+    @SKValue(ComputedDoubleAtom.shared) private var doubled
+    @SKValue(ComputedSummaryAtom.shared) private var summary
 
     var body: some View {
         Form {

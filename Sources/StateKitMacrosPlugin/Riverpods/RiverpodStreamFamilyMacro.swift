@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @RiverpodStreamFamily: Generates a StreamProvider family
-/// Parameterized continuous stream provider
 public struct RiverpodStreamFamilyMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -14,17 +12,32 @@ public struct RiverpodStreamFamilyMacro: PeerMacro {
             throw MacroError.onlyApplicableToFunctions
         }
 
-        guard let returnType = funcDecl.signature.returnClause?.type else {
-            throw MacroError.custom("@RiverpodStreamFamily function must have explicit return type")
+        let functionName = funcDecl.name.text
+        let familyName = functionName + "Family"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        // Extract ID parameter type (assume first non-ref parameter)
+        var argType = "String"
+        var argName = "id"
+        for param in funcDecl.signature.parameterClause.parameters {
+            let typeStr = param.type.trimmedDescription
+            if typeStr != "ProviderRef" {
+                argType = typeStr
+                argName = param.firstName.text
+                break
+            }
         }
 
-        let functionName = funcDecl.name.text
-        let providerName = functionName + "Family"
-
-        let streamProvider: DeclSyntax = """
-        public let \(raw: providerName) = StreamProvider.family(\(raw: functionName))
+        let familyDecl: DeclSyntax = """
+        @MainActor
+        \(raw: staticKeyword)let \(raw: familyName) = StreamProvider.family { (ref: ProviderRef, arg: \(raw: argType)) in
+            \(raw: functionName)(\(raw: argName): arg)
+        }
         """
 
-        return [streamProvider]
+        return [familyDecl]
     }
 }

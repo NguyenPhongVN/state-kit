@@ -1,26 +1,50 @@
 import SwiftUI
-import Riverpods
+import StateKitAtoms
+import StateKitUI
+import StateKitMacros
 
-private let todosProvider = StateProvider { _ in ["Write docs", "Ship demo"] }
-private let selectedProvider = StateProvider<String?> { _ in nil }
+@StateAtom
+private struct TodosAtom {
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> [String] {
+        ["Write docs", "Ship demo"]
+    }
+}
+
+@StateAtom
+private struct SelectedTodoAtom {
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> String? { nil }
+}
 
 struct SwiftDataIntegrationExampleView: View {
-    @Watch(todosProvider) var todos
-    @Watch(selectedProvider) var selected
-    @Environment(\.providerContainer) var container
+    @SKState(TodosAtom.shared) private var todos
+    @SKState(SelectedTodoAtom.shared) private var selected
 
     var body: some View {
         Form {
             Section("Persistence-like flow") {
-                Button("Insert todo") { container.read(todosProvider.notifier).state.append("Todo #\(todos.count + 1)") }
-                if let selected { Text("Selected: \(selected)") }
+                Button("Insert todo") {
+                    todos.append("Todo #\(todos.count + 1)")
+                }
+                if let selected {
+                    Text("Selected: \(selected)")
+                }
             }
             Section("Todos") {
                 ForEach(todos, id: \.self) { todo in
-                    Button(todo) { container.read(selectedProvider.notifier).state = todo }
+                    Button(todo) {
+                        selected = todo
+                    }
                 }
             }
         }
         .navigationTitle("SwiftData Style")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        SwiftDataIntegrationExampleView()
     }
 }

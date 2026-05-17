@@ -1,35 +1,34 @@
 import SwiftUI
-import Riverpods
+import StateKitAtoms
+import StateKitUI
+import StateKitMacros
 
-private let observableCounterProvider = StateProvider { _ in 0 }
-private let observableDoubleProvider = Provider { ref in
-    ref.watch(observableCounterProvider) * 2
+@ObservableState
+final class UserState {
+    var count: Int = 0
+    var name: String = "Guest"
 }
 
 struct ObservableStateMacroExampleView: View {
-    @Watch(observableCounterProvider) var count
-    @Watch(observableDoubleProvider) var doubled
-    @Environment(\.providerContainer) var container
+    @State private var state = UserState()
 
     var body: some View {
         Form {
-            Section("Riverpods @Watch") {
-                LabeledContent("Count", value: "\(count)")
-                LabeledContent("Derived", value: "\(doubled)")
+            Section("Observation Framework") {
+                LabeledContent("Count", value: "\(state.count)")
+                LabeledContent("User", value: state.name)
             }
             Section("Actions") {
-                Button("-1") {
-                    container.read(observableCounterProvider.notifier).state -= 1
-                }
-                Button("+1") {
-                    container.read(observableCounterProvider.notifier).state += 1
-                }
-                Button("Reset") {
-                    container.refresh(observableCounterProvider)
-                }
+                Stepper("Adjust Count", value: $state.count)
+                TextField("Update Name", text: $state.name)
+            }
+            Section("Info") {
+                Text("This view uses @ObservableState macro which integrates with Apple's Observation framework.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
-        .navigationTitle("Riverpods State")
+        .navigationTitle("Observable Macro")
     }
 }
 

@@ -31,19 +31,37 @@ public struct HookEffectMacro: PeerMacro {
         }
 
         let params = paramList.joined(separator: ", ")
-        let deps = depsList.isEmpty ? "" : ".preserved(by: \(depsList.joined(separator: ", ")))"
+        let depsArg = depsList.isEmpty ? "" : "updateStrategy: .preserved(by: \(depsList.joined(separator: ", ")))"
         let initCode = instanceInit.isEmpty ? "()" : "(\n" + instanceInit.joined(separator: ",\n") + "\n    )"
 
         let hasCleanup = PropertyExtractor.function(in: structDecl, named: "cleanup") != nil
-        let cleanupCall = hasCleanup ? "\(structName)\(initCode).cleanup()" : ""
+        let body: DeclSyntax
+        if hasCleanup {
+            body = """
+                {
+                    let task = Task { await \(raw: structName)\(raw: initCode).run() }
+                    return {
+                        \(raw: structName)\(raw: initCode).cleanup()
+                        task.cancel()
+                    }
+                }
+                """
+        } else {
+            body = """
+                {
+                    let task = Task { await \(raw: structName)\(raw: initCode).run() }
+                    return { task.cancel() }
+                }
+                """
+        }
+
+        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
+        let staticModifier = isStatic ? "static " : ""
 
         let hookFunction: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)(\(raw: params)) {
-            useEffect(updateStrategy: \(raw: deps)) {
-                let task = Task { await \(raw: structName)\(raw: initCode).run() }
-                return { \(raw: cleanupCall); task.cancel() }
-            }
+        \(raw: staticModifier)func \(raw: hookName)(\(raw: params)) {
+            useEffect(\(raw: depsArg)) \(body)
         }
         """
 

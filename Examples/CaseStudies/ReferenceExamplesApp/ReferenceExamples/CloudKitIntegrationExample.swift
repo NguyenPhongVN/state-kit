@@ -1,20 +1,23 @@
 import SwiftUI
 import StateKitAtoms
 import StateKitUI
+import StateKitMacros
 
-private struct CloudNotesAtom: SKStateAtom, Hashable {
-    typealias Value = [String]
+@StateAtom
+private struct CloudNotesAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> [String] { ["Welcome"] }
 }
 
-private struct UnsyncedCountAtom: SKValueAtom, Hashable {
-    typealias Value = Int
-    func value(context: SKAtomTransactionContext) -> Int { context.watch(CloudNotesAtom()).count }
+@Computed
+private struct UnsyncedCountAtom {
+    @MainActor
+    func compute(context: SKAtomTransactionContext) -> Int { context.watch(CloudNotesAtom.shared).count }
 }
 
 struct CloudKitIntegrationExampleView: View {
-    @SKState(CloudNotesAtom()) private var notes
-    @SKValue(UnsyncedCountAtom()) private var unsyncedCount
+    @SKState(CloudNotesAtom.shared) private var notes
+    @SKValue(UnsyncedCountAtom.shared) private var unsyncedCount
 
     var body: some View {
         Form {
@@ -27,5 +30,11 @@ struct CloudKitIntegrationExampleView: View {
             }
         }
         .navigationTitle("Cloud Sync")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        CloudKitIntegrationExampleView()
     }
 }

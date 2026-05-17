@@ -11,6 +11,7 @@
 		8B1CF21283E6DA8465838208 /* ReferenceExamplesApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92DDD8CEEE0BFA69F4AF7ABD /* ReferenceExamplesApp.swift */; };
 		9A9534192F83E8AB00F5F87F /* Textual in Frameworks */ = {isa = PBXBuildFile; productRef = 9A9534182F83E8AB00F5F87F /* Textual */; };
 		9AB0D6372FB7F0DA001FB12D /* Riverpods in Frameworks */ = {isa = PBXBuildFile; productRef = 9AB0D6362FB7F0DA001FB12D /* Riverpods */; };
+		A1B2C3D4E5F60718293A4B5C /* StateKitMacros in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B5B /* StateKitMacros */; };
 		9AD747FD2F9D00FE008D66BB /* StateKit in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD747FC2F9D00FE008D66BB /* StateKit */; };
 		9AD747FF2F9D00FE008D66BB /* StateKitAtoms in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD747FE2F9D00FE008D66BB /* StateKitAtoms */; };
 		9AD748012F9D00FE008D66BB /* StateKitCombine in Frameworks */ = {isa = PBXBuildFile; productRef = 9AD748002F9D00FE008D66BB /* StateKitCombine */; };
@@ -83,6 +84,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9AB0D6372FB7F0DA001FB12D /* Riverpods in Frameworks */,
+				A1B2C3D4E5F60718293A4B5C /* StateKitMacros in Frameworks */,
 				9AD747FD2F9D00FE008D66BB /* StateKit in Frameworks */,
 				9AD747FF2F9D00FE008D66BB /* StateKitAtoms in Frameworks */,
 				9AD748072F9D00FE008D66BB /* StateKitSupport in Frameworks */,
@@ -208,6 +210,7 @@
 				9AD748062F9D00FE008D66BB /* StateKitSupport */,
 				9AD7480A2F9D00FE008D66BB /* StateKitUI */,
 				9AB0D6362FB7F0DA001FB12D /* Riverpods */,
+				A1B2C3D4E5F60718293A4B5B /* StateKitMacros */,
 			);
 			productName = ReferenceExamplesApp;
 			productReference = B87EC1F4C264C56DF8FF0BFD /* ReferenceExamplesApp.app */;
@@ -722,6 +725,11 @@
 		EC5E79442F659FF8006164B0 /* StateKitUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = StateKitUI;
+		};
+		A1B2C3D4E5F60718293A4B5B /* StateKitMacros */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 9AD747FB2F9D00FE008D66BB /* XCLocalSwiftPackageReference "../../../state-kit" */;
+			productName = StateKitMacros;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

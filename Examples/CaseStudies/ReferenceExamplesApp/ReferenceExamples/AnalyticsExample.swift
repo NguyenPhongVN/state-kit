@@ -1,35 +1,47 @@
 import SwiftUI
-import Riverpods
+import StateKitAtoms
+import StateKitUI
+import StateKitMacros
 
-final class AnalyticsNotifier: Notifier<[String]> {
-    override func build() -> [String] { [] }
-
-    func track(_ event: String) {
-        state.insert("\(Date().formatted(date: .omitted, time: .standard)) - \(event)", at: 0)
-    }
-
-    func clear() { state = [] }
+@StateAtom
+private struct AnalyticsAtom {
+    @MainActor
+    func defaultValue(context: SKAtomTransactionContext) -> [String] { [] }
 }
 
-private let analyticsProvider = NotifierProvider { AnalyticsNotifier() }
-
 struct AnalyticsExampleView: View {
-    @Watch(analyticsProvider) var events
-    @Watch(analyticsProvider.notifier) var notifier
+    @SKState(AnalyticsAtom.shared) private var events
+    @SKContext private var atomContext
 
     var body: some View {
         Form {
             Section("Track Events") {
-                Button("Track screen_view") { notifier.track("screen_view") }
-                Button("Track add_to_cart") { notifier.track("add_to_cart") }
-                Button("Track checkout") { notifier.track("checkout") }
-                Button("Clear") { notifier.clear() }
+                Button("Track screen_view") { trackEvent("screen_view") }
+                Button("Track add_to_cart") { trackEvent("add_to_cart") }
+                Button("Track checkout") { trackEvent("checkout") }
+                Button("Clear") { events = [] }
             }
             Section("Recent") {
-                if events.isEmpty { Text("No events yet").foregroundStyle(.secondary) }
-                ForEach(events, id: \.self) { Text($0).font(.footnote.monospaced()) }
+                if events.isEmpty {
+                    Text("No events yet").foregroundStyle(.secondary)
+                } else {
+                    ForEach(events, id: \.self) {
+                        Text($0).font(.footnote.monospaced())
+                    }
+                }
             }
         }
         .navigationTitle("Analytics")
+    }
+
+    private func trackEvent(_ event: String) {
+        let timestamp = Date().formatted(date: .omitted, time: .standard)
+        events.insert("\(timestamp) - \(event)", at: 0)
+    }
+}
+
+#Preview {
+    NavigationStack {
+        AnalyticsExampleView()
     }
 }

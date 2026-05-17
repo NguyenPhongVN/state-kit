@@ -4,6 +4,11 @@
 
 StateKit now provides a comprehensive macro library reducing boilerplate across atoms, hooks, and views.
 
+> Note: Atom-type macros like `@StateAtom`, `@ValueAtom`, `@TaskAtom`,
+> `@ThrowingTaskAtom`, and `@PublisherAtom` generate associated types only.
+> You still must explicitly conform to protocol types such as `SKStateAtom`,
+> `SKValueAtom`, `SKTaskAtom`, etc.
+
 ---
 
 ## Category Breakdown
@@ -96,7 +101,7 @@ StateKit now provides a comprehensive macro library reducing boilerplate across 
 
 ### 🌊 Riverpod Macros (1 total)
 
-21. **@riverpodNotifier** — Generates `NotifierProvider` from Notifier/AsyncNotifier class
+21. **@RiverpodNotifier** — Generates `NotifierProvider` from Notifier/AsyncNotifier class
     - Use case: Riverpod integration
     - Auto-registers provider with lowercase name
 

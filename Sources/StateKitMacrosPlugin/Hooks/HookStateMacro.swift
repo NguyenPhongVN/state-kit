@@ -20,6 +20,9 @@ public struct HookStateMacro: PeerMacro {
         let structName = structDecl.name.text
         let hookName = "use" + structName
 
+        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
+        let staticModifier = isStatic ? "static " : ""
+
         var returnTupleElements: [String] = []
         var functionBody: [String] = []
 
@@ -28,18 +31,30 @@ public struct HookStateMacro: PeerMacro {
             let defaultVal = prop.defaultValue ?? "nil"
 
             returnTupleElements.append("\(propName): Binding<\(prop.typeName)>")
-            functionBody.append("    \(propName): useBinding(\(defaultVal))")
+            functionBody.append("            \(propName): useBinding(\(defaultVal))")
         }
 
-        let returnTuple = "(" + returnTupleElements.joined(separator: ", ") + ")"
-        let bodyContent = "(\n" + functionBody.joined(separator: ",\n") + "\n    )"
+        let hookFunction: DeclSyntax
+        if properties.count == 1 {
+            let prop = properties[0]
+            let defaultVal = prop.defaultValue ?? "nil"
+            hookFunction = """
+            @MainActor
+            \(raw: staticModifier)func \(raw: hookName)() -> Binding<\(raw: prop.typeName)> {
+                return useBinding(\(raw: defaultVal))
+            }
+            """
+        } else {
+            let returnTuple = "(" + returnTupleElements.joined(separator: ", ") + ")"
+            let bodyContent = "(\n" + functionBody.joined(separator: ",\n") + "\n        )"
 
-        let hookFunction: DeclSyntax = """
-        @MainActor
-        public func \(raw: hookName)() -> \(raw: returnTuple) {
-            return \(raw: bodyContent)
+            hookFunction = """
+            @MainActor
+            \(raw: staticModifier)func \(raw: hookName)() -> \(raw: returnTuple) {
+                return \(raw: bodyContent)
+            }
+            """
         }
-        """
 
         return [hookFunction]
     }

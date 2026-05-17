@@ -53,7 +53,7 @@ StateKit Macro Ecosystem
 │   └── @AsyncView          — Async phase helpers
 │
 └── 🌊 RIVERPOD MACROS (5) — Riverpod Providers
-    ├── @riverpodNotifier   — Notifier provider generation
+    ├── @RiverpodNotifier   — Notifier provider generation
     ├── @StateProvider      — Simple state providers
     ├── @Provider           — Derived providers
     ├── @FutureProvider     — One-shot async
@@ -131,7 +131,7 @@ StateKit Macro Ecosystem
 
 | Macro | Applied To | Generates | Pattern |
 |-------|-----------|-----------|---------|
-| **@riverpodNotifier** | Class | `NotifierProvider` instance | Notifier wrapper |
+| **@RiverpodNotifier** | Class | `NotifierProvider` instance | Notifier wrapper |
 | **@StateProvider** | Struct | `StateProvider { _ in ... }` | Simple state |
 | **@Provider** | Function | `Provider { ref in ... }` | Derived state |
 | **@FutureProvider** | Function | `FutureProvider { _ in ... }` | One-shot async |
@@ -176,7 +176,7 @@ Need to create PROVIDERS (Riverpod)?
 ├─ One-shot async? → @FutureProvider
 ├─ Continuous streams? → @StreamProvider
 ├─ Parameterized? → @ProviderFamily
-└─ Notifier logic? → @riverpodNotifier
+└─ Notifier logic? → @RiverpodNotifier
 ```
 
 ---

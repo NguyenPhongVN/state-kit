@@ -2,31 +2,37 @@ import SwiftUI
 import StateKit
 import StateKitAtoms
 import StateKitUI
+import StateKitMacros
 
-private struct HKCounterAtom: SKStateAtom, Hashable {
-    typealias Value = Int
+@StateAtom
+private struct HKCounterAtom {
+    @MainActor
     func defaultValue(context: SKAtomTransactionContext) -> Int { 1 }
 }
 
+@HookView
 struct HookMacrosExtendedExampleView: View {
-    var body: some View {
-        StateScope {
-            let draft = useBinding("")
-            let (count, setCount) = useAtomState(HKCounterAtom())
-            let reset = useAtomReset(HKCounterAtom())
+    var stateBody: some View {
+        let draft = useBinding("")
+        let (count, setCount) = useAtomState(HKCounterAtom.shared)
+        let reset = useAtomReset(HKCounterAtom.shared)
 
-            Form {
-                Section("StateScope hooks") {
-                    TextField("Local draft", text: draft)
-                    LabeledContent("Atom count", value: "\(count)")
-                }
-                Section("Actions") {
-                    Button("+1") { setCount(count + 1) }
-                    Button("-1") { setCount(count - 1) }
-                    Button("Reset") { reset() }
-                }
+        return Form {
+            Section("StateScope hooks") {
+                TextField("Local draft", text: draft)
+                LabeledContent("Atom count", value: "\(count)")
+            }
+            Section("Actions") {
+                Button("+1") { setCount(count + 1) }
+                Button("-1") { setCount(count - 1) }
+                Button("Reset") { reset() }
             }
         }
-        .navigationTitle("Atom Hooks")
+    }
+}
+
+#Preview {
+    NavigationStack {
+        HookMacrosExtendedExampleView()
     }
 }

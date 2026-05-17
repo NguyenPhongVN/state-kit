@@ -215,6 +215,8 @@ let package = Package(
         PackageDescription.Target.testTarget(
             name: "StateKitMacrosTests",
             dependencies: [
+                PackageDescription.Target.Dependency.byName(name: "StateKitMacros"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitUI"),
                 PackageDescription.Target.Dependency.byName(name: "StateKitMacrosPlugin"),
                 PackageDescription.Target.Dependency.product(name: "SwiftSyntaxMacrosTestSupport", package: "swift-syntax"),
             ]

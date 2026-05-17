@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @RiverpodAsync: Generates a simple async Provider
-/// Cleaner syntax for one-shot async operations
 public struct RiverpodAsyncMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -14,20 +12,19 @@ public struct RiverpodAsyncMacro: PeerMacro {
             throw MacroError.onlyApplicableToFunctions
         }
 
-        guard let returnType = funcDecl.signature.returnClause?.type else {
-            throw MacroError.custom("@RiverpodAsync function must have explicit return type")
-        }
-
-        guard let body = funcDecl.body else {
-            throw MacroError.custom("@RiverpodAsync function must have implementation")
-        }
-
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        let tryKeyword = funcDecl.signature.effectSpecifiers?.throwsClause != nil ? "try " : ""
 
         let asyncProvider: DeclSyntax = """
-        public let \(raw: providerName) = FutureProvider { ref in
-            try await \(raw: functionName)()
+        @MainActor
+        \(raw: staticKeyword)let \(raw: providerName) = FutureProvider { ref in
+            \(raw: tryKeyword)await \(raw: functionName)()
         }
         """
 

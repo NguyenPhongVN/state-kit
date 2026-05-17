@@ -225,7 +225,7 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 ///     return try await fetchData()
 /// }
 ///
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class RefreshNotifier: AsyncNotifier<Void> {
 ///     override func build() async throws -> Void {
 ///         ref.onAddListener {
@@ -319,7 +319,7 @@ public struct FutureProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
     ///
     /// **Example: Await in Notifier**
     /// ```swift
-    /// @riverpodNotifier
+    /// @RiverpodNotifier
     /// final class DataNotifier: AsyncNotifier<Data> {
     ///     override func build() async throws -> Data {
     ///         return try await dataProvider.future // Await the future
@@ -397,7 +397,7 @@ public struct FutureProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
 ///
 /// **Example: In AsyncNotifier**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class ProcessingNotifier: AsyncNotifier<ProcessedData> {
 ///     override func build() async throws -> ProcessedData {
 ///         // Get the data via future

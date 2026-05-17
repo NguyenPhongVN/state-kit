@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @Throttle: Limits function execution frequency to once per interval
-/// Useful for scroll events, resize, etc.
 public struct ThrottleMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -15,23 +13,39 @@ public struct ThrottleMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
-        let throttleMs = "100"  // Default, can be overridden via attribute
+        let throttledName = functionName + "_throttled"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        let throttledFunction: DeclSyntax = """
+        // Extract milliseconds argument
+        var milliseconds: Int = 0
+        if let args = node.arguments?.as(LabeledExprListSyntax.self),
+           let firstArg = args.first?.expression.as(IntegerLiteralExprSyntax.self) {
+            milliseconds = Int(firstArg.literal.text) ?? 0
+        }
+
+        let lastExecName = "_\(functionName)LastExecution"
+        
+        let lastExecDecl: DeclSyntax = """
         @MainActor
-        private var _\(raw: functionName)LastExecution: Date = Date(timeIntervalSince1970: 0)
+        \(raw: staticKeyword)private var \(raw: lastExecName): Date = Date(timeIntervalSince1970: 0)
+        """
 
-        public func \(raw: functionName)_throttled() {
+        let throttledFunc: DeclSyntax = """
+        @MainActor
+        \(raw: staticKeyword)func \(raw: throttledName)() {
             let now = Date()
-            let interval = TimeInterval(\(raw: throttleMs)) / 1000.0
-
-            if now.timeIntervalSince(_\(raw: functionName)LastExecution) >= interval {
-                _\(raw: functionName)LastExecution = now
+            let interval = TimeInterval(\(raw: milliseconds)) / 1000.0
+            
+            if now.timeIntervalSince(\(raw: lastExecName)) >= interval {
+                \(raw: lastExecName) = now
                 Task { await \(raw: functionName)() }
             }
         }
         """
 
-        return [throttledFunction]
+        return [lastExecDecl, throttledFunc]
     }
 }

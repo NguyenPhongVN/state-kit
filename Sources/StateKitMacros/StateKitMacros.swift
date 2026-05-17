@@ -1,212 +1,240 @@
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
+import StateKitAtoms
+import Riverpods
+import Observation
 
-// MARK: - Atom Macros
+// MARK: - Atom Macros (17)
 
-/// @StateAtom: Generates `typealias Value = <ReturnType>` from a struct with `func defaultValue(context:) -> Value`
-@attached(member, names: named(Value))
+/// @StateAtom: Applied to `struct`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKStateAtom, Hashable)
+@attached(memberAttribute)
 public macro StateAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "StateAtomMacro")
 
-/// @ValueAtom: Generates `typealias Value = <ReturnType>` from a struct with `func value(context:) -> Value`
-@attached(member, names: named(Value))
+/// @ValueAtom: Applied to `struct`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro ValueAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "ValueAtomMacro")
 
-/// @TaskAtom: Generates `typealias TaskSuccess = <ReturnType>` from a struct with `func task(context:) async -> TaskSuccess`
-@attached(member, names: named(TaskSuccess))
+/// @TaskAtom: Applied to `struct`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKTaskAtom, Hashable)
+@attached(memberAttribute)
 public macro TaskAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "TaskAtomMacro")
 
-/// @ThrowingTaskAtom: Generates `typealias TaskSuccess = <ReturnType>` from a struct with `func task(context:) async throws -> TaskSuccess`
-@attached(member, names: named(TaskSuccess))
+/// @ThrowingTaskAtom: Applied to `struct`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKThrowingTaskAtom, Hashable)
+@attached(memberAttribute)
 public macro ThrowingTaskAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "TaskAtomMacro")
 
-/// @PublisherAtom: Generates `typealias PublisherOutput` and `typealias AtomPublisher` from a struct with `func publisher(context:) -> AnyPublisher<...>`
-@attached(member, names: named(PublisherOutput), named(AtomPublisher))
+/// @PublisherAtom: Applied to `struct`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKPublisherAtom, Hashable)
+@attached(memberAttribute)
 public macro PublisherAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "PublisherAtomMacro")
 
-/// @Atom: Unified macro that auto-detects the atom type from method names:
-/// - `defaultValue(context:)` → SKStateAtom
-/// - `value(context:)` → SKValueAtom
-/// - `task(context:) async` → SKTaskAtom
-/// - `task(context:) async throws` → SKThrowingTaskAtom
-/// - `publisher(context:)` → SKPublisherAtom
-@attached(member)
+/// @Atom: Unified macro.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKStateAtom, SKValueAtom, SKTaskAtom, SKThrowingTaskAtom, SKPublisherAtom, Hashable)
+@attached(memberAttribute)
 public macro Atom() = #externalMacro(module: "StateKitMacrosPlugin", type: "AtomMacro")
 
-/// @AtomFamily: Generates an atomFamily factory function from a struct with stored properties used as ID parameters
-@attached(peer)
+/// @AtomFamily: Generates factory member `family`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKStateAtom, Hashable)
+@attached(memberAttribute)
 public macro AtomFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "AtomFamilyMacro")
 
-/// @SelectorFamily: Generates a selectorFamily factory function from a struct with stored properties and value(context:) method
-@attached(peer)
+/// @SelectorFamily: Generates factory member `family`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro SelectorFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "SelectorFamilyMacro")
 
-/// @AsyncTaskFamily: Generates an atomFamily factory function for async task atoms from a struct with stored properties and task(context:) method
-@attached(peer)
+/// @AsyncTaskFamily: Generates factory member `family`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKTaskAtom, Hashable)
+@attached(memberAttribute)
 public macro AsyncTaskFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "AsyncTaskFamilyMacro")
 
-/// @AtomReducer: Generates a reducer-based state atom from a struct with State typealias, Action typealias, and reduce(_:action:) method
-@attached(peer)
+/// @AtomReducer: Generates a reducer-based state atom.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKStateAtom, Hashable)
 public macro AtomReducer() = #externalMacro(module: "StateKitMacrosPlugin", type: "AtomReducerMacro")
 
-/// @Computed: Generates a derived atom from a struct with compute(context:) method
-@attached(member, names: named(Computed))
+/// @Computed: Generates a derived atom.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro Computed() = #externalMacro(module: "StateKitMacrosPlugin", type: "ComputedMacro")
 
-/// @SelectorAtom: Generates derived state from select(context:) method
-/// More semantic than @ValueAtom for explicitly selected/filtered values
-@attached(member, names: named(Value))
+/// @SelectorAtom: Generates derived state via `select(context:)`.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro SelectorAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "SelectorAtomMacro")
 
-/// @FilteredAtom: Auto-generates filtered atom from predicate method
-/// Applies filtering to a source atom's list values
-@attached(member, names: named(Value))
+/// @FilteredAtom: Auto-generates filtered atom.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro FilteredAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "FilteredAtomMacro")
 
-/// @MappedAtom: Auto-generates mapped atom from transform function
-/// Transforms values from a source atom
-@attached(member, names: named(Value))
+/// @MappedAtom: Auto-generates mapped atom.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro MappedAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "MappedAtomMacro")
 
-/// @CombineAtom: Combines multiple atoms into a single tuple value
-@attached(member, names: named(Value))
+/// @CombineAtom: Combines multiple atoms.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro CombineAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "CombineAtomMacro")
 
-/// @DistinctAtom: Only emits distinct/unique values
-@attached(member, names: named(Value))
+/// @DistinctAtom: Only emits distinct values.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro DistinctAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "DistinctAtomMacro")
 
-/// @FlatMapAtom: Flattens nested async values
-@attached(member, names: named(Value))
+/// @FlatMapAtom: Flattens nested async values.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: SKValueAtom, Hashable)
+@attached(memberAttribute)
 public macro FlatMapAtom() = #externalMacro(module: "StateKitMacrosPlugin", type: "FlatMapAtomMacro")
 
-// MARK: - View Macros
+// MARK: - View Macros (4)
 
-/// @HookView: Generates `var body: some View { StateScope { stateBody } }` from a struct with `var stateBody: some View`
+/// @HookView: Generates `body` with `StateScope` wrapping.
 @attached(member, names: named(body))
 public macro HookView() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookViewMacro")
 
-/// @StateView: Convenience alias for @HookView for StateView protocol conformance
+/// @StateView: Alias for @HookView for StateView protocol.
 @attached(member, names: named(body))
 public macro StateView() = #externalMacro(module: "StateKitMacrosPlugin", type: "StateViewMacro")
 
-/// @AsyncView: Generates helper properties for AsyncPhase handling
-@attached(member)
-public macro AsyncView() = #externalMacro(module: "StateKitMacrosPlugin", type: "AsyncViewMacro")
+/// @AsyncView: Generates AsyncPhase helper properties.
+@attached(member, names: named(body), named(isLoading), named(hasError))
+public macro AsyncView<A: SKAtom>(atom: A) = #externalMacro(module: "StateKitMacrosPlugin", type: "AsyncViewMacro")
 
-/// @ObservableState: Integrates with Swift's Observation framework for observable state management
-@attached(member)
+/// @ObservableState: Integrates with Observation framework.
+@attached(member, names: arbitrary)
+@attached(extension, conformances: Observable)
 public macro ObservableState() = #externalMacro(module: "StateKitMacrosPlugin", type: "ObservableStateMacro")
 
-// MARK: - Hook Macros
+// MARK: - Hook Macros (16)
 
-/// @Hook: Validates custom hook functions follow naming conventions (must start with 'use')
-@attached(peer)
+/// @Hook: Validates 'use' naming convention.
+@attached(peer, names: arbitrary)
 public macro Hook() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookMacro")
 
-/// @HookState: Generates a hook function from a struct with stored properties using useBinding
-@attached(peer)
-public macro HookState() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookStateMacro")
-
-/// @HookRef: Generates a hook function from a struct with stored properties using useRef
-@attached(peer)
-public macro HookRef() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookRefMacro")
-
-/// @HookEffect: Generates a hook function from a struct with run() and optional cleanup() methods
-@attached(peer)
-public macro HookEffect() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookEffectMacro")
-
-/// @AsyncHook: Generates an async hook function from a struct with async run() method
-@attached(peer)
-public macro AsyncHook() = #externalMacro(module: "StateKitMacrosPlugin", type: "AsyncHookMacro")
-
-/// @Debounce: Delays execution of a function until interval elapses with no new calls
-@attached(peer)
-public macro Debounce(milliseconds: Int) = #externalMacro(module: "StateKitMacrosPlugin", type: "DebounceMacro")
-
-/// @Throttle: Limits function execution frequency to once per interval
-@attached(peer)
-public macro Throttle(milliseconds: Int) = #externalMacro(module: "StateKitMacrosPlugin", type: "ThrottleMacro")
-
-/// @HookPrevious: Tracks the previous value of a state
-@attached(peer)
-public macro HookPrevious() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookPreviousMacro")
-
-/// @HookToggle: Simple boolean toggle helper
-@attached(peer)
-public macro HookToggle() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookToggleMacro")
-
-/// @HookInterval: Interval/polling hook for periodic tasks
-@attached(peer)
-public macro HookInterval() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookIntervalMacro")
-
-/// @HookMemo: Generates a hook function from a struct with compute() method using useMemo
-@attached(peer)
-public macro HookMemo() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookMemoMacro")
-
-/// @HookCallback: Generates a hook function from a struct with call() or handle() method using useCallback
-@attached(peer)
-public macro HookCallback() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookCallbackMacro")
-
-/// @HookReducer: Generates a hook function from a struct with State typealias, Action typealias, and reduce() method
-@attached(peer)
-public macro HookReducer() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookReducerMacro")
-
-/// @HookContext: Generates a HookContext instance and hook function from a struct
-@attached(peer)
-public macro HookContext() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookContextMacro")
-
-/// @HookForm: Generates a form hook struct with validation and error handling from a struct with stored properties
-@attached(peer)
-public macro HookForm() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookFormMacro")
-
-/// @CustomHook: Validates custom hook functions and generates test helpers
-@attached(peer)
+/// @CustomHook: Validates custom hooks and generates helpers.
+@attached(peer, names: arbitrary)
 public macro CustomHook() = #externalMacro(module: "StateKitMacrosPlugin", type: "CustomHookMacro")
 
-// MARK: - Riverpod Macros
+/// @HookState: Generates a hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookState() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookStateMacro")
 
-/// @riverpodNotifier: Generates a provider instance from a Notifier/AsyncNotifier subclass
-/// Emits: `public let <lowercaseClassName>Provider = NotifierProvider { ClassName() }`
-@attached(peer, names: named(provider))
-public macro riverpodNotifier() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodNotifierMacro")
+/// @HookRef: Generates a hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookRef() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookRefMacro")
 
-/// @StateProvider: Generates a StateProvider from a struct with 'initial' property
-@attached(peer)
-public macro StateProvider() = #externalMacro(module: "StateKitMacrosPlugin", type: "StateProviderMacro")
+/// @HookToggle: Simple boolean toggle hook prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookToggle() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookToggleMacro")
 
-/// @Provider: Generates a derived Provider from a function with (ref: ProviderRef) parameter
-@attached(peer)
-public macro Provider() = #externalMacro(module: "StateKitMacrosPlugin", type: "ProviderMacro")
+/// @HookEffect: Generates a hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookEffect() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookEffectMacro")
 
-/// @FutureProvider: Generates a FutureProvider from an async function
-@attached(peer)
-public macro FutureProvider() = #externalMacro(module: "StateKitMacrosPlugin", type: "FutureProviderMacro")
+/// @AsyncHook: Generates an async hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro AsyncHook() = #externalMacro(module: "StateKitMacrosPlugin", type: "AsyncHookMacro")
 
-/// @StreamProvider: Generates a StreamProvider from a function returning AnyPublisher
-@attached(peer)
-public macro StreamProvider() = #externalMacro(module: "StateKitMacrosPlugin", type: "StreamProviderMacro")
+/// @Debounce: Delays execution (Peer).
+@attached(peer, names: suffixed(_debounced))
+public macro Debounce(milliseconds: Int) = #externalMacro(module: "StateKitMacrosPlugin", type: "DebounceMacro")
 
-/// @ProviderFamily: Generates a family provider from a function with parameterized ID
-@attached(peer)
-public macro ProviderFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "ProviderFamilyMacro")
+/// @Throttle: Limits execution frequency (Peer).
+@attached(peer, names: suffixed(_throttled))
+public macro Throttle(milliseconds: Int) = #externalMacro(module: "StateKitMacrosPlugin", type: "ThrottleMacro")
 
-/// @RiverpodFamily: Generates a family provider from a Notifier/AsyncNotifier with parameterized build
-@attached(peer, names: named(provider))
+/// @HookPrevious: Tracks previous value prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookPrevious() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookPreviousMacro")
+
+/// @HookInterval: Polling hook prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookInterval() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookIntervalMacro")
+
+/// @HookMemo: Generates hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookMemo() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookMemoMacro")
+
+/// @HookCallback: Generates hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookCallback() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookCallbackMacro")
+
+/// @HookReducer: Generates hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookReducer() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookReducerMacro")
+
+/// @HookContext: Generates hook function prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookContext() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookContextMacro")
+
+/// @HookForm: Generates a form hook prefixed with 'use' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookForm() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookFormMacro")
+
+// MARK: - Riverpod Macros (11)
+
+/// @RiverpodNotifier: Generates a static `provider` member (Member).
+@attached(member, names: arbitrary)
+public macro RiverpodNotifier() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodNotifierMacro")
+
+/// @RiverpodFamily: Generates a static `family` member (Member).
+@attached(member, names: arbitrary)
 public macro RiverpodFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodFamilyMacro")
 
-/// @RiverpodSelector: Generates a selector provider from a function
-@attached(peer, names: named(Provider))
+/// @StateProvider: Generates a static `provider` member (Member).
+@attached(member, names: arbitrary)
+public macro StateProvider() = #externalMacro(module: "StateKitMacrosPlugin", type: "StateProviderMacro")
+
+/// @Provider: Generates a derived `Provider` suffixed with 'Provider' (Peer).
+@attached(peer, names: suffixed(Provider))
+public macro Provider() = #externalMacro(module: "StateKitMacrosPlugin", type: "ProviderMacro")
+
+/// @FutureProvider: Generates a `FutureProvider` suffixed with 'Provider' (Peer).
+@attached(peer, names: suffixed(Provider))
+public macro FutureProvider() = #externalMacro(module: "StateKitMacrosPlugin", type: "FutureProviderMacro")
+
+/// @StreamProvider: Generates a `StreamProvider` suffixed with 'Provider' (Peer).
+@attached(peer, names: suffixed(Provider))
+public macro StreamProvider() = #externalMacro(module: "StateKitMacrosPlugin", type: "StreamProviderMacro")
+
+/// @ProviderFamily: Generates a family `Provider` suffixed with 'Provider' (Peer).
+@attached(peer, names: suffixed(Provider))
+public macro ProviderFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "ProviderFamilyMacro")
+
+/// @RiverpodSelector: Generates a selector `Provider` suffixed with 'Provider' (Peer).
+@attached(peer, names: suffixed(Provider))
 public macro RiverpodSelector() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodSelectorMacro")
 
-/// @RiverpodFutureFamily: Generates a FutureProvider family
-@attached(peer, names: named(Family))
+/// @RiverpodAsync: Generates an async `Provider` suffixed with 'Provider' (Peer).
+@attached(peer, names: suffixed(Provider))
+public macro RiverpodAsync() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodAsyncMacro")
+
+/// @RiverpodFutureFamily: Generates a family suffixed with 'Family' (Peer).
+@attached(peer, names: suffixed(Family))
 public macro RiverpodFutureFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodFutureFamilyMacro")
 
-/// @RiverpodStreamFamily: Generates a StreamProvider family
-@attached(peer, names: named(Family))
+/// @RiverpodStreamFamily: Generates a family suffixed with 'Family' (Peer).
+@attached(peer, names: suffixed(Family))
 public macro RiverpodStreamFamily() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodStreamFamilyMacro")
-
-/// @RiverpodAsync: Generates a simple async Provider
-@attached(peer, names: named(Provider))
-public macro RiverpodAsync() = #externalMacro(module: "StateKitMacrosPlugin", type: "RiverpodAsyncMacro")

@@ -4,11 +4,10 @@ import SwiftSyntaxMacros
 
 /// @DistinctAtom: Only emits distinct/unique values
 /// Filters out duplicate consecutive values from source atom
-public struct DistinctAtomMacro: MemberMacro {
+public struct DistinctAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro, PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
-        providingMembersOf declaration: DeclGroupSyntax,
-        conformingTo protocols: [IdentifierTypeSyntax],
+        providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         guard declaration.as(StructDeclSyntax.self) != nil else {
@@ -17,6 +16,62 @@ public struct DistinctAtomMacro: MemberMacro {
 
         let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "source")
         let typealiasDecl: DeclSyntax = "typealias Value = \(returnType)"
-        return [typealiasDecl]
+        let valueMethod: DeclSyntax = """
+        @MainActor
+        func value(context: SKAtomTransactionContext) -> Value {
+            source(context: context)
+        }
+        """
+
+        return [typealiasDecl, valueMethod]
+    }
+
+    public static func expansion(
+        of node: AttributeSyntax,
+        attachedTo declaration: some DeclGroupSyntax,
+        providingExtensionsOf type: some TypeSyntaxProtocol,
+        conformingTo protocols: [TypeSyntax],
+        in context: some MacroExpansionContext
+    ) throws -> [ExtensionDeclSyntax] {
+        let valueAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): SKValueAtom {}")
+        let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
+
+        return [valueAtomExtension, hashableExtension]
+    }
+
+    public static func expansion(
+        of node: AttributeSyntax,
+        attachedTo declaration: some DeclGroupSyntax,
+        providingAttributesFor member: some DeclSyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) throws -> [AttributeSyntax] {
+        guard let funcDecl = member.as(FunctionDeclSyntax.self),
+              funcDecl.name.text == "source" else {
+            return []
+        }
+
+        if !funcDecl.attributes.contains(where: { attr in
+            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "MainActor"
+        }) {
+            return ["@MainActor "]
+        }
+
+        return []
+    }
+
+    public static func expansion(
+        of node: AttributeSyntax,
+        providingPeersOf declaration: some DeclSyntaxProtocol,
+        in context: some MacroExpansionContext
+    ) throws -> [DeclSyntax] {
+        guard let structDecl = declaration.as(StructDeclSyntax.self) else { return [] }
+        let className = structDecl.name.text
+        let atomName = className.prefix(1).lowercased() + className.dropFirst()
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        return ["@MainActor \(raw: staticKeyword)let \(raw: atomName) = \(raw: className)()"]
     }
 }

@@ -44,7 +44,7 @@ import Observation
 ///
 /// **Usage Pattern (Macro-based):**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class CounterNotifier: Notifier<Int> {
 ///     override func build() -> Int { 0 }
 ///
@@ -137,7 +137,7 @@ open class Notifier<State: Sendable> {
     ///
     /// **Example: With Dependencies (works with manual or macro provider wiring)**
     /// ```swift
-    /// @riverpodNotifier
+    /// @RiverpodNotifier
     /// final class UserNotifier: Notifier<User?> {
     ///     override func build() -> User? {
     ///         let userId = ref.watch(userIdProvider)  // Track dependency
@@ -362,7 +362,7 @@ public final class NotifierInstanceElement<N: Notifier<T>, T: Sendable>: Provide
 ///
 /// **Example: Counter with Min/Max (macro syntax)**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class BoundedCounterNotifier: Notifier<Int> {
 ///     let minValue = 0
 ///     let maxValue = 100
@@ -400,7 +400,7 @@ public final class NotifierInstanceElement<N: Notifier<T>, T: Sendable>: Provide
 ///
 /// **Example: Form Notifier with Validation**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class FormNotifier: Notifier<FormState> {
 ///     override func build() -> FormState {
 ///         return FormState()
@@ -424,7 +424,7 @@ public final class NotifierInstanceElement<N: Notifier<T>, T: Sendable>: Provide
 ///
 /// **Example: With Dependencies**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class UserNotifier: Notifier<User?> {
 ///     override func build() -> User? {
 ///         let userId = ref.watch(selectedUserIdProvider)

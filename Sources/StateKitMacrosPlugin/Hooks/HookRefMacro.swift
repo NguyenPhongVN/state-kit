@@ -13,34 +13,31 @@ public struct HookRefMacro: PeerMacro {
         }
 
         let properties = PropertyExtractor.storedProperties(from: structDecl)
-        guard !properties.isEmpty else {
-            throw MacroError.methodNotFound("stored properties")
+        let className = structDecl.name.text
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        if properties.count == 1 {
+            let prop = properties[0]
+            let initialValue = prop.defaultValue ?? "\(prop.typeName)()"
+            let hookDecl: DeclSyntax = """
+            @MainActor
+            \(raw: staticKeyword)func \(raw: hookName)() -> StateKit.StateRef<\(raw: prop.typeName)> {
+                return useRef(\(raw: initialValue))
+            }
+            """
+            return [hookDecl]
+        } else {
+            let hookDecl: DeclSyntax = """
+            @MainActor
+            \(raw: staticKeyword)func \(raw: hookName)() -> (\(raw: properties.map { "StateKit.StateRef<\($0.typeName)>" }.joined(separator: ", "))) {
+                return (\(raw: properties.map { "useRef(\($0.defaultValue ?? "\($0.typeName)()") )" }.joined(separator: ", ")))
+            }
+            """
+            return [hookDecl]
         }
-
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
-
-        var returnTupleElements: [String] = []
-        var functionBody: [String] = []
-
-        for prop in properties {
-            let propName = prop.name
-            let defaultVal = prop.defaultValue ?? "nil"
-
-            returnTupleElements.append("\(propName): StateRef<\(prop.typeName)>")
-            functionBody.append("    \(propName): useRef(\(defaultVal))")
-        }
-
-        let returnTuple = "(" + returnTupleElements.joined(separator: ", ") + ")"
-        let bodyContent = "(\n" + functionBody.joined(separator: ",\n") + "\n    )"
-
-        let hookFunction: DeclSyntax = """
-        @MainActor
-        public func \(raw: hookName)() -> \(raw: returnTuple) {
-            return \(raw: bodyContent)
-        }
-        """
-
-        return [hookFunction]
     }
 }

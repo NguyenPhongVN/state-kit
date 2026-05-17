@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @HookToggle: Simple boolean toggle helper
-/// Generates a hook that returns (value, toggle) for boolean state
 public struct HookToggleMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -14,18 +12,24 @@ public struct HookToggleMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
+        let className = structDecl.name.text
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        let hookFunction: DeclSyntax = """
+        let hookDecl: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)() -> (Bool, () -> Void) {
+        \(raw: staticKeyword)func \(raw: hookName)() -> (Bool, () -> Void) {
             let (value, setValue) = useState(false)
-            let toggle = { setValue(!value) }
+            let toggle = {
+                setValue(!value)
+            }
             return (value, toggle)
         }
         """
 
-        return [hookFunction]
+        return [hookDecl]
     }
 }

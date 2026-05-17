@@ -32,13 +32,29 @@ enum ReturnTypeExtractor {
     }
 
     /// Extract the Nth generic argument from a type (0-indexed)
-    /// For now, just returns the full type for PublisherAtom
-    /// since extracting from generic types is complex in Swift 6
     static func extractGenericArg(from type: TypeSyntax, index: Int) throws -> TypeSyntax {
-        // For AnyPublisher<Output, Failure>, we would want Output
-        // But generic argument extraction is complex, so just return the type
-        // User can manually specify if needed
+        if let identifierType = type.as(IdentifierTypeSyntax.self),
+           let genericArgs = identifierType.genericArgumentClause {
+            let args = Array(genericArgs.arguments)
+            if index < args.count {
+                // Use string representation to ensure we get a valid TypeSyntax
+                return TypeSyntax("\(raw: args[index].argument)")
+            }
+        }
+        
+        // Fallback for non-generic or index out of bounds
         return type
+    }
+
+    /// Extract the underlying type of a typealias named 'named' within a declaration
+    static func extractTypealias(from decl: DeclGroupSyntax, named: String) throws -> String {
+        for member in decl.memberBlock.members {
+            if let typealiasDecl = member.decl.as(TypeAliasDeclSyntax.self),
+               typealiasDecl.name.text == named {
+                return typealiasDecl.initializer.value.description.trimmingCharacters(in: .whitespaces)
+            }
+        }
+        throw ExtractionError.noReturnType
     }
 
     /// Find a function declaration by name within a struct/class

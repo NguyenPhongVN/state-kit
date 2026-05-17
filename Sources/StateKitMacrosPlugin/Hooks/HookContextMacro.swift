@@ -12,26 +12,26 @@ public struct HookContextMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        let structName = structDecl.name.text
-        let contextVarName = lowercaseFirstChar(structName) + "HookContext"
-        let hookName = "use" + structName + "Context"
+        let className = structDecl.name.text
+        let lowerCaseClassName = className.prefix(1).lowercased() + className.dropFirst()
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        let contextVar: DeclSyntax = """
-        public let \(raw: contextVarName) = HookContext<\(raw: structName)>(\(raw: structName)())
+        let contextInstanceDecl: DeclSyntax = """
+        @MainActor
+        \(raw: staticKeyword)let \(raw: lowerCaseClassName)HookContext = StateKit.HookContext<\(raw: className)>(\(raw: className)())
         """
 
-        let hookFunction: DeclSyntax = """
+        let hookDecl: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)() -> \(raw: structName) {
-            useContext(\(raw: contextVarName))
+        \(raw: staticKeyword)func \(raw: hookName)() -> \(raw: className) {
+            useContext(\(raw: lowerCaseClassName)HookContext)
         }
         """
 
-        return [contextVar, hookFunction]
-    }
-
-    private static func lowercaseFirstChar(_ str: String) -> String {
-        guard !str.isEmpty else { return str }
-        return String(str.first!).lowercased() + String(str.dropFirst())
+        return [contextInstanceDecl, hookDecl]
     }
 }

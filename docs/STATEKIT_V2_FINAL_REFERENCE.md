@@ -105,7 +105,7 @@
 #### Notifiers
 | Macro | Input | Generates | Use Case |
 |-------|-------|-----------|----------|
-| **@riverpodNotifier** | Notifier class | Provider instance | Notifier wrapper |
+| **@RiverpodNotifier** | Notifier class | Provider instance | Notifier wrapper |
 | **@RiverpodFamily** | Notifier with params | Family provider | Parameterized async |
 
 #### Family Providers

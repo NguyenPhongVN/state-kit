@@ -239,7 +239,7 @@ extension NotifierProvider {
     ///
     /// **Example: User Manager Notifier**
     /// ```swift
-    /// @riverpodNotifier
+    /// @RiverpodNotifier
     /// final class UserManagerNotifier: Notifier<UserState> {
     ///     let userId: Int
     ///
@@ -267,7 +267,7 @@ extension NotifierProvider {
     ///
     /// **Example: Document Editor**
     /// ```swift
-    /// @riverpodNotifier
+    /// @RiverpodNotifier
     /// final class DocumentNotifier: Notifier<Document> {
     ///     let documentId: String
     ///

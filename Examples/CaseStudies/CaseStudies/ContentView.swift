@@ -97,7 +97,7 @@ struct ContentView: View {
                 title: "Riverpod: Macros",
                 summary: "Macro-only patterns for notifier, provider, future provider, and selector APIs.",
                 category: .riverpod,
-                keywords: ["macro", "riverpodNotifier", "Provider", "FutureProvider"]
+                keywords: ["macro", "RiverpodNotifier", "Provider", "FutureProvider"]
             ) { RiverpodMacrosGuideView() },
 
             CaseStudy(

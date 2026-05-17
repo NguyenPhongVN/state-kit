@@ -1,12 +1,12 @@
 # StateKit Manual
 
-Tài liệu này tổng hợp toàn bộ API của `StateKit` (Hooks, Atoms và Concurrency) đang được demo trong ứng dụng `CaseStudies`.
+This documentation summarizes the complete API of `StateKit` (Hooks, Atoms, Concurrency, and Macros) as demonstrated in the `CaseStudies` application.
 
 ---
 
 ## 1. Scoped Hook API (Local State)
 
-| Nhóm | API |
+| Category | API |
 |------|-----|
 | State | `useState`, `useBinding`, `useReducer`, `useRef`, `useMemo`, `useCallback` |
 | Data Flow | `useContext`, `useEnvironment`, `useOnChange` |
@@ -14,68 +14,95 @@ Tài liệu này tổng hợp toàn bộ API của `StateKit` (Hooks, Atoms và 
 | Async | `useAsync`, `useAsyncSequence`, `usePublisher` |
 | Runtime | `StateScope`, `StateView`, `UpdateStrategy` |
 
-### Runtime quan trọng
-- **`StateScope`**: Bắt buộc phải bọc quanh code có sử dụng hook.
-- **`UpdateStrategy`**: Kiểm soát việc chạy lại hook (`.once`, `.preserved(by:)`).
+### Critical Runtime Concepts
+- **`StateScope`**: Mandatory wrapper for any code utilizing hooks.
+- **`UpdateStrategy`**: Controls hook re-execution (`.once`, `.preserved(by:)`).
 
 ---
 
 ## 2. Atom API (Global State)
 
-Atom là đơn vị trạng thái độc lập, có thể truy cập từ bất cứ đâu trong ứng dụng.
+Atoms are independent state units accessible from anywhere in the application.
 
-| Loại Atom | Protocol | Mô tả |
-|-----------|----------|-------|
-| State Atom | `SKStateAtom` | Lưu trữ dữ liệu có thể đọc/ghi trực tiếp. |
-| Value Atom | `SKValueAtom` | Dữ liệu phái sinh (derived), tự cập nhật khi atom nguồn đổi. |
-| Task Atom | `SKTaskAtom` | Thực hiện async task không ném lỗi. |
-| Throwing Task | `SKThrowingTaskAtom` | Thực hiện async task có ném lỗi (`throws`). |
-| Publisher | `SKPublisherAtom` | Kết nối với Combine Publisher. |
+| Atom Type | Protocol | Description |
+|-----------|----------|-------------|
+| State Atom | `SKStateAtom` | Stores data with direct read/write access. |
+| Value Atom | `SKValueAtom` | Derived data that updates automatically when source atoms change. |
+| Task Atom | `SKTaskAtom` | Performs asynchronous tasks that do not throw errors. |
+| Throwing Task | `SKThrowingTaskAtom` | Performs asynchronous tasks that may `throw` errors. |
+| Publisher | `SKPublisherAtom` | Integrates with Combine Publishers. |
 
-### Cách sử dụng (Property Wrappers)
-- **`@SKState(MyAtom())`**: Đọc/ghi state atom.
-- **`@SKValue(MyDerivedAtom())`**: Đọc giá trị phái sinh (read-only).
-- **`@SKTask(MyAsyncAtom())`**: Theo dõi trạng thái của async task (`AsyncPhase`).
-- **`@SKContext`**: Truy cập store một cách imperative (cho action handler).
+### Usage (Property Wrappers)
+- **`@SKState(MyAtom())`**: Read/write access to a state atom.
+- **`@SKValue(MyDerivedAtom())`**: Read access to derived data (read-only).
+- **`@SKTask(MyAsyncAtom())`**: Track the state of an async task (`AsyncPhase`).
+- **`@SKContext`**: Imperative access to the store (for action handlers).
 
 ---
 
-## 3. Concurrency Utilities (SCTask)
+## 3. Macro API - 48 Macros
 
-Bộ công cụ mở rộng cho Swift Concurrency và `AsyncSequence`.
+The Macro system minimizes boilerplate, automatically generates conformances, and manages Concurrency isolation.
+
+### 3.1 Atom Macros (17)
+Applied to `struct`. Automatically adds `@MainActor`, `Hashable`, and `typealias Value`.
+
+- **Core**: `@StateAtom`, `@ValueAtom`, `@TaskAtom`, `@ThrowingTaskAtom`, `@PublisherAtom`, `@Atom`.
+- **Advanced**: `@AtomFamily` (ID-based), `@AtomReducer` (Reducer pattern).
+- **Variants**: `@Computed`, `@SelectorAtom`, `@FilteredAtom`, `@MappedAtom`, `@CombineAtom`, `@DistinctAtom`, `@FlatMapAtom`.
+
+### 3.2 Riverpod Macros (11)
+Bridges the Riverpod system with StateKit.
+
+- **Providers**: `@RiverpodNotifier` (class), `@StateProvider`, `@Provider`, `@FutureProvider`, `@StreamProvider`.
+- **Families**: `@RiverpodFamily` (class), `@ProviderFamily`, `@RiverpodFutureFamily`, `@RiverpodStreamFamily`.
+- **Misc**: `@RiverpodSelector`, `@RiverpodAsync`.
+
+### 3.3 Hook Macros (16)
+Peer macros that generate `use...` functions from logic structs.
+
+- **Stateful**: `@HookState`, `@HookRef`, `@HookToggle`, `@HookPrevious`, `@HookMemo`, `@HookCallback`, `@HookReducer`.
+- **Effects**: `@HookEffect`, `@AsyncHook`, `@HookInterval`.
+- **Control**: `@Debounce`, `@Throttle` (Applied to async functions).
+- **Infrastructure**: `@HookContext`, `@HookForm`, `@Hook`, `@CustomHook`.
+
+### 3.4 View Macros (4)
+Optimizes SwiftUI View declarations.
+
+- **UI Integration**: `@HookView`, `@StateView` (Auto-generates `body` and `StateScope`).
+- **Async Handling**: `@AsyncView(atom:)` (Generates `isLoading`, `hasError` helpers).
+- **Observation**: `@ObservableState` (Integration with Swift 6 Observation Framework).
+
+---
+
+## 4. Concurrency Utilities (SCTask)
+
+Extended toolkit for Swift Concurrency and `AsyncSequence`.
 
 ### Task Extensions
-- **`Task.retrying`**: Tự động thử lại khi gặp lỗi (hỗ trợ exponential backoff).
-- **`Task.throwingTimeout`**: Giới hạn thời gian thực thi của một task.
-- **`Task.gather`**: Chạy song song nhiều task và thu thập kết quả (có giới hạn số luồng).
-- **`Task.race`**: Chạy đua nhiều task, lấy kết quả nhanh nhất.
+- **`Task.retrying`**: Automatically retries on failure (supports exponential backoff).
+- **`Task.throwingTimeout`**: Limits the execution time of a task.
+- **`Task.gather`**: Executes multiple tasks in parallel and collects results (concurrency limited).
+- **`Task.race`**: Executes multiple tasks and returns the fastest result.
 
 ### AsyncSequence Operators
-- **`.timeout(_:)`**: Ngắt stream nếu không có dữ liệu mới trong khoảng thời gian quy định.
-- **`.debounce(for:)`**: Trì hoãn phát dữ liệu cho đến khi stream ổn định.
+- **`.timeout(_:)`**: Terminates the stream if no new data is received within a specified interval.
+- **`.debounce(for:)`**: Delays data emission until the stream stabilizes.
 
 ---
 
-## 4. Chi tiết các Hook phổ biến
+## 5. Common Hooks in Detail
 
 ### `useState` / `useBinding`
-Quản lý trạng thái cục bộ. `useBinding` trả về `Binding<T>` của SwiftUI.
+Local state management. `useBinding` returns a SwiftUI `Binding<T>`.
 
 ```swift
 let (count, setCount) = useState(0)
 let name = useBinding("")
 ```
 
-### `useMemo` / `useCallback`
-Tối ưu hiệu năng bằng cách cache giá trị hoặc closure.
-
-```swift
-let sorted = useMemo(updateStrategy: .preserved(by: items)) { items.sorted() }
-let onClick = useCallback(updateStrategy: .preserved(by: id)) { print(id) }
-```
-
 ### `useEffect` / `useLayoutEffect`
-Chạy side effect sau render. Hỗ trợ hàm cleanup để dọn dẹp tài nguyên.
+Runs side effects after rendering. Supports a cleanup function for resource management.
 
 ```swift
 useEffect(updateStrategy: .preserved(by: socketURL)) {
@@ -84,37 +111,17 @@ useEffect(updateStrategy: .preserved(by: socketURL)) {
 }
 ```
 
-### `useAsync` / `useAsyncSequence`
-Làm việc với code bất đồng bộ một cách reactive.
-
-```swift
-let phase = useAsync(updateStrategy: .preserved(by: query)) {
-    try await search(query)
-}
-```
-
 ---
 
-## 5. Property Wrappers (Tiện ích)
+## 6. Quick Selection Guide
 
-Dùng để rút gọn code khi khai báo bên trong `StateView` hoặc `StateScope`.
-
-- **`@HState`**: Shortcut cho `useBinding`.
-- **`@HMemo`**: Shortcut cho `useMemo`.
-- **`@HRef`**: Shortcut cho `useRef`.
-- **`@HEnvironment`**: Shortcut cho `useEnvironment`.
-
----
-
-## 6. Gợi ý chọn nhanh
-
-| Nếu bạn cần... | Hãy dùng... |
+| If you need... | Use... |
 |----------------|-------------|
-| State đơn giản | `useState` |
-| Binding cho control | `useBinding` hoặc `@HState` |
-| Logic update phức tạp | `useReducer` |
-| Giá trị không re-render | `useRef` hoăc `@HRef` |
-| Tối ưu tính toán | `useMemo` hoặc `@HMemo` |
-| Side effect sau render | `useEffect` |
-| Gọi API một lần | `useAsync` |
-| Luồng dữ liệu | `useAsyncSequence` hoặc `SKPublisherAtom` |
+| Fast Atom definition | `@StateAtom`, `@ValueAtom` |
+| Identity/Auth management | `@RiverpodNotifier` + `@RiverpodSelector` |
+| View using Hooks | `@HookView` |
+| Debounced Search | `@Debounce` on an async function |
+| Form Validation | `@HookForm` |
+| Complex update logic | `useReducer` or `@HookReducer` |
+| Global state (Observed) | `@ObservableState` |
+| Calculation optimization | `useMemo` or `@HookMemo` |

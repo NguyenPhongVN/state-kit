@@ -4,7 +4,7 @@
 
 **Existing Macros:**
 - ✅ 1 View Macro: @HookView (generates body with StateScope)
-- ✅ 1 Riverpod Macro: @riverpodNotifier (generates NotifierProvider from class)
+- ✅ 1 Riverpod Macro: @RiverpodNotifier (generates NotifierProvider from class)
 
 ---
 
@@ -101,9 +101,9 @@ let doubleCounterProvider = Provider { ref in
 }
 ```
 
-#### 3. Notifier Provider (Has @riverpodNotifier macro)
+#### 3. Notifier Provider (Has @RiverpodNotifier macro)
 ```swift
-@riverpodNotifier
+@RiverpodNotifier
 class TodoNotifier: Notifier<[String]> {
     override func build() -> [String] { [...] }
     
@@ -114,9 +114,9 @@ class TodoNotifier: Notifier<[String]> {
 // Generates: public let todoNotifierProvider = NotifierProvider { TodoNotifier() }
 ```
 
-#### 4. AsyncNotifier Provider (Has @riverpodNotifier macro)
+#### 4. AsyncNotifier Provider (Has @RiverpodNotifier macro)
 ```swift
-@riverpodNotifier
+@RiverpodNotifier
 class UserProfileNotifier: AsyncNotifier<String> {
     override func build() async throws -> String { ... }
     
@@ -364,9 +364,9 @@ func clockProvider() -> AnyPublisher<String, Error> {
 
 ---
 
-#### 8. **@NotifierProvider** — Enhanced version of @riverpodNotifier
+#### 8. **@NotifierProvider** — Enhanced version of @RiverpodNotifier
 ```swift
-// Same as @riverpodNotifier but with additional scaffolding
+// Same as @RiverpodNotifier but with additional scaffolding
 @NotifierProvider
 class TodoNotifier: Notifier<[String]> {
     override func build() -> [String] { [...] }
@@ -379,7 +379,7 @@ class TodoNotifier: Notifier<[String]> {
 // Plus: Helper extensions for easier access patterns
 ```
 
-**Boilerplate Saved:** Same as @riverpodNotifier, but renamed for clarity  
+**Boilerplate Saved:** Same as @RiverpodNotifier, but renamed for clarity  
 **Pattern Frequency:** Existing macro already implemented  
 **Recommendation:** ⭐ Alias/rename existing macro
 

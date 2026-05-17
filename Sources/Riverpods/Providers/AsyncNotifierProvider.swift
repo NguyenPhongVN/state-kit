@@ -73,7 +73,7 @@ import Observation
 ///
 /// **Usage Pattern (Macro-based):**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class UserNotifier: AsyncNotifier<User> {
 ///     override func build() async throws -> User {
 ///         let userId = ref.watch(userIdProvider)
@@ -450,7 +450,7 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
 ///
 /// **Example: User with Async Initialization (macro syntax)**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class UserNotifier: AsyncNotifier<User> {
 ///     override func build() async throws -> User {
 ///         let userId = ref.watch(userIdProvider)
@@ -481,7 +481,7 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
 ///
 /// **Example: Complex Async Initialization**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class AppStateNotifier: AsyncNotifier<AppState> {
 ///     override func build() async throws -> AppState {
 ///         let user = try await loadUser()
@@ -499,7 +499,7 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
 ///
 /// **Example: With Error Recovery**
 /// ```swift
-/// @riverpodNotifier
+/// @RiverpodNotifier
 /// final class DataNotifier: AsyncNotifier<[Data]> {
 ///     override func build() async throws -> [Data] {
 ///         do {

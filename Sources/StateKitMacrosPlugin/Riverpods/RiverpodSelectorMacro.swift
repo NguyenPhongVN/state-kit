@@ -2,8 +2,6 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @RiverpodSelector: Generates a selector provider from a function
-/// that derives value from other providers
 public struct RiverpodSelectorMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -14,21 +12,18 @@ public struct RiverpodSelectorMacro: PeerMacro {
             throw MacroError.onlyApplicableToFunctions
         }
 
-        guard let returnType = funcDecl.signature.returnClause?.type else {
-            throw MacroError.custom("@RiverpodSelector function must have explicit return type")
-        }
-
-        guard let body = funcDecl.body else {
-            throw MacroError.custom("@RiverpodSelector function must have implementation")
-        }
-
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        let selectorProvider: DeclSyntax = """
-        public let \(raw: providerName) = Provider(\(raw: functionName))
+        let providerDecl: DeclSyntax = """
+        @MainActor
+        \(raw: staticKeyword)let \(raw: providerName) = Provider(\(raw: functionName))
         """
 
-        return [selectorProvider]
+        return [providerDecl]
     }
 }

@@ -2,6 +2,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+/// @HookMemo: Generates a hook function from a struct with compute() method using useMemo
 public struct HookMemoMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -12,41 +13,33 @@ public struct HookMemoMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
-        guard let computeFn = PropertyExtractor.function(in: structDecl, named: "compute") else {
-            throw MacroError.missingComputeMethod
+        let className = structDecl.name.text
+        let hookName = "use" + className
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
+
+        // Find compute method and its return type
+        var returnType = "Any"
+        for member in structDecl.memberBlock.members {
+            if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
+               funcDecl.name.text == "compute" {
+                if let type = funcDecl.signature.returnClause?.type {
+                    returnType = type.trimmedDescription
+                }
+            }
         }
 
-        guard let returnType = computeFn.signature.returnClause?.type else {
-            throw MacroError.invalidReturnType
-        }
-
-        let properties = PropertyExtractor.storedProperties(from: structDecl)
-        let structName = structDecl.name.text
-        let hookName = "use" + structName + "Memo"
-
-        var paramList: [String] = []
-        var depsList: [String] = []
-        var instanceInit: [String] = []
-
-        for prop in properties {
-            paramList.append("\(prop.name): \(prop.typeName)")
-            depsList.append(prop.name)
-            instanceInit.append("    \(prop.name): \(prop.name)")
-        }
-
-        let params = paramList.joined(separator: ", ")
-        let deps = depsList.isEmpty ? ".once" : ".preserved(by: \(depsList.joined(separator: ", ")))"
-        let initCode = instanceInit.isEmpty ? "()" : "(\n" + instanceInit.joined(separator: ",\n") + "\n    )"
-
-        let hookFunction: DeclSyntax = """
+        let hookDecl: DeclSyntax = """
         @MainActor
-        public func \(raw: hookName)(\(raw: params)) -> \(returnType) {
-            useMemo(updateStrategy: \(raw: deps)) {
-                \(raw: structName)\(raw: initCode).compute()
+        \(raw: staticKeyword)func \(raw: hookName)() -> \(raw: returnType) {
+            useMemo(updateStrategy: .once) {
+                \(raw: className)().compute()
             }
         }
         """
 
-        return [hookFunction]
+        return [hookDecl]
     }
 }

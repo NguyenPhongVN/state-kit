@@ -297,7 +297,7 @@ func userDetailProvider(ref: ProviderRef, id: Int) -> String {
 - 2 new (@StateView, @AsyncView)
 
 **Riverpod Macros (5):**
-- 1 notifier (@riverpodNotifier)
+- 1 notifier (@RiverpodNotifier)
 - 4 new providers (@StateProvider, @Provider, @FutureProvider, @StreamProvider, @ProviderFamily)
 
 ---

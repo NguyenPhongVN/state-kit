@@ -12,40 +12,42 @@ public struct ProviderFamilyMacro: PeerMacro {
             throw MacroError.onlyApplicableToFunctions
         }
 
-        let funcName = funcDecl.name.text
+        let functionName = funcDecl.name.text
+        let providerName = functionName + "Provider"
+        
+        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
+        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
+        let staticKeyword = isStatic ? "static " : ""
 
-        // Extract all parameters except first (which should be ref)
-        var familyParams: [String] = []
-        var familyParamTypes: [(name: String, type: String)] = []
-
-        let params = funcDecl.signature.parameterClause.parameters
-        for (index, param) in params.enumerated() {
-            if index == 0 && param.firstName.text == "ref" {
-                continue  // Skip ref parameter
-            }
-
-            let paramName = param.firstName.text
-            let paramType = param.type.description.trimmingCharacters(in: .whitespaces)
-
-            familyParams.append(paramName)
-            familyParamTypes.append((name: paramName, type: paramType))
-        }
-
-        guard !familyParams.isEmpty else {
-            throw MacroError.methodNotFound("@ProviderFamily requires at least one parameter (besides ref)")
-        }
-
-        // Extract return type
         guard let returnType = funcDecl.signature.returnClause?.type else {
             throw MacroError.invalidReturnType
         }
 
-        let paramList = familyParamTypes.map { "\($0.name): \($0.type)" }.joined(separator: ", ")
-        let callParams = familyParams.joined(separator: ", ")
+        // Surgical parameter extraction
+        var paramDecls: [String] = []
+        var callArgs: [String] = []
+
+        for param in funcDecl.signature.parameterClause.parameters {
+            let typeStr = param.type.trimmedDescription
+            let label = param.firstName.text
+            let internalName = param.secondName?.text ?? label
+            
+            paramDecls.append("\(label): \(typeStr)")
+
+            if label == "_" {
+                callArgs.append(internalName)
+            } else {
+                callArgs.append("\(label): \(internalName)")
+            }
+        }
+
+        let paramList = paramDecls.joined(separator: ", ")
+        let argList = callArgs.joined(separator: ", ")
 
         let providerDecl: DeclSyntax = """
-        public let \(raw: funcName) = Provider.family { (ref: ProviderRef, \(raw: paramList)) -> \(returnType) in
-            \(raw: funcName)(ref: ref, \(raw: callParams))
+        @MainActor
+        \(raw: staticKeyword)let \(raw: providerName) = Provider.family { (\(raw: paramList)) -> \(raw: returnType.trimmedDescription) in
+            \(raw: functionName)(\(raw: argList))
         }
         """
 
