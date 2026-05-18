@@ -17,14 +17,14 @@ private struct SessionAtom {
 private struct FeedAtom {
     @MainActor
     func value(context: SKAtomTransactionContext) -> [String] {
-        let session = context.watch(SessionAtom.shared)
+        let session = context.watch(SessionAtom())
         return session.user == nil ? ["Please sign in"] : ["News", "Trends", "For You"]
     }
 }
 
 struct ArchitectureShowcaseExampleView: View {
-    @SKState(SessionAtom.shared) private var session
-    @SKValue(FeedAtom.shared) private var feed
+    @SKState(SessionAtom()) private var session
+    @SKValue(FeedAtom()) private var feed
 
     var body: some View {
         Form {

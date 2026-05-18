@@ -2,6 +2,37 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+// HookEffectMacro: @attached(peer, names: prefixed(use))
+//
+// Generates a peer function named "use<StructName>" that wraps useEffect().
+// The struct must provide an async `run()` method and may optionally provide
+// a `cleanup()` method.
+//
+// Stored properties on the struct become both parameters AND effect
+// dependencies (preserved(by: ...)), so the effect re-runs when any of
+// them change.
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   @HookEffect struct Logger {
+//       var message: String = "loaded"
+//       func run() async { print(message) }
+//   }
+//
+// Expands to:
+//   struct Logger { var message: String = "loaded"; func run() async { ... } }
+//
+//   @MainActor
+//   func useLogger(message: String = "loaded") {
+//       StateKit.useEffect(updateStrategy: .preserved(by: message)) {
+//           let task = Task { await Logger(message: message).run() }
+//           return { task.cancel() }
+//       }
+//   }
+//
+// Usage:
+//   useLogger()                    // prints "loaded"
+//   useLogger(message: "hello")    // re-runs, prints "hello"
+
 public struct HookEffectMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -16,9 +47,12 @@ public struct HookEffectMacro: PeerMacro {
             throw MacroError.missingRunMethod
         }
 
+        let className = structDecl.name.text
+        let funcName = "use" + className
+
         let properties = PropertyExtractor.storedProperties(from: structDecl)
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
+
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
         var paramList: [String] = []
         var depsList: [String] = []
@@ -39,9 +73,9 @@ public struct HookEffectMacro: PeerMacro {
         if hasCleanup {
             body = """
                 {
-                    let task = Task { await \(raw: structName)\(raw: initCode).run() }
+                    let task = Task { await \(raw: className)\(raw: initCode).run() }
                     return {
-                        \(raw: structName)\(raw: initCode).cleanup()
+                        \(raw: className)\(raw: initCode).cleanup()
                         task.cancel()
                     }
                 }
@@ -49,19 +83,16 @@ public struct HookEffectMacro: PeerMacro {
         } else {
             body = """
                 {
-                    let task = Task { await \(raw: structName)\(raw: initCode).run() }
+                    let task = Task { await \(raw: className)\(raw: initCode).run() }
                     return { task.cancel() }
                 }
                 """
         }
 
-        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
-        let staticModifier = isStatic ? "static " : ""
-
         let hookFunction: DeclSyntax = """
         @MainActor
-        \(raw: staticModifier)func \(raw: hookName)(\(raw: params)) {
-            useEffect(\(raw: depsArg)) \(body)
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)(\(raw: params)) {
+            StateKit.useEffect(\(raw: depsArg)) \(body)
         }
         """
 

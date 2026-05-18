@@ -13,22 +13,22 @@ private struct CacheKeyAtom {
 private struct CachedResponseAtom {
     @MainActor
     func task(context: SKAtomTransactionContext) async -> String {
-        let key = context.watch(CacheKeyAtom.shared)
+        let key = context.watch(CacheKeyAtom())
         try? await Task.sleep(nanoseconds: 400_000_000)
         return "Response for key #\(key) at \(Date().formatted(date: .omitted, time: .standard))"
     }
 }
 
 struct CacheExampleView: View {
-    @SKState(CacheKeyAtom.shared) private var key
-    @SKTask(CachedResponseAtom.shared) private var response
+    @SKState(CacheKeyAtom()) private var key
+    @SKTask(CachedResponseAtom()) private var response
     @SKContext private var context
 
     var body: some View {
         Form {
             Section("Cache Key") {
                 Stepper("Key: \(key)", value: $key, in: 1...9)
-                Button("Refresh") { Task { await context.refresh(CachedResponseAtom.shared) } }
+                Button("Refresh") { Task { await context.refresh(CachedResponseAtom()) } }
             }
             Section("Phase") {
                 Text(phase)

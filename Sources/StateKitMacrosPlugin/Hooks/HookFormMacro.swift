@@ -2,6 +2,49 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+// HookFormMacro: @attached(peer, names: prefixed(use), named(FHook))
+//
+// Generates TWO peer declarations:
+//   1. A public struct `FHook` with Binding<…> properties for each field,
+//      plus `isValid`, `validate()`, and `reset()` helpers.
+//   2. A function `use<StructName>() -> FHook` that creates the form via
+//      useBinding for each field + useBinding("") for each error field.
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   @HookForm struct Profile {
+//       var name: String = ""
+//       var bio: String = ""
+//   }
+//
+// Expands to:
+//   struct Profile { var name: String = ""; var bio: String = "" }
+//
+//   public struct FHook {
+//       public var name: Binding<String>
+//       public var nameError: Binding<String>
+//       public var bio: Binding<String>
+//       public var bioError: Binding<String>
+//
+//       public var isValid: Bool { nameError.wrappedValue.isEmpty && bioError.wrappedValue.isEmpty }
+//       @discardableResult func validate() -> Bool { ... }
+//       func reset() { ... }
+//   }
+//
+//   @MainActor
+//   func useProfile() -> FHook {
+//       FHook(
+//           name: StateKit.useBinding(""),
+//           nameError: StateKit.useBinding(""),
+//           bio: StateKit.useBinding(""),
+//           bioError: StateKit.useBinding("")
+//       )
+//   }
+//
+// Usage:
+//   let form = useProfile()
+//   form.name.wrappedValue = "Alice"
+//   form.isValid          // true
+
 public struct HookFormMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -17,9 +60,10 @@ public struct HookFormMacro: PeerMacro {
             throw MacroError.methodNotFound("form fields")
         }
 
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
-        let hookStructName = structName + "Hook"
+        let className = structDecl.name.text
+        let funcName = "use" + className
+
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
         var bindingProps: [String] = []
         var errorProps: [String] = []
@@ -34,14 +78,14 @@ public struct HookFormMacro: PeerMacro {
             bindingProps.append("    public var \(propName): Binding<\(typeName)>")
             errorProps.append("    public var \(propName)Error: Binding<String>")
 
-            useBindingCalls.append("        \(propName): useBinding(\(defaultVal))")
-            useErrorBindingCalls.append("        \(propName)Error: useBinding(\"\")")
+            useBindingCalls.append("        \(propName): StateKit.useBinding(\(defaultVal))")
+            useErrorBindingCalls.append("        \(propName)Error: StateKit.useBinding(\"\")")
         }
 
         let errorChecks = properties.map { "\($0.name)Error.wrappedValue.isEmpty" }.joined(separator: " && ")
 
         let hookStruct: DeclSyntax = """
-        public struct \(raw: hookStructName) {
+        public struct FHook {
         \(raw: bindingProps.joined(separator: "\n"))
         \(raw: errorProps.joined(separator: "\n"))
 
@@ -51,7 +95,6 @@ public struct HookFormMacro: PeerMacro {
 
             @discardableResult
             func validate() -> Bool {
-                // Basic validation: all fields must not be empty if they are Strings
                 var allValid = true
         \(raw: properties.filter { $0.typeName == "String" }.map { "        if \($0.name).wrappedValue.isEmpty { \($0.name)Error.wrappedValue = \"Required\"; allValid = false }" }.joined(separator: "\n"))
                 return allValid
@@ -64,13 +107,10 @@ public struct HookFormMacro: PeerMacro {
         }
         """
 
-        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
-        let staticModifier = isStatic ? "static " : ""
-
         let hookFunction: DeclSyntax = """
         @MainActor
-        \(raw: staticModifier)func \(raw: hookName)() -> \(raw: hookStructName) {
-            \(raw: hookStructName)(
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)() -> FHook {
+            FHook(
         \(raw: useBindingCalls.joined(separator: ",\n")),
         \(raw: useErrorBindingCalls.joined(separator: ",\n"))
             )

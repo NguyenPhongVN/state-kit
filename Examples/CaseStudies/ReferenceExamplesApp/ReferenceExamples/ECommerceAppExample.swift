@@ -25,13 +25,13 @@ private struct CartAtom {
 private struct TotalAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> Int {
-        context.watch(CartAtom.shared).reduce(0) { $0 + $1.price }
+        context.watch(CartAtom()).reduce(0) { $0 + $1.price }
     }
 }
 
 struct ECommerceAppExampleView: View {
-    @SKState(CartAtom.shared) private var cart
-    @SKValue(TotalAtom.shared) private var total
+    @SKState(CartAtom()) private var cart
+    @SKValue(TotalAtom()) private var total
 
     var body: some View {
         Form {

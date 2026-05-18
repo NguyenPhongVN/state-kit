@@ -19,7 +19,7 @@ private struct ComputedNameAtom {
 private struct ComputedDoubleAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> Int {
-        context.watch(ComputedCountAtom.shared) * 2
+        context.watch(ComputedCountAtom()) * 2
     }
 }
 
@@ -27,17 +27,17 @@ private struct ComputedDoubleAtom {
 private struct ComputedSummaryAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> String {
-        let name = context.watch(ComputedNameAtom.shared)
-        let count = context.watch(ComputedCountAtom.shared)
+        let name = context.watch(ComputedNameAtom())
+        let count = context.watch(ComputedCountAtom())
         return "\(name): \(count)"
     }
 }
 
 struct ComputedMacroExampleView: View {
-    @SKState(ComputedCountAtom.shared) private var count
-    @SKState(ComputedNameAtom.shared) private var name
-    @SKValue(ComputedDoubleAtom.shared) private var doubled
-    @SKValue(ComputedSummaryAtom.shared) private var summary
+    @SKState(ComputedCountAtom()) private var count
+    @SKState(ComputedNameAtom()) private var name
+    @SKValue(ComputedDoubleAtom()) private var doubled
+    @SKValue(ComputedSummaryAtom()) private var summary
 
     var body: some View {
         Form {

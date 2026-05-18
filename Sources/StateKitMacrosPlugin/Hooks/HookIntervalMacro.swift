@@ -2,8 +2,41 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @HookInterval: Interval/polling hook for periodic tasks
-/// Automatically handles setup/cleanup of interval timers
+// HookIntervalMacro: @attached(peer, names: prefixed(use))
+//
+// Generates a peer function named "use<StructName>" that creates a
+// repeating interval effect via useEffect.  The struct must provide
+// a stored `intervalMs: Int` property and a `tick()` async method.
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   @HookInterval struct Poller {
+//       var intervalMs: Int = 5000
+//       func tick() async { /* poll */ }
+//   }
+//
+// Expands to:
+//   struct Poller { var intervalMs: Int = 5000; func tick() async {} }
+//
+//   @MainActor
+//   func usePoller(intervalMs: Int = 5000) {
+//       StateKit.useEffect(updateStrategy: .preserved(by: intervalMs)) {
+//           let instance = Poller(intervalMs: intervalMs)
+//           let task = Task {
+//               while !Task.isCancelled {
+//                   try? await Task.sleep(nanoseconds: UInt64(instance.intervalMs) * 1_000_000)
+//                   if !Task.isCancelled {
+//                       await instance.tick()
+//                   }
+//               }
+//           }
+//           return { task.cancel() }
+//       }
+//   }
+//
+// Usage:
+//   usePoller()               // polls every 5000ms
+//   usePoller(intervalMs: 1000) // re-runs, polls every 1000ms
+
 public struct HookIntervalMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -18,9 +51,12 @@ public struct HookIntervalMacro: PeerMacro {
             throw MacroError.custom("@HookInterval requires a 'tick()' method")
         }
 
+        let className = structDecl.name.text
+        let funcName = "use" + className
+
         let properties = PropertyExtractor.storedProperties(from: structDecl)
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
+
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
         var paramList: [String] = []
         var depsList: [String] = []
@@ -36,14 +72,11 @@ public struct HookIntervalMacro: PeerMacro {
         let depsArg = depsList.isEmpty ? ".once" : ".preserved(by: \(depsList.joined(separator: ", ")))"
         let initCode = instanceInit.isEmpty ? "()" : "(\n" + instanceInit.joined(separator: ",\n") + "\n    )"
 
-        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
-        let staticModifier = isStatic ? "static " : ""
-
         let hookFunction: DeclSyntax = """
         @MainActor
-        \(raw: staticModifier)func \(raw: hookName)(\(raw: params)) {
-            useEffect(updateStrategy: \(raw: depsArg)) {
-                let instance = \(raw: structName)\(raw: initCode)
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)(\(raw: params)) {
+            StateKit.useEffect(updateStrategy: \(raw: depsArg)) {
+                let instance = \(raw: className)\(raw: initCode)
                 let task = Task {
                     while !Task.isCancelled {
                         try? await Task.sleep(nanoseconds: UInt64(instance.intervalMs) * 1_000_000)

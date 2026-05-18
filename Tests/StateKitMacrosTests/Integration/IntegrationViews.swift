@@ -9,116 +9,97 @@ struct ProfileDashboardView: View {
     
     // MARK: Hooks (16)
     
-    @Hook
-    func useAnalytics() {
-    }
-    
-    @CustomHook
-    func useTheme() {
+    private struct Hooks {
+        @Hook
+        static func useAnalytics() {
+        }
     }
     
     @HookState
-    struct Counter {
-        var value: Int = 0
-    }
+    struct CounterHook { var value: Int = 0 }
     
     @HookRef
-    struct AnimationRef {
-        var offset: Double = 0.0
-    }
+    struct AnimationRefHook { var offset: Double = 0.0 }
     
     @HookToggle
-    struct IsEditing {
-    }
+    struct IsEditingHook {}
     
     @HookEffect
-    struct Logger {
+    struct LoggerHook {
         func run() async {
             print("Profile Loaded")
         }
     }
     
     @AsyncHook
-    struct Uploader {
-        func run() async {
-            // Simulated upload
-        }
+    struct UploaderHook {
+        func run() async {}
     }
     
     @HookPrevious
-    struct LastScore {
-        let score: Int
-    }
+    struct LastScoreHook { let score: Int }
     
     @HookInterval
-    struct AutoRefresh {
+    struct AutoRefreshHook {
         var intervalMs: Int = 5000
-        func tick() async {
-        }
+        func tick() async {}
     }
     
     @HookMemo
-    struct ExpensiveTitle {
-        func compute() -> String {
-            "User Dashboard"
-        }
+    struct ExpensiveTitleHook {
+        func compute() -> String { "User Dashboard" }
     }
     
     @HookCallback
-    struct ShareHandler {
-        func call() {
-        }
-    }
+    struct ShareHandlerHook { func call() {} }
     
     @HookReducer
-    struct Preferences: Hashable {
+    struct PreferencesHook {
         typealias State = Bool
         typealias Action = Int
-        
         func reduce(_ s: inout Bool, action: Int) {
             s = (action > 0)
         }
     }
     
     @HookContext
-    struct AppContext {
-        var version: String = "1.0"
-    }
+    struct AppContextHook { var version: String = "1.0" }
     
     @HookForm
-    struct ProfileForm {
+    struct ProfileFormHook {
         var name: String = ""
         var bio: String = ""
     }
     
-    @Debounce(milliseconds: 300)
-    static func search() async {
+    private struct SearchHook {
+        @Debounce(milliseconds: 300)
+        static func search() async {}
     }
     
-    @Throttle(milliseconds: 500)
-    static func like() async {
+    private struct LikeHook {
+        @Throttle(milliseconds: 500)
+        static func like() async {}
     }
 
     var stateBody: some View {
-        useAnalytics()
-        useTheme()
+        Hooks.useAnalytics()
+
+        let _ = useCounterHook(value: 0)
+        let _ = useAnimationRefHook(offset: 0.0)
+        let (isEditing, toggleEditing) = useIsEditingHook()
         
-        let _ = useCounter()
-        let _ = useAnimationRef()
-        let (isEditing, toggleEditing) = useIsEditing()
+        useLoggerHook()
+        useUploaderHook()
         
-        useLogger()
-        useUploader()
+        let _ = useLastScoreHook(score: 10)
+        useAutoRefreshHook(intervalMs: 1000)
         
-        let _ = useLastScore(score: 10)
-        useAutoRefresh(intervalMs: 1000)
+        let _ = useExpensiveTitleHook()
+        let _ = useShareHandlerHook()
+        let _ = usePreferencesHook()
+        let _ = useAppContextHook()
         
-        let _ = useExpensiveTitle()
-        let _ = useShareHandler()
-        let _ = usePreferences()
-        let _ = useAppContext()
-        
-        let form = useProfileForm()
+        let form = useProfileFormHook()
         
         return VStack {
             TextField("Name", text: form.name)
@@ -127,10 +108,10 @@ struct ProfileDashboardView: View {
             }
             if isEditing {
                 Button("Like") {
-                    Self.like_throttled()
+                    LikeHook.likeThrottled()
                 }
                 Button("Search") {
-                    Self.search_debounced()
+                    SearchHook.searchDebounced()
                 }
             }
         }
@@ -146,7 +127,7 @@ struct SimpleHeader: View {
     }
 }
 
-@AsyncView(atom: UserModule.SessionAtom.shared) 
+@AsyncView(atom: UserModule.SessionAtom()) 
 struct ProfileAsyncView: View {
     var stateBody: some View {
         Text("Loaded")

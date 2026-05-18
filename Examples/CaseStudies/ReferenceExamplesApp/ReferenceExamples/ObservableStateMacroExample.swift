@@ -4,7 +4,7 @@ import StateKitUI
 import StateKitMacros
 
 @ObservableState
-final class UserState {
+private struct UserState {
     var count: Int = 0
     var name: String = "Guest"
 }

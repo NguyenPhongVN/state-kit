@@ -17,7 +17,7 @@ private struct ObjectLabelAtom {
     let id: Int
     @MainActor
     func value(context: SKAtomTransactionContext) -> String {
-        let scale = context.watch(ObjectScaleAtom.family(id))
+        let scale: Double = context.watch(ObjectScaleAtom(id: id))
         return "Object \(id) scale \(scale.formatted(.number.precision(.fractionLength(1))))"
     }
 }
@@ -28,8 +28,8 @@ struct VisionOSExampleView: View {
             Section("Spatial objects") {
                 ForEach([1, 2, 3], id: \.self) { id in
                     SKAtomScopeView {
-                        let scale = useAtomBinding(ObjectScaleAtom.family(id))
-                        let label = useAtomValue(ObjectLabelAtom.family(id))
+                        let scale: Binding<Double> = useAtomBinding(ObjectScaleAtom(id: id))
+                        let label: String = useAtomValue(ObjectLabelAtom(id: id))
                         VStack(alignment: .leading) {
                             Text(label)
                             Slider(value: scale, in: 0.5...3.0)

@@ -2,26 +2,41 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+/// @FutureProvider: Declares an async provider that produces a single value.
+///
+/// Attached to an `async` function. Generates a peer `let` initialized with
+/// `FutureProvider { ... }` that calls the annotated function with `await`.
+///
+/// ## Generated Members
+/// - `let <functionName>Provider = FutureProvider { ... }` — a peer constant at the same scope.
+///
+/// ## User Requirements
+/// - The function must be marked `async`.
+///
+/// ## Behavior
+/// - `static` propagates from the annotated function to the generated constant.
+/// - Access level propagates from the function to the generated constant.
 public struct FutureProviderMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
+        // Only apply to functions
         guard let funcDecl = declaration.as(FunctionDeclSyntax.self) else {
             throw MacroError.onlyApplicableToFunctions
         }
 
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
-        
-        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
-        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
-        let staticKeyword = isStatic ? "static " : ""
 
+        // Extract access level and static from the function's modifiers
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
+
+        // Generate: @MainActor [access] [static] let <name>Provider = FutureProvider { ... }
         let providerDecl: DeclSyntax = """
         @MainActor
-        \(raw: staticKeyword)let \(raw: providerName) = FutureProvider { _ in
+        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = FutureProvider { _ in
             await \(raw: functionName)()
         }
         """

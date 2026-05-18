@@ -10,7 +10,7 @@ private struct AnalyticsAtom {
 }
 
 struct AnalyticsExampleView: View {
-    @SKState(AnalyticsAtom.shared) private var events
+    @SKState(AnalyticsAtom()) private var events
     @SKContext private var atomContext
 
     var body: some View {

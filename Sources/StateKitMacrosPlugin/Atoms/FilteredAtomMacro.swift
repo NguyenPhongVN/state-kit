@@ -2,35 +2,49 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @FilteredAtom: Auto-generates filtered atom from predicate
-/// Applies filtering to a source atom's list values
-public struct FilteredAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro, PeerMacro {
+/// @FilteredAtom: Filters elements from a source array using a predicate.
+///
+/// Generates a `SKValueAtom` conformance with `Value` typealias inferred from
+/// `source(context:)` (expected to return `[Element]`). Also synthesizes
+/// `value(context:)` that filters the source array using the `predicate` function,
+/// and adds `Hashable`.
+///
+/// ## Generated Members
+/// - `func value(context:) -> Value` — returns `source(context: context).filter(predicate)`
+///
+/// ## Generated Conformances
+/// - `SKValueAtom` with `Value` typealias
+/// - `Hashable`
+///
+/// ## User Requirements
+/// - A method `func source(context: SKAtomTransactionContext) -> [Element]` providing the source array.
+/// - A method `func predicate(_ element: Element) -> Bool` filtering array elements.
+///
+/// ## Behavior
+/// - Access level propagates from the struct to both the generated typealias and method.
+/// - `@MainActor` is automatically added to both `source(context:)` and `predicate(_:)` unless already present.
+public struct FilteredAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
+    // MemberMacro: generates value(context:) = source().filter(predicate)
     public static func expansion(
         of node: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-            throw MacroError.onlyApplicableToStructs
-        }
+        // Propagate the struct's access level to the generated method
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
 
-        guard PropertyExtractor.function(in: structDecl, named: "predicate") != nil else {
-            throw MacroError.custom("@FilteredAtom requires a 'predicate(_:) -> Bool' method")
-        }
-
-        // For filtered atoms, Value is typically [Any] unless specific inference is added
-        let typealiasDecl: DeclSyntax = "typealias Value = [Any]"
+        // Generate: func value(context:) -> Value { source(context: context).filter(predicate) }
         let valueMethod: DeclSyntax = """
-        @MainActor
-        func value(context: SKAtomTransactionContext) -> Value {
-            // Placeholder implementation
-            fatalError("value(context:) must be implemented by user")
+        \(raw: mainActorAttr)\(raw: accessPrefix)func value(context: SKAtomTransactionContext) -> Value {
+            source(context: context).filter(predicate)
         }
         """
-
-        return [typealiasDecl, valueMethod]
+        return [valueMethod]
     }
 
+    // ExtensionMacro: adds SKValueAtom conformance with Value typealias
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -38,45 +52,49 @@ public struct FilteredAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMac
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let valueAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): SKValueAtom {}")
+        // Extract the return type from source(context:) to determine Value
+        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "source")
+        // Propagate the struct's access level to the generated typealias
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
+
+        // Generate: extension MyAtom: SKValueAtom { typealias Value = [Element] }
+        let valueAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("""
+        \(raw: mainActorAttr)extension \(type.trimmed): SKValueAtom {
+            \(raw: accessPrefix)typealias Value = \(raw: returnType.trimmedDescription)
+        }
+        """)
+        // Generate: extension MyAtom: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 
         return [valueAtomExtension, hashableExtension]
     }
 
+    // MemberAttributeMacro: adds @MainActor to source(context:) and predicate(_:) if needed
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingAttributesFor member: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
+        // Only apply to source(context:) or predicate(_:) methods
         guard let funcDecl = member.as(FunctionDeclSyntax.self),
-              funcDecl.name.text == "predicate" else {
+              ["source", "predicate"].contains(funcDecl.name.text) else {
             return []
         }
 
-        if !funcDecl.attributes.contains(where: { attr in
-            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "MainActor"
-        }) {
-            return ["@MainActor "]
+        // Skip if the struct already has @MainActor
+        if AttributeHelper.hasAttribute("MainActor", on: declaration) {
+            return []
+        }
+
+        // Add @MainActor if the method doesn't already have it
+        if !AttributeHelper.hasAttribute("MainActor", on: funcDecl) {
+            return [AttributeHelper.mainActorNewline]
         }
 
         return []
-    }
-
-    public static func expansion(
-        of node: AttributeSyntax,
-        providingPeersOf declaration: some DeclSyntaxProtocol,
-        in context: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else { return [] }
-        let className = structDecl.name.text
-        let atomName = className.prefix(1).lowercased() + className.dropFirst()
-        
-        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
-        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
-        let staticKeyword = isStatic ? "static " : ""
-
-        return ["@MainActor \(raw: staticKeyword)let \(raw: atomName) = \(raw: className)()"]
     }
 }

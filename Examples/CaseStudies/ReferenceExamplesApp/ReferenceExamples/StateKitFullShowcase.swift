@@ -19,14 +19,14 @@ private struct FSCountAtom {
 private struct FSBadgeAtom {
     @MainActor
     func value(context: SKAtomTransactionContext) -> String {
-        "\(context.watch(FSNameAtom.shared)) • \(context.watch(FSCountAtom.shared))"
+        "\(context.watch(FSNameAtom())) • \(context.watch(FSCountAtom()))"
     }
 }
 
 struct StateKitFullShowcaseView: View {
-    @SKState(FSNameAtom.shared) private var name
-    @SKState(FSCountAtom.shared) private var count
-    @SKValue(FSBadgeAtom.shared) private var badge
+    @SKState(FSNameAtom()) private var name
+    @SKState(FSCountAtom()) private var count
+    @SKValue(FSBadgeAtom()) private var badge
 
     var body: some View {
         Form {

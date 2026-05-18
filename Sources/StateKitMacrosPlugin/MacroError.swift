@@ -25,7 +25,7 @@ enum MacroError: Error, CustomStringConvertible {
         case .onlyApplicableToClasses:
             return "@RiverpodNotifier can only be applied to classes"
         case .onlyApplicableToFunctions:
-            return "@Hook and @CustomHook can only be applied to functions"
+            return "@Hook can only be applied to functions (use 'CheckHookFunctionMacro')"
         case .methodNotFound(let name):
             return "Required method '\(name)' not found"
         case .multipleMethodsFound(let name):

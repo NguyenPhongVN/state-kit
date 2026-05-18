@@ -14,8 +14,8 @@ private struct HKCounterAtom {
 struct HookMacrosExtendedExampleView: View {
     var stateBody: some View {
         let draft = useBinding("")
-        let (count, setCount) = useAtomState(HKCounterAtom.shared)
-        let reset = useAtomReset(HKCounterAtom.shared)
+        let (count, setCount) = useAtomState(HKCounterAtom())
+        let reset = useAtomReset(HKCounterAtom())
 
         return Form {
             Section("StateScope hooks") {

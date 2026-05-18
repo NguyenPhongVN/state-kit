@@ -25,8 +25,8 @@ private struct FilterAtom {
 private struct FilteredTodosAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> [String] {
-        let todos = context.watch(TodosAtom.shared)
-        let filter = context.watch(FilterAtom.shared)
+        let todos = context.watch(TodosAtom())
+        let filter = context.watch(FilterAtom())
         if filter.isEmpty { return todos }
         return todos.filter { $0.localizedCaseInsensitiveContains(filter) }
     }
@@ -36,7 +36,7 @@ private struct FilteredTodosAtom {
 private struct TodoCountAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> Int {
-        context.watch(FilteredTodosAtom.shared).count
+        context.watch(FilteredTodosAtom()).count
     }
 }
 
@@ -56,7 +56,7 @@ private struct TodoDisplayAtom {
     let todo: String
     @MainActor
     func value(context: SKAtomTransactionContext) -> String {
-        let isCompleted = context.watch(TodoCompletedAtom.family(todo))
+        let isCompleted: Bool = context.watch(TodoCompletedAtom(todo: todo))
         return isCompleted ? "✓ \(todo)" : "○ \(todo)"
     }
 }
@@ -64,19 +64,16 @@ private struct TodoDisplayAtom {
 // MARK: - Main View
 
 struct NineNewMacrosExamplesView: View {
-    @SKState(FilterAtom.shared) private var filter
-    @SKState(TodosAtom.shared) private var todos
-    @SKValue(FilteredTodosAtom.shared) private var filteredTodos
-    @SKValue(TodoCountAtom.shared) private var count
+    @SKState(FilterAtom()) private var filter
+    @SKState(TodosAtom()) private var todos
+    @SKValue(FilteredTodosAtom()) private var filteredTodos
+    @SKValue(TodoCountAtom()) private var count
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Search (atomFamily demo)") {
                     TextField("Filter todos...", text: $filter)
-                        .placeholder(when: filter.isEmpty) {
-                            Text("Type to search").foregroundColor(.gray)
-                        }
                 }
 
                 Section("Results (\(count))") {
@@ -115,8 +112,8 @@ private struct TodoItemView: View {
     var body: some View {
         SKAtomScopeView {
             // Using StateScope hooks pattern
-            let display = useAtomValue(TodoDisplayAtom.family(todo))
-            let isCompleted = useAtomBinding(TodoCompletedAtom.family(todo))
+            let display: String = useAtomValue(TodoDisplayAtom(todo: todo))
+            let isCompleted: Binding<Bool> = useAtomBinding(TodoCompletedAtom(todo: todo))
 
             HStack {
                 Button(action: { isCompleted.wrappedValue.toggle() }) {
@@ -134,19 +131,4 @@ private struct TodoItemView: View {
 
 #Preview {
     NineNewMacrosExamplesView()
-}
-
-// MARK: - Helper Extension
-
-extension View {
-    func placeholder<Content: View>(
-        when shouldShow: Bool,
-        alignment: Alignment = .leading,
-        @ViewBuilder placeholder: () -> Content
-    ) -> some View {
-        ZStack(alignment: alignment) {
-            placeholder().opacity(shouldShow ? 1 : 0)
-            self
-        }
-    }
 }

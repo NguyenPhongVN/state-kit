@@ -1,258 +1,387 @@
-# State-Kit Unit Test Plan
+# StateKit Unit Test Plan
 
-## 1) Muc tieu
+## 1) Goals
 
-- Dam bao tinh dung dan cua cac target trong `Package.swift`.
-- Chuan hoa test strategy theo 3 lop: `core behavior`, `integration behavior`, `regression`.
-- Day nhanh feedback loop voi test nhanh theo target va test tong hop toan bo package.
+- Ensure correctness of all targets in `Package.swift`.
+- Standardize test strategy into 3 layers: `core behavior`, `integration behavior`, `regression`.
+- Accelerate feedback loop with fast per-target tests and full-package validation.
 
-## 2) Pham vi
+## 2) Scope
 
-Test targets hien co:
+Current test targets:
 
-- `StateKitTests`
-- `StateKitCoreTests`
-- `StateKitUITests`
-- `StateKitSupportTests`
-- `StateConcurrencyTests`
-- `StateKitAtomsTests`
-- `StateKitMacrosTests`
-- `RiverpodsTests`
-- `StateKitCacheTests`
-- `StateKitFeatureFlagsTests`
-- `StateKitAnalyticsTests`
+| # | Target | Status |
+| :--- | :--- | :--- |
+| 1 | `StateKitTests` | Active |
+| 2 | `StateKitCoreTests` | Active |
+| 3 | `StateKitUITests` | Active |
+| 4 | `StateKitSupportTests` | Active |
+| 5 | `StateConcurrencyTests` | Active |
+| 6 | `StateKitAtomsTests` | Active |
+| 7 | `StateKitMacrosTests` | Active |
+| 8 | `RiverpodsTests` | Active |
+| 9 | `StateKitCacheTests` | Active |
+| 10 | `StateKitFeatureFlagsTests` | Active |
+| 11 | `StateKitAnalyticsTests` | Active |
 
-Khong bao gom benchmark/perf chuyen sau va end-to-end app tests.
+**Out of scope**: Deep benchmark/profiling, end-to-end app tests.
 
-## 3) Nguyen tac test
+## 3) Testing Principles
 
-- Moi API public quan trong can co test happy path + edge case + failure path.
-- Moi bug fix phai kem it nhat 1 regression test.
-- Test doc lap, khong phu thuoc thu tu chay.
-- Uu tien assertion hanh vi observable thay vi implementation detail.
-- Dat ten test theo format: `when_<condition>_then_<expected>` (co the map vao `@Test("...")`).
+- Every important public API needs: **happy path** + **edge case** + **failure path**.
+- Every bug fix must include at least 1 **regression test**.
+- Tests must be **independent** and **order-independent**.
+- Prefer assertions on **observable behavior** over implementation details.
+- Naming convention: `when_<condition>_then_<expected>` (mappable to `@Test("...")`).
 
-## 4) Execution strategy
+## 4) Execution Strategy
 
-### Nhanh (pre-commit)
+### Fast (pre-commit)
 
-- `swift test --filter StateKitCoreTests`
-- `swift test --filter StateKitTests`
-- `swift test --filter RiverpodsTests`
+```bash
+swift test --filter StateKitCoreTests
+swift test --filter StateKitTests
+swift test --filter RiverpodsTests
+```
 
-### Day du (CI gate)
+### Full (CI gate)
 
-- `swift test`
+```bash
+swift test
+```
 
-### Theo nhom de debug
+### By group (debug)
 
-- `swift test --filter StateKitAtomsTests`
-- `swift test --filter StateKitMacrosTests`
-- `swift test --filter StateConcurrencyTests`
+```bash
+swift test --filter StateKitAtomsTests
+swift test --filter StateKitMacrosTests
+swift test --filter StateConcurrencyTests
+```
 
-## 5) Test plan theo target
+## 5) Per-Target Test Plan
 
 ### A. `StateKitCoreTests`
 
-Trang thai hien tai: da co `StateRuntimeTests`, `StateSignalRefTests`, `StateContextTests`.
+**Current files**: `StateRuntimeTests`, `StateSignalRefTests`, `StateContextTests`.
 
-Can bao phu:
+#### 5.A.1 Runtime Lifecycle
+- `when_context_initialized_then_readable()` — create context, read value returns default.
+- `when_context_deinitialized_then_readers_notify()` — deinit triggers observer cleanup.
+- `when_context_nested_then_parent_isolation()` — child context inherits parent scope.
+- `when_reentry_occurs_then_protected()` — re-entrant write does not deadlock.
 
-1. Runtime lifecycle
-   - init/teardown context
-   - nested context isolation
-   - re-entrancy protection
-2. Signal & subscription
-   - subscribe/unsubscribe
-   - duplicate notification prevention
-   - ordering guarantee
-3. Context propagation
-   - read/write value
-   - override theo scope
-   - thread/main actor expectation neu co
+#### 5.A.2 Signal & Subscription
+- `when_subscribed_then_receives_current_value()` — subscribe immediately gets current.
+- `when_unsubscribed_then_no_further_updates()` — unsubscribe stops notifications.
+- `when_duplicate_value_emitted_then_no_notification()` — identical values are deduplicated.
+- `when_multiple_subscribers_then_all_notified_in_order()` — ordering guarantee holds.
+
+#### 5.A.3 Context Propagation
+- `when_value_written_then_readable_in_same_context()` — basic read-after-write.
+- `when_value_overridden_in_scope_then_scope_reads_override()` — scoped override works.
+- `when_value_read_across_actors_then_mainActor_enforced()` — `@MainActor` boundary check.
 
 ### B. `StateKitTests`
 
-Trang thai hien tai: da co `HookTests`, `StateKitCombineTests`, `StateKitTests` (useEffect/useLayoutEffect/useContext, AsyncPhase).
+**Current files**: `HookTests`, `StateKitCombineTests`, `StateKitTests` (useEffect/useLayoutEffect/useContext, AsyncPhase).
 
-Can bao phu bo sung:
+#### 5.B.1 Hooks State Machine
+- `when_useState_updated_then_component_renders()` — state change triggers re-render.
+- `when_multiple_hooks_then_order_stable_across_renders()` — hook order is preserved.
+- `when_stale_closure_captures_old_state_then_uses_latest()` — stale closure fix works.
 
-1. Hooks state machine
-   - `useState` update sequencing
-   - multiple hooks order stability
-   - stale closure scenarios
-2. Effects
-   - cleanup timing khi dependency doi
-   - no-op khi dependency khong doi
-   - dispose cleanup khi unmount
-3. AsyncPhase/Async APIs
-   - transitions idle -> loading -> success/failure
-   - terminal semantics (`isTerminal`, `isPending`)
+#### 5.B.2 Effects
+- `when_dependency_changes_then_cleanup_runs_before_recreate()` — cleanup timing correct.
+- `when_dependencies_unchanged_then_effect_skipped()` — no-op when deps match.
+- `when_component_unmounts_then_cleanup_executes()` — dispose on unmount.
+
+#### 5.B.3 AsyncPhase / Async APIs
+- `when_async_starts_then_phase_idle_to_loading()` — transition idle → loading.
+- `when_async_succeeds_then_phase_loading_to_success()` — transition loading → success.
+- `when_async_fails_then_phase_loading_to_failure()` — transition loading → failure.
+- `when_checking_terminal_then_success_and_failure_are_terminal()` — `isTerminal` semantics.
+- `when_checking_pending_then_loading_is_pending()` — `isPending` semantics.
 
 ### C. `StateKitUITests`
 
-Trang thai hien tai: co `StateUITests` + `PlaceholderTests`.
+**Current files**: `StateUITests`, `PlaceholderTests`.
 
-Can thay `PlaceholderTests` bang test that su:
+**Action**: Replace `PlaceholderTests` with real tests.
 
-1. View re-render behavior
-   - state change trigger render
-   - no unnecessary re-render
-2. Binding/interaction
-   - user action -> state mutation -> UI update
-3. Environment integration
-   - provider/container injection
-   - fallback/default environment behavior
+#### 5.C.1 View Re-render Behavior
+- `when_state_changes_then_view_renders()` — state mutation triggers body re-evaluation.
+- `when_unrelated_state_changes_then_view_skips_render()` — no unnecessary re-render.
+
+#### 5.C.2 Binding / Interaction
+- `when_user_action_then_state_mutates_and_ui_updates()` — action → mutation → UI.
+- `when_binding_writes_then_source_of_truth_updates()` — `Binding` writes propagate.
+
+#### 5.C.3 Environment Integration
+- `when_provider_injected_then_child_reads_provider_value()` — container injection.
+- `when_no_provider_then_fallback_default_used()` — default environment behavior.
 
 ### D. `StateKitSupportTests`
 
-Trang thai hien tai: co `HookPropertyWrapperTests` + `PlaceholderTests`.
+**Current files**: `HookPropertyWrapperTests`, `PlaceholderTests`.
 
-Can thay `PlaceholderTests` bang test that su:
+**Action**: Replace `PlaceholderTests` with real tests.
 
-1. Property wrappers
-   - init default values
-   - update propagation
-   - reset semantics
-2. Error handling
-   - invalid usage diagnostics
-   - assertion/failure expectation (neu API co)
+#### 5.D.1 Property Wrappers
+- `when_wrapper_initialized_then_default_value_set()` — init with default.
+- `when_wrapper_value_updated_then_propagation_fires()` — update propagates.
+- `when_wrapper_reset_then_value_returns_to_default()` — reset semantics.
+
+#### 5.D.2 Error Handling
+- `when_invalid_used_then_diagnostic_emitted()` — invalid usage produces error.
+- `when_assertion_fires_then_message_is_helpful()` — assertion messages are clear.
 
 ### E. `StateConcurrencyTests`
 
-Trang thai hien tai: `SCTaskTests`, `AsyncStreamTests`.
+**Current files**: `SCTaskTests`, `AsyncStreamTests`.
 
-Can bao phu:
+#### 5.E.1 Cancellation Correctness
+- `when_cancelled_before_start_then_task_never_runs()` — cancel before start.
+- `when_cancelled_during_execution_then_task_stops()` — cancel mid-flight.
+- `when_cancelled_multiple_times_then_idempotent()` — idempotent cancel.
 
-1. Cancellation correctness
-   - cancel truoc khi start
-   - cancel trong luc dang chay
-   - idempotent cancel
-2. Stream behavior
-   - completion propagation
-   - error propagation
-   - backpressure/basic buffering assumption
-3. Actor/thread safety
-   - cross-actor access expectation
-   - race-condition regression cases
+#### 5.E.2 Stream Behavior
+- `when_stream_completes_then_terminal_event_propagates()` — completion propagation.
+- `when_stream_errors_then_error_propagates_to_subscriber()` — error propagation.
+- `when_backpressure_applied_then_buffering_limits_honored()` — buffering assumption.
+
+#### 5.E.3 Actor / Thread Safety
+- `when_cross_actor_access_then_isolation_enforced()` — cross-actor access correct.
+- `when_race_condition_possible_then_no_data_corruption()` — race-condition regression.
 
 ### F. `StateKitAtomsTests`
 
-Trang thai hien tai: da co bo test lon (graph, family, environment, effect, publisher, eviction...).
+**Current files**: Large test suite (graph, family, environment, effect, publisher, eviction).
 
-Can duy tri va bo sung:
+#### 5.F.1 Graph Invalidation
+- `when_dependency_changes_then_dependents_recompute_in_order()` — deep chain ordering.
+- `when_cycle_detected_then_error_or_break_cycle()` — cycle detection (if implemented).
 
-1. Graph invalidation
-   - deep dependency chain recompute dung thu tu
-   - cycle detection/handling (neu co)
-2. Family & key stability
-   - same input -> same identity
-   - different input -> isolated state
-3. Store lifecycle
-   - eviction policy correctness
-   - transaction rollback/consistency
+#### 5.F.2 Family & Key Stability
+- `when_same_key_used_then_same_atom_instance_returned()` — identity stability.
+- `when_different_key_used_then_isolated_state()` — per-key isolation.
+
+#### 5.F.3 Store Lifecycle
+- `when_eviction_policy_set_then_old_atoms_disposed()` — eviction policy correct.
+- `when_transaction_fails_then_rollback_restores_previous()` — transaction rollback.
+- `when_store_reset_then_all_atoms_cleared()` — full store reset.
 
 ### G. `StateKitMacrosTests`
 
-Trang thai hien tai: `MacroTests`.
+**Current files**: `AtomMacrosTests`, `ViewMacrosTests`, `HookMacrosTests`, `RiverpodMacrosTests`, `MacroTests`.
 
-Can bao phu:
+#### 5.G.1 Expansion Snapshot Tests
+- `when_valid_atom_input_then_expanded_code_matches_expected()` — `@StateAtom`, `@ValueAtom`, etc.
+- `when_valid_hook_input_then_expanded_code_matches_expected()` — `@HookState`, `@HookRef`, etc.
+- `when_valid_riverpod_input_then_expanded_code_matches_expected()` — `@Provider`, `@RiverpodNotifier`, etc.
+- `when_valid_view_input_then_expanded_code_matches_expected()` — `@HookView`, `@ObservableState`, etc.
 
-1. Expansion snapshot tests
-   - valid input -> expected expanded source
-2. Diagnostics tests
-   - invalid syntax -> expected compiler diagnostics
-   - wrong target kind (class/struct/function mismatch)
-3. Regression suite
-   - moi macro bug da fix phai co test input nho gon
+#### 5.G.2 Diagnostics Tests
+- `when_applied_to_class_instead_of_struct_then_diagnostic_emitted()` — type mismatch.
+- `when_missing_required_method_then_helpful_error()` — missing `value(context:)`.
+- `when_opaque_return_type_used_then_error_mentions_opaque()` — `some` type rejection.
+- `when_duplicate_parameter_then_diagnostic_points_to_duplicate()` — parameter clash.
+
+#### 5.G.3 Edge Case / Robustness
+- `when_public_access_level_then_generated_code_also_public()` — access level propagation.
+- `when_private_access_level_then_generated_code_also_private()` — access level propagation.
+- `when_generic_struct_annotated_then_generics_preserved_in_output()` — generic parameter pass-through.
+- `when_typealias_in_signature_then_typealias_resolved_correctly()` — typealias handling.
+- `when_nested_in_other_type_then_expansion_does_not_break()` — nested type support.
+- `when_unconventional_whitespace_then_parser_still_handles()` — formatting resilience.
+
+#### 5.G.4 Regression Suite
+- `when_fixed_bug_regression_input_then_output_no_longer_incorrect()` — each prior bug has a test.
 
 ### H. `RiverpodsTests`
 
-Trang thai hien tai: `ProviderTests`, `NotifierTests`, `AdvancedTests`, `LifecycleTests`, `NewFeaturesTests`.
+**Current files**: `ProviderTests`, `NotifierTests`, `AdvancedTests`, `LifecycleTests`, `NewFeaturesTests`.
 
-Can bao phu:
+#### 5.H.1 Provider Semantics
+- `when_provider_read_then_returns_current_value()` — basic read.
+- `when_provider_watched_then_subscriber_notified_on_change()` — watch notification.
+- `when_provider_parameterized_then_different_params_isolated()` — parameter isolation.
+- `when_provider_result_cached_then_recomputed_only_on_dep_change()` — memoization.
 
-1. Provider semantics
-   - read/watch/listen behavior
-   - memoization/cache correctness
-2. Notifier semantics
-   - `build()` lifecycle
-   - state update notification
-3. Family/selectors/advanced
-   - parameterized provider isolation
-   - derived providers recompute only when needed
-4. Lifecycle
-   - disposal/autoDispose behavior
-   - keepAlive expectations
+#### 5.H.2 Notifier Semantics
+- `when_notifier_builds_then_state_initialized()` — `build()` lifecycle.
+- `when_notifier_state_updated_then_watchers_notified()` — state update notification.
+- `when_notifier_disposed_then_cleanup_runs()` — dispose lifecycle.
+
+#### 5.H.3 Family / Selectors / Advanced
+- `when_family_same_key_then_same_instance()` — key-based identity.
+- `when_family_different_key_then_isolated_state()` — per-key isolation.
+- `when_selector_dependency_changes_then_selector_recomputes()` — derived recompute.
+- `when_selector_dependency_unchanged_then_cached_value_used()` — no unnecessary recompute.
+
+#### 5.H.4 Lifecycle
+- `when_autoDispose_enabled_then_provider_disposed_when_unused()` — autoDispose.
+- `when_keepAlive_set_then_provider_survives_unused_period()` — keepAlive.
+- `when_provider_overridden_then_override_takes_precedence()` — provider override.
 
 ### I. `StateKitCacheTests`
 
-Trang thai hien tai: `CacheTests`.
+**Current files**: `CacheTests`.
 
-Can bao phu:
+#### 5.I.1 TTL / Expiration
+- `when_entry_expired_then_lookup_returns_nil()` — TTL expiration.
+- `when_entry_not_expired_then_lookup_returns_value()` — within TTL.
 
-1. TTL/expiration
-2. Eviction policy (LRU/FIFO neu co)
-3. Concurrent access safety
-4. Serialization/deserialization neu cache support persistence
+#### 5.I.2 Eviction Policy (LRU / FIFO)
+- `when_cache_full_then_oldest_entry_evicted()` — eviction under capacity.
+- `when_lru_enabled_then_least_recently_used_evicted_first()` — LRU ordering.
+
+#### 5.I.3 Concurrent Access Safety
+- `when_multiple_threads_read_write_then_no_crash()` — concurrent safety.
+- `when_racy_access_sequence_then_invariant_preserved()` — race regression.
+
+#### 5.I.4 Serialization (if supported)
+- `when_cache_serialized_then_deserialization_restores_entries()` — persistence round-trip.
 
 ### J. `StateKitFeatureFlagsTests`
 
-Trang thai hien tai: `FeatureFlagsTests`.
+**Current files**: `FeatureFlagsTests`.
 
-Can bao phu:
+#### 5.J.1 Default Flag Values
+- `when_flag_not_configured_then_default_returned()` — unconfigured flag fallback.
+- `when_default_provided_then_default_value_used()` — explicit default.
 
-1. Default flag values
-2. Remote/local override precedence
-3. Unknown flag fallback
-4. Runtime update propagation
+#### 5.J.2 Remote / Local Override Precedence
+- `when_local_override_set_then_local_takes_precedence()` — local override.
+- `when_remote_override_set_then_remote_overrides_default()` — remote override.
+- `when_both_set_then_highest_priority_wins()` — precedence chain.
+
+#### 5.J.3 Unknown Flag Fallback
+- `when_unknown_flag_queried_then_no_crash_and_default_returned()` — graceful degradation.
+
+#### 5.J.4 Runtime Update Propagation
+- `when_flag_updated_at_runtime_then_observers_notified()` — live update.
+- `when_flag_updated_then_new_reads_return_new_value()` — eventual consistency.
 
 ### K. `StateKitAnalyticsTests`
 
-Trang thai hien tai: `AnalyticsTests`.
+**Current files**: `AnalyticsTests`.
 
-Can bao phu:
+#### 5.K.1 Event Validation
+- `when_event_sent_then_name_and_payload_match_schema()` — event structure.
+- `when_payload_missing_required_field_then_validation_error()` — schema enforcement.
 
-1. Event validation (name, payload schema)
-2. Batching/flush behavior
-3. Failure-retry policy
-4. Privacy guardrails (masking/sensitive fields)
+#### 5.K.2 Batching / Flush Behavior
+- `when_events_batched_then_flushed_on_threshold()` — batch size flush.
+- `when_events_batched_then_flushed_on_interval()` — time-based flush.
+- `when_flush_called_manually_then_all_pending_events_sent()` — manual flush.
 
-## 6) Priority rollout
+#### 5.K.3 Failure / Retry Policy
+- `when_network_failure_then_events_retried()` — retry on failure.
+- `when_max_retries_exceeded_then_events_dropped_and_callback_fires()` — max retry limit.
 
-### P0 (tuan 1)
+#### 5.K.4 Privacy Guardrails
+- `when_sensitive_field_in_payload_then_field_masked()` — PII masking.
+- `when_event_marked_sensitive_then_not_sent_to_third_parties()` — privacy routing.
 
-- Xoa `PlaceholderTests` o `StateKitUITests` va `StateKitSupportTests`, thay bang test that su.
-- Bo sung regression tests cho bug da tung gap trong `RiverpodsTests` va `StateKitAtomsTests`.
+## 6) Priority Rollout
 
-### P1 (tuan 2)
+### P0 (Week 1)
 
-- Tang do bao phu concurrency + lifecycle (`StateConcurrencyTests`, `StateKitCoreTests`).
-- Hoan thien diagnostics tests cho macros.
+- Remove all `PlaceholderTests` from `StateKitUITests` and `StateKitSupportTests`; replace with real tests.
+- Add regression tests for previously fixed bugs in `RiverpodsTests` and `StateKitAtomsTests`.
 
-### P2 (tuan 3)
+### P1 (Week 2)
 
-- Bo sung test sau cho cache/analytics/feature-flags theo production scenarios.
+- Increase concurrency + lifecycle coverage (`StateConcurrencyTests`, `StateKitCoreTests`).
+- Complete diagnostics tests for all macro groups (Atom, View, Hook, Riverpod).
+- Add edge-case / robustness tests for macros (access levels, generics, nested types).
 
-## 7) Exit criteria
+### P2 (Week 3)
 
-- Tat ca test target chay pass tren local va CI (`swift test`).
-- Khong con `PlaceholderTests`.
-- Moi module co it nhat:
-  - 1 test happy path
-  - 1 test edge case
-  - 1 test failure/regression cho API quan trong
-- Bug moi duoc fix deu co regression test di kem.
+- Add in-depth test suites for cache/analytics/feature-flags based on production scenarios.
+- Add snapshot/regression harness for macros if not already present.
 
-## 8) Quy uoc review cho unit tests
+## 7) Exit Criteria
 
-- Tranh sleep khong can thiet; uu tien deterministic scheduler/clock neu co.
-- Tranh assertion qua chung chung (vi du chi check `true`).
-- Test message ro nghia, de trace khi fail.
-- PR nao thay doi public API phai cap nhat test lien quan trong cung PR.
+- All test targets pass on local and CI (`swift test`).
+- Zero `PlaceholderTests` remaining.
+- Each module has at minimum:
+  - 1 happy-path test
+  - 1 edge-case test
+  - 1 failure/regression test for every important public API
+- Every new bug fix includes a companion regression test.
 
-## 9) De xuat tiep theo
+## 8) Review Conventions for Unit Tests
 
-1. Tao file tracking theo target (checklist) va danh dau completion theo sprint.
-2. Chon 2 target placeholder (`StateKitUI`, `StateKitSupport`) de implement ngay bo test dau tien.
-3. Bat buoc CI check `swift test` cho moi PR.
+- Avoid unnecessary `sleep`; prefer deterministic scheduler/clock where available.
+- Avoid overly generic assertions (e.g. asserting `true`).
+- Test messages must be descriptive and easy to trace on failure.
+- Any PR changing public API must update the relevant tests in the same PR.
+
+## 9) Next Steps
+
+1. Create per-target tracking (checklist) and mark completion per sprint.
+2. Pick 2 placeholder targets (`StateKitUI`, `StateKitSupport`) and implement first real tests.
+3. Enforce `swift test` CI check on every PR.
+
+## 10) Macro Test Strategy
+
+Macro testing follows 4 tiers (52 expansion/diagnostic tests currently passing).
+
+### Tier 1: Macro Expansion & Diagnostic Testing
+
+**Goal**: Verify macros generate the exact Swift code intended and provide helpful error messages for misuse.
+
+- **Tools**: `SwiftSyntaxMacrosTestSupport`, `assertMacroExpansion`.
+- **Status**: 100% Covered (52 Test Cases).
+- **Key Files**:
+  - `AtomMacrosTests.swift`: 17 tests (Core & Derived Atoms)
+  - `ViewMacrosTests.swift`: 5 tests (UI & Observation)
+  - `HookMacrosTests.swift`: 16 tests (Hooks & Side Effects)
+  - `RiverpodMacrosTests.swift`: 11 tests (Providers & Families)
+  - `MacroTests.swift`: Infrastructure checks
+
+### Tier 2: Integration & Runtime Testing
+
+**Goal**: Ensure generated code compiles against the full library and behaves at runtime.
+
+- Target: `StateKitMacroIntegrationTests`
+- Verification points:
+  - `@StateAtom` extensions satisfy protocol requirements
+  - `@Provider` generates accessible properties on `ProviderContainer`
+  - `@HookView` wraps body in `StateScope` at runtime
+
+### Tier 3: Edge Case & Robustness
+
+- Access levels (`public`, `internal`, `private`, `fileprivate`).
+- Generic types (`@ValueAtom struct MyAtom<T>`).
+- Typealiases in method signatures.
+- Nested type declarations.
+- Unconventional whitespace/formatting.
+
+### Tier 4: Tooling & IDE Compatibility
+
+- Manual Xcode audit: generated members (`Value`, `Provider`, `useHook`) appear in autocomplete.
+- No red squigglies in editor after macro expansion.
+
+### Macro Audit Registry
+
+| Macro Group | Macros | Test File | Expansion | Diagnostics | Conformances |
+| :--- | :--- | :--- | :---: | :---: | :---: |
+| **Atom Core** | @StateAtom, @ValueAtom, @TaskAtom, @ThrowingTaskAtom, @PublisherAtom, @Atom | `AtomMacrosTests` | ✅ | ✅ | ✅ |
+| **Atom Family** | @AtomFamily, @SelectorFamily, @AsyncTaskFamily | `AtomMacrosTests` | ✅ | ✅ | N/A |
+| **Derived Atoms** | @Computed, @SelectorAtom, @FilteredAtom, @MappedAtom, @CombineAtom, @DistinctAtom, @FlatMapAtom | `AtomMacrosTests` | ✅ | ✅ | ✅ |
+| **Atom Reducer** | @AtomReducer | `AtomMacrosTests` | ✅ | ✅ | ✅ |
+| **View Infrastructure** | @HookView, @StateView, @AsyncView, @ObservableState | `ViewMacrosTests` | ✅ | ✅ | ✅ |
+| **Hook Basics** | @HookState, @HookRef, @HookToggle, @Hook (validation), @CustomHook (validation) | `HookMacrosTests` | ✅ | ✅ | N/A |
+| **Hook Effects** | @HookEffect, @AsyncHook, @Debounce, @Throttle, @HookInterval | `HookMacrosTests` | ✅ | ✅ | N/A |
+| **Hook Logic** | @HookMemo, @HookCallback, @HookReducer, @HookPrevious, @HookContext, @HookForm | `HookMacrosTests` | ✅ | ✅ | N/A |
+| **Riverpod Core** | @RiverpodNotifier, @StateProvider, @FutureProvider, @StreamProvider, @Provider | `RiverpodMacrosTests` | ✅ | ✅ | N/A |
+| **Riverpod Family** | @ProviderFamily, @RiverpodFamily, @RiverpodFutureFamily, @RiverpodStreamFamily | `RiverpodMacrosTests` | ✅ | ✅ | N/A |
+| **Riverpod Misc** | @RiverpodSelector, @RiverpodAsync | `RiverpodMacrosTests` | ✅ | ✅ | N/A |
+
+### Macro Future Maintenance
+
+1. **Macro Regression Suite**: Run Tier 1 tests on every CI build.
+2. **Swift Version Tracking**: Verify compatibility with every major Swift/SwiftSyntax release.
+3. **Documentation Sync**: Ensure `README.md` and `docs/` reflect tested behavioral patterns.

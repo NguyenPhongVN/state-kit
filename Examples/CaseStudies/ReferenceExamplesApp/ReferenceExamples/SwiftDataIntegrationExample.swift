@@ -18,8 +18,8 @@ private struct SelectedTodoAtom {
 }
 
 struct SwiftDataIntegrationExampleView: View {
-    @SKState(TodosAtom.shared) private var todos
-    @SKState(SelectedTodoAtom.shared) private var selected
+    @SKState(TodosAtom()) private var todos
+    @SKState(SelectedTodoAtom()) private var selected
 
     var body: some View {
         Form {

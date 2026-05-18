@@ -17,7 +17,7 @@ private struct FamilyLabelAtom {
     let id: Int
     @MainActor
     func value(context: SKAtomTransactionContext) -> String {
-        let score = context.watch(FamilyScoreAtom.family(id))
+        let score = context.watch(FamilyScoreAtom(id: id))
         return "Member \(id): \(score)"
     }
 }
@@ -40,8 +40,9 @@ private struct FamilyRow: View {
 
     var body: some View {
         SKAtomScopeView {
-            let score = useAtomBinding(FamilyScoreAtom.family(memberID))
-            let label = useAtomValue(FamilyLabelAtom.family(memberID))
+            // Explicitly use the type of the value
+            let score: Binding<Int> = useAtomBinding(FamilyScoreAtom(id: memberID))
+            let label = useAtomValue(FamilyLabelAtom(id: memberID))
 
             HStack {
                 Text(label)

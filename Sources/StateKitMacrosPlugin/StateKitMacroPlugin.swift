@@ -25,7 +25,7 @@ struct StateKitMacrosPlugin: CompilerPlugin {
         StateViewMacro.self,
         AsyncViewMacro.self,
         ObservableStateMacro.self,
-        HookMacro.self,
+        CheckHookFunctionMacro.self,
         HookStateMacro.self,
         HookRefMacro.self,
         HookEffectMacro.self,
@@ -40,7 +40,7 @@ struct StateKitMacrosPlugin: CompilerPlugin {
         HookReducerMacro.self,
         HookContextMacro.self,
         HookFormMacro.self,
-        CustomHookMacro.self,
+
         RiverpodNotifierMacro.self,
         StateProviderMacro.self,
         ProviderMacro.self,

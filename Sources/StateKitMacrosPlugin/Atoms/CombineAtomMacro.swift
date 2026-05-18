@@ -2,30 +2,49 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @CombineAtom: Combines multiple atoms into a single tuple value
-/// Watches multiple atoms and emits combined result
-public struct CombineAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro, PeerMacro {
+/// @CombineAtom: Combines values from multiple atoms into a single result.
+///
+/// Generates a `SKValueAtom` conformance with `Value` typealias inferred from
+/// `combine(context:)`. Also synthesizes `value(context:)` that delegates to
+/// `combine(context:)`, and adds `Hashable`.
+/// Use this to aggregate or zip multiple atom dependencies.
+///
+/// ## Generated Members
+/// - `func value(context:) -> Value` — delegates to `combine(context:)`
+///
+/// ## Generated Conformances
+/// - `SKValueAtom` with `Value` typealias
+/// - `Hashable`
+///
+/// ## User Requirements
+/// - A method `func combine(context: SKAtomTransactionContext) -> T` combining multiple atom values.
+///
+/// ## Behavior
+/// - Access level propagates from the struct to the generated typealias and method.
+/// - `@MainActor` is automatically added to `combine(context:)` unless the struct or method already has it.
+public struct CombineAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
+    // MemberMacro: generates value(context:) that delegates to combine(context:)
     public static func expansion(
         of node: AttributeSyntax,
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard declaration.as(StructDeclSyntax.self) != nil else {
-            throw MacroError.onlyApplicableToStructs
-        }
+        // Propagate the struct's access level to the generated method
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
 
-        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "combine")
-        let typealiasDecl: DeclSyntax = "typealias Value = \(returnType)"
+        // Generate: func value(context:) -> Value { combine(context: context) }
         let valueMethod: DeclSyntax = """
-        @MainActor
-        func value(context: SKAtomTransactionContext) -> Value {
+        \(raw: mainActorAttr)\(raw: accessPrefix)func value(context: SKAtomTransactionContext) -> Value {
             combine(context: context)
         }
         """
 
-        return [typealiasDecl, valueMethod]
+        return [valueMethod]
     }
 
+    // ExtensionMacro: adds SKValueAtom conformance with Value typealias
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -33,45 +52,49 @@ public struct CombineAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacr
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let valueAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): SKValueAtom {}")
+        // Extract the return type from combine(context:) to determine Value
+        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "combine")
+        // Propagate the struct's access level to the generated typealias
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
+
+        // Generate: extension MyAtom: SKValueAtom { typealias Value = T }
+        let valueAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("""
+        \(raw: mainActorAttr)extension \(type.trimmed): SKValueAtom {
+            \(raw: accessPrefix)typealias Value = \(raw: returnType.trimmedDescription)
+        }
+        """)
+        // Generate: extension MyAtom: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 
         return [valueAtomExtension, hashableExtension]
     }
 
+    // MemberAttributeMacro: adds @MainActor to combine(context:) if needed
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingAttributesFor member: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
+        // Only apply to the combine(context:) method
         guard let funcDecl = member.as(FunctionDeclSyntax.self),
               funcDecl.name.text == "combine" else {
             return []
         }
 
-        if !funcDecl.attributes.contains(where: { attr in
-            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "MainActor"
-        }) {
-            return ["@MainActor "]
+        // Skip if the struct already has @MainActor
+        if AttributeHelper.hasAttribute("MainActor", on: declaration) {
+            return []
+        }
+
+        // Add @MainActor if the method doesn't already have it
+        if !AttributeHelper.hasAttribute("MainActor", on: funcDecl) {
+            return [AttributeHelper.mainActorNewline]
         }
 
         return []
-    }
-
-    public static func expansion(
-        of node: AttributeSyntax,
-        providingPeersOf declaration: some DeclSyntaxProtocol,
-        in context: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else { return [] }
-        let className = structDecl.name.text
-        let atomName = className.prefix(1).lowercased() + className.dropFirst()
-        
-        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
-        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
-        let staticKeyword = isStatic ? "static " : ""
-
-        return ["@MainActor \(raw: staticKeyword)let \(raw: atomName) = \(raw: className)()"]
     }
 }

@@ -12,12 +12,12 @@ private struct CloudNotesAtom {
 @Computed
 private struct UnsyncedCountAtom {
     @MainActor
-    func compute(context: SKAtomTransactionContext) -> Int { context.watch(CloudNotesAtom.shared).count }
+    func compute(context: SKAtomTransactionContext) -> Int { context.watch(CloudNotesAtom()).count }
 }
 
 struct CloudKitIntegrationExampleView: View {
-    @SKState(CloudNotesAtom.shared) private var notes
-    @SKValue(UnsyncedCountAtom.shared) private var unsyncedCount
+    @SKState(CloudNotesAtom()) private var notes
+    @SKValue(UnsyncedCountAtom()) private var unsyncedCount
 
     var body: some View {
         Form {

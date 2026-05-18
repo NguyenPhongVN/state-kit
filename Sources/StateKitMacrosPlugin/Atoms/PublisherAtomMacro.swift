@@ -2,26 +2,24 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-public struct PublisherAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
-    public static func expansion(
-        of node: AttributeSyntax,
-        providingMembersOf declaration: some DeclGroupSyntax,
-        in context: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-            throw MacroError.onlyApplicableToStructs
-        }
-
-        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "publisher")
-        let outputType = try ReturnTypeExtractor.extractGenericArg(from: returnType, index: 0)
-
-        let publisherOutputTypeAlias: DeclSyntax = "typealias PublisherOutput = \(outputType)"
-        let atomPublisherTypeAlias: DeclSyntax = "typealias AtomPublisher = \(returnType)"
-        let sharedDecl: DeclSyntax = "@MainActor public static let shared = \(raw: structDecl.name.text)()"
-
-        return [publisherOutputTypeAlias, atomPublisherTypeAlias, sharedDecl]
-    }
-
+/// @PublisherAtom: Declares a Combine publisher-based atom for reactive streams.
+///
+/// Generates a `SKPublisherAtom` conformance extension with `PublisherOutput` and
+/// `AtomPublisher` typealiases inferred from the return type of `publisher(context:)`.
+/// Also synthesizes `Hashable`.
+///
+/// ## Generated Conformances
+/// - `SKPublisherAtom` with `PublisherOutput` + `AtomPublisher` typealiases
+/// - `Hashable`
+///
+/// ## User Requirements
+/// - A method `func publisher(context: SKAtomTransactionContext) -> P` where `P` is a Combine publisher
+///   (e.g., `AnyPublisher<Int, Error>`). The output type is extracted as the first generic argument.
+///
+/// ## Behavior
+/// - Access level propagates from the struct to the generated typealiases.
+/// - `@MainActor` is automatically added to `publisher(context:)` unless the struct or method already has it.
+public struct PublisherAtomMacro: ExtensionMacro, MemberAttributeMacro {
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -29,27 +27,51 @@ public struct PublisherAtomMacro: MemberMacro, ExtensionMacro, MemberAttributeMa
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let publisherAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): SKPublisherAtom {}")
+        // Extract the return type from publisher(context:) to determine PublisherOutput and AtomPublisher
+        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "publisher")
+        // PublisherOutput is the first generic argument of the publisher type
+        let outputType = try ReturnTypeExtractor.extractGenericArg(from: returnType, index: 0)
+        // Propagate the struct's access level to the generated typealiases
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
+
+        // Generate: extension MyAtom: SKPublisherAtom { typealias PublisherOutput = O; typealias AtomPublisher = P }
+        let publisherAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("""
+        \(raw: mainActorAttr)extension \(type.trimmed): SKPublisherAtom {
+            \(raw: accessPrefix)typealias PublisherOutput = \(raw: outputType.trimmedDescription)
+            \(raw: accessPrefix)typealias AtomPublisher = \(raw: returnType.trimmedDescription)
+        }
+        """)
+        
+        // Generate: extension MyAtom: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 
         return [publisherAtomExtension, hashableExtension]
     }
 
+    // MemberAttributeMacro: adds @MainActor to publisher(context:) if needed
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingAttributesFor member: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
+        // Only apply to the publisher(context:) method
         guard let funcDecl = member.as(FunctionDeclSyntax.self),
               funcDecl.name.text == "publisher" else {
             return []
         }
 
-        if !funcDecl.attributes.contains(where: { attr in
-            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "MainActor"
-        }) {
-            return [AttributeSyntax("@MainActor\n")]
+        // Skip if the struct already has @MainActor
+        if AttributeHelper.hasAttribute("MainActor", on: declaration) {
+            return []
+        }
+
+        // Add @MainActor if the method doesn't already have it
+        if !AttributeHelper.hasAttribute("MainActor", on: funcDecl) {
+            return [AttributeHelper.mainActorNewline]
         }
 
         return []

@@ -2,7 +2,28 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-/// @HookMemo: Generates a hook function from a struct with compute() method using useMemo
+// HookMemoMacro: @attached(peer, names: prefixed(use))
+//
+// Generates a peer function named "use<StructName>" that wraps useMemo().
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   @HookMemo struct Title {
+//       func compute() -> String { "Dashboard" }
+//   }
+//
+// Expands to:
+//   struct Title { func compute() -> String { "Dashboard" } }
+//
+//   @MainActor
+//   func useTitle() -> String {
+//       StateKit.useMemo(updateStrategy: .once) {
+//           Title().compute()
+//       }
+//   }
+//
+// Usage:
+//   let title = useTitle()   // "Dashboard", cached via useMemo
+
 public struct HookMemoMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -14,17 +35,14 @@ public struct HookMemoMacro: PeerMacro {
         }
 
         let className = structDecl.name.text
-        let hookName = "use" + className
-        
-        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
-        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
-        let staticKeyword = isStatic ? "static " : ""
+        let funcName = "use" + className
 
-        // Find compute method and its return type
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
+
+        // Extract return type from the compute() method.
         var returnType = "Any"
         for member in structDecl.memberBlock.members {
-            if let funcDecl = member.decl.as(FunctionDeclSyntax.self),
-               funcDecl.name.text == "compute" {
+            if let funcDecl = member.decl.as(FunctionDeclSyntax.self), funcDecl.name.text == "compute" {
                 if let type = funcDecl.signature.returnClause?.type {
                     returnType = type.trimmedDescription
                 }
@@ -33,13 +51,12 @@ public struct HookMemoMacro: PeerMacro {
 
         let hookDecl: DeclSyntax = """
         @MainActor
-        \(raw: staticKeyword)func \(raw: hookName)() -> \(raw: returnType) {
-            useMemo(updateStrategy: .once) {
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)() -> \(raw: returnType) {
+            StateKit.useMemo(updateStrategy: .once) {
                 \(raw: className)().compute()
             }
         }
         """
-
         return [hookDecl]
     }
 }

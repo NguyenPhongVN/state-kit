@@ -20,7 +20,7 @@ final class UserModule {
     @ValueAtom
     struct IsLoggedInAtom {
         func value(context: SKAtomTransactionContext) -> Bool {
-            context.watch(SessionAtom.shared) != nil
+            context.watch(SessionAtom()) != nil
         }
     }
     
@@ -83,7 +83,7 @@ final class UserModule {
     // MARK: Advanced Atoms
     
     @AtomReducer
-    struct FriendsReducer: Hashable {
+    struct FriendsReducer {
         typealias State = [String]
         typealias Action = String
         
@@ -108,6 +108,7 @@ final class UserModule {
     
     @FilteredAtom
     struct OnlineFriends {
+        func source(context: SKAtomTransactionContext) -> [String] { ["Alice", "Bob"] }
         func predicate(_ name: String) -> Bool {
             true
         }
@@ -115,6 +116,7 @@ final class UserModule {
     
     @MappedAtom
     struct FriendNames {
+        func source(context: SKAtomTransactionContext) -> String { "friend" }
         func transform(_ friend: String) -> String {
             friend.uppercased()
         }

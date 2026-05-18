@@ -19,14 +19,14 @@ private struct AMNameAtom {
 private struct AMSummaryAtom {
     @MainActor
     func value(context: SKAtomTransactionContext) -> String {
-        "\(context.watch(AMNameAtom.shared)) #\(context.watch(AMCountAtom.shared))"
+        "\(context.watch(AMNameAtom())) #\(context.watch(AMCountAtom()))"
     }
 }
 
 struct AtomMacrosExtendedExampleView: View {
-    @SKState(AMCountAtom.shared) private var count
-    @SKState(AMNameAtom.shared) private var name
-    @SKValue(AMSummaryAtom.shared) private var summary
+    @SKState(AMCountAtom()) private var count
+    @SKState(AMNameAtom()) private var name
+    @SKValue(AMSummaryAtom()) private var summary
     @SKContext private var context
 
     var body: some View {
@@ -37,8 +37,8 @@ struct AtomMacrosExtendedExampleView: View {
                 TextField("Name", text: $name)
             }
             Section("Context") {
-                Button("Reset count") { context.reset(AMCountAtom.shared) }
-                Button("Set to 42") { context.set(42, for: AMCountAtom.shared) }
+                Button("Reset count") { context.reset(AMCountAtom()) }
+                Button("Set to 42") { context.set(42, for: AMCountAtom()) }
             }
         }
         .navigationTitle("Atom State")

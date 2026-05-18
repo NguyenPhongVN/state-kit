@@ -21,8 +21,8 @@ private enum AsyncDemoError: LocalizedError {
 @ThrowingTaskAtom
 private struct AsyncProfileAtom {
     func task(context: SKAtomTransactionContext) async throws -> String {
-        let id = context.watch(AsyncSeedAtom.shared)
-        let shouldFail = context.watch(AsyncFailAtom.shared)
+        let id = context.watch(AsyncSeedAtom())
+        let shouldFail = context.watch(AsyncFailAtom())
         try await Task.sleep(nanoseconds: 500_000_000)
         if shouldFail { throw AsyncDemoError.forced }
         return "Loaded profile #\(id)"
@@ -30,9 +30,9 @@ private struct AsyncProfileAtom {
 }
 
 struct AsyncHookMacroExampleView: View {
-    @SKState(AsyncSeedAtom.shared) private var requestID
-    @SKState(AsyncFailAtom.shared) private var shouldFail
-    @SKTask(AsyncProfileAtom.shared) private var profile
+    @SKState(AsyncSeedAtom()) private var requestID
+    @SKState(AsyncFailAtom()) private var shouldFail
+    @SKTask(AsyncProfileAtom()) private var profile
     @SKContext private var atomContext
 
     var body: some View {
@@ -41,7 +41,7 @@ struct AsyncHookMacroExampleView: View {
                 Stepper("Request: \(requestID)", value: $requestID, in: 1...9)
                 Toggle("Force failure", isOn: $shouldFail)
                 Button("Refresh") {
-                    Task { await atomContext.refresh(AsyncProfileAtom.shared) }
+                    Task { await atomContext.refresh(AsyncProfileAtom()) }
                 }
             }
             Section("Phase") {

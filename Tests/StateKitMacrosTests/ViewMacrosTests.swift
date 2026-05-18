@@ -8,8 +8,7 @@ final class ViewMacrosTests: XCTestCase {
     let testMacros: [String: Macro.Type] = [
         "HookView": HookViewMacro.self,
         "StateView": StateViewMacro.self,
-        "AsyncView": AsyncViewMacro.self,
-        "ObservableState": ObservableStateMacro.self
+        "AsyncView": AsyncViewMacro.self
     ]
 
     func testHookViewMacro() {
@@ -81,40 +80,6 @@ final class ViewMacrosTests: XCTestCase {
                 var hasError: Bool {
                     false  // User implements based on phase
                 }
-            }
-            """,
-            macros: testMacros
-        )
-    }
-
-    func testObservableStateMacro() {
-        assertMacroExpansion(
-            """
-            @ObservableState
-            struct MyState {
-                var count = 0
-            }
-            """,
-            expandedSource: """
-            struct MyState {
-                var count = 0
-
-                private let _observationRegistrar = ObservationRegistrar()
-
-                nonisolated public func withObserver<V>(_ body: () -> V) -> V {
-                    _observe {
-                        body()
-                    }
-                }
-
-                nonisolated private func _observe<V>(_ body: () -> V) -> V {
-                    _observationRegistrar.withMutation(of: self, keyPath: \\.self) {
-                        body()
-                    }
-                }
-            }
-
-            extension MyState: Observable {
             }
             """,
             macros: testMacros

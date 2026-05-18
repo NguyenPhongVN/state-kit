@@ -15,7 +15,7 @@ private struct QueryAtom {
 private struct FilteredItemsAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> [String] {
-        let query = context.watch(QueryAtom.shared)
+        let query = context.watch(QueryAtom())
         guard !query.isEmpty else {
             return Array(allItems.prefix(30))
         }
@@ -24,8 +24,8 @@ private struct FilteredItemsAtom {
 }
 
 struct PerformanceOptimizationExampleView: View {
-    @SKState(QueryAtom.shared) private var query
-    @SKValue(FilteredItemsAtom.shared) private var filtered
+    @SKState(QueryAtom()) private var query
+    @SKValue(FilteredItemsAtom()) private var filtered
 
     var body: some View {
         Form {

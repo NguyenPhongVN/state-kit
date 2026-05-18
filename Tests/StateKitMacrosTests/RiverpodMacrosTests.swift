@@ -33,7 +33,7 @@ final class RiverpodMacrosTests: XCTestCase {
             }
 
             @MainActor
-            let authNotifierProvider = NotifierProvider {
+            let AuthNotifierProvider = NotifierProvider {
                 AuthNotifier()
             }
             """,
@@ -55,7 +55,7 @@ final class RiverpodMacrosTests: XCTestCase {
             }
 
             @MainActor
-            let counterProvider = StateProvider { _ in
+            let CounterProvider = StateProvider { _ in
                 0
             }
             """,
@@ -77,7 +77,7 @@ final class RiverpodMacrosTests: XCTestCase {
             }
 
             @MainActor
-            let settingsProvider = Provider { (ref: ProviderRef) -> Int  in
+            let settingsProvider = Provider { (ref: ProviderRef) -> Int in
                 settings(ref: ref)
             }
             """,
@@ -135,7 +135,7 @@ final class RiverpodMacrosTests: XCTestCase {
             }
 
             @MainActor
-            let userProfileProvider = Provider.family { (ref: ProviderRef, userId: String) -> Profile  in
+            let userProfileProvider = Provider.family { (ref: ProviderRef, userId: String) -> Profile in
                 userProfile(ref: ref, userId: userId)
             }
             """,
@@ -157,7 +157,7 @@ final class RiverpodMacrosTests: XCTestCase {
             }
 
             @MainActor
-            let userNotifierFamily = NotifierProvider.family { (arg: String) in
+            let UserNotifierFamily = NotifierProvider.family { (arg: String) in
                 UserNotifier()
             }
             """,

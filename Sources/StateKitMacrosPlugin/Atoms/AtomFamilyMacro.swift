@@ -2,55 +2,25 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-public struct AtomFamilyMacro: MemberAttributeMacro, MemberMacro, ExtensionMacro {
-    public static func expansion(
-        of node: AttributeSyntax,
-        providingMembersOf declaration: some DeclGroupSyntax,
-        in context: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-            throw MacroError.onlyApplicableToStructs
-        }
-
-        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "defaultValue")
-        let className = structDecl.name.text
-        var members: [DeclSyntax] = ["typealias Value = \(raw: returnType)"]
-
-        let properties = PropertyExtractor.storedProperties(from: structDecl)
-
-        if properties.count == 1 {
-            let prop = properties[0]
-            members.append("""
-            @MainActor
-            public static let family = atomFamily { (\(raw: prop.name): \(raw: prop.typeName)) in
-                \(raw: className)(\(raw: prop.name): \(raw: prop.name))
-            }
-            """)
-        } else {
-            let idStructName = "FamilyID"
-            members.append("""
-            public struct \(raw: idStructName): Hashable, Sendable {
-                \(raw: properties.map { "public let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
-                public init(\(raw: properties.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) {
-                    \(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n        "))
-                }
-            }
-
-            @MainActor
-            private static let _familyInternal = atomFamily { (id: \(raw: idStructName)) in
-                \(raw: className)(\(raw: properties.map { "\($0.name): id.\($0.name)" }.joined(separator: ", ")))
-            }
-
-            @MainActor
-            public static func family(\(raw: properties.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) -> \(raw: className) {
-                _familyInternal(\(raw: idStructName)(\(raw: properties.map { "\($0.name): \($0.name)" }.joined(separator: ", "))))
-            }
-            """)
-        }
-
-        return members
-    }
-
+/// @AtomFamily: Declares a parameterized state atom family.
+///
+/// Like @StateAtom but accepts parameters (stored as `let` properties on the struct)
+/// to create a family of atom instances. Generates a `SKStateAtom` conformance with
+/// `Value` typealias inferred from `defaultValue(context:)`.
+/// Also synthesizes `Hashable` using the struct's stored properties.
+///
+/// ## Generated Conformances
+/// - `SKStateAtom` with `Value` typealias
+/// - `Hashable`
+///
+/// ## User Requirements
+/// - One or more `let` properties serving as family parameters (automatically included in `Hashable`).
+/// - A method `func defaultValue(context: SKAtomTransactionContext) -> T` returning the atom's value.
+///
+/// ## Behavior
+/// - Access level propagates from the struct to the generated typealias.
+/// - `@MainActor` is automatically added to `defaultValue(context:)` unless the struct or method already has it.
+public struct AtomFamilyMacro: ExtensionMacro, MemberAttributeMacro {
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -58,27 +28,49 @@ public struct AtomFamilyMacro: MemberAttributeMacro, MemberMacro, ExtensionMacro
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let stateAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): SKStateAtom {}")
+        // Extract the return type from defaultValue(context:) to determine Value
+        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "defaultValue")
+        let typeName = returnType.trimmedDescription
+        // Propagate the struct's access level to the generated typealias
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
+
+        // Generate: extension UserAtom: SKStateAtom { typealias Value = T }
+        let stateAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("""
+        \(raw: mainActorAttr)extension \(type.trimmed): SKStateAtom {
+            \(raw: accessPrefix)typealias Value = \(raw: typeName)
+        }
+        """)
+        
+        // Generate: extension UserAtom: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 
         return [stateAtomExtension, hashableExtension]
     }
 
+    // MemberAttributeMacro: adds @MainActor to defaultValue(context:) if needed
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingAttributesFor member: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
+        // Only apply to the defaultValue(context:) method
         guard let funcDecl = member.as(FunctionDeclSyntax.self),
               funcDecl.name.text == "defaultValue" else {
             return []
         }
 
-        if !funcDecl.attributes.contains(where: { attr in
-            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "MainActor"
-        }) {
-            return [AttributeSyntax("@MainActor\n")]
+        // Skip if the struct already has @MainActor
+        if AttributeHelper.hasAttribute("MainActor", on: declaration) {
+            return []
+        }
+
+        // Add @MainActor if the method doesn't already have it
+        if !AttributeHelper.hasAttribute("MainActor", on: funcDecl) {
+            return [AttributeHelper.mainActorNewline]
         }
 
         return []

@@ -2,6 +2,35 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+// HookStateMacro: @attached(peer, names: prefixed(use))
+//
+// Generates a peer function named "use<StructName>" that wraps useBinding().
+//
+// Same design rationale as HookRefMacro — see HookRefMacro.swift for the
+// explanation of prefixed(use), access-level propagation, and computed/lazy
+// property filtering.
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   @HookState struct Count {
+//       var count: Int = 0
+//   }
+//
+// Expands to:
+//   struct Count { var count: Int = 0 }
+//
+//   @MainActor
+//   func useCount(count: Int = 0) -> Binding<Count> {
+//       return StateKit.useBinding(Count(count: count))
+//   }
+//
+// Usage:
+//   let $count = useCount()         // Binding<Count> with default 0
+//   $count.count.wrappedValue       // read
+//   $count.count.wrappedValue = 5   // write
+//
+// Unlike HookRef, HookState requires at least one stored property
+// because Binding<EmptyStruct> is not useful.
+
 public struct HookStateMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -12,50 +41,33 @@ public struct HookStateMacro: PeerMacro {
             throw MacroError.onlyApplicableToStructs
         }
 
+        let className = structDecl.name.text
+        let funcName = "use" + className
+
         let properties = PropertyExtractor.storedProperties(from: structDecl)
         guard !properties.isEmpty else {
-            throw MacroError.methodNotFound("stored properties")
+            throw MacroError.methodNotFound("stored properties for HookState")
         }
 
-        let structName = structDecl.name.text
-        let hookName = "use" + structName
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
-        let isStatic = structDecl.modifiers.contains(where: { $0.name.text == "static" })
-        let staticModifier = isStatic ? "static " : ""
-
-        var returnTupleElements: [String] = []
-        var functionBody: [String] = []
-
-        for prop in properties {
-            let propName = prop.name
-            let defaultVal = prop.defaultValue ?? "nil"
-
-            returnTupleElements.append("\(propName): Binding<\(prop.typeName)>")
-            functionBody.append("            \(propName): useBinding(\(defaultVal))")
-        }
-
-        let hookFunction: DeclSyntax
-        if properties.count == 1 {
-            let prop = properties[0]
-            let defaultVal = prop.defaultValue ?? "nil"
-            hookFunction = """
-            @MainActor
-            \(raw: staticModifier)func \(raw: hookName)() -> Binding<\(raw: prop.typeName)> {
-                return useBinding(\(raw: defaultVal))
+        let params = properties.map { prop in
+            if let defaultVal = prop.defaultValue {
+                "\(prop.name): \(prop.typeName) = \(defaultVal)"
+            } else {
+                "\(prop.name): \(prop.typeName)"
             }
-            """
-        } else {
-            let returnTuple = "(" + returnTupleElements.joined(separator: ", ") + ")"
-            let bodyContent = "(\n" + functionBody.joined(separator: ",\n") + "\n        )"
+        }.joined(separator: ", ")
 
-            hookFunction = """
-            @MainActor
-            \(raw: staticModifier)func \(raw: hookName)() -> \(raw: returnTuple) {
-                return \(raw: bodyContent)
-            }
-            """
+        let initArgs = properties.map { "\($0.name): \($0.name)" }.joined(separator: ", ")
+
+        let hookDecl: DeclSyntax = """
+        @MainActor
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)(\(raw: params)) -> Binding<\(raw: className)> {
+            return StateKit.useBinding(\(raw: className)(\(raw: initArgs)))
         }
+        """
 
-        return [hookFunction]
+        return [hookDecl]
     }
 }

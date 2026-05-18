@@ -2,59 +2,25 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-public struct SelectorFamilyMacro: MemberAttributeMacro, MemberMacro, ExtensionMacro {
-    public static func expansion(
-        of node: AttributeSyntax,
-        providingMembersOf declaration: some DeclGroupSyntax,
-        in context: some MacroExpansionContext
-    ) throws -> [DeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else {
-            throw MacroError.onlyApplicableToStructs
-        }
-
-        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "value")
-        let className = structDecl.name.text
-        var members: [DeclSyntax] = ["typealias Value = \(raw: returnType)"]
-
-        let properties = PropertyExtractor.storedProperties(from: structDecl)
-
-        if properties.count == 1 {
-            let prop = properties[0]
-            members.append("""
-            @MainActor
-            public static let family = selectorFamily { (\(raw: prop.name): \(raw: prop.typeName), context: SKAtomTransactionContext) in
-                \(raw: className)(\(raw: prop.name): \(raw: prop.name)).value(context: context)
-            }
-            """)
-        } else {
-            let idStructName = "FamilyID"
-            members.append("""
-            public struct \(raw: idStructName): Hashable, Sendable {
-                \(raw: properties.map { "public let \($0.name): \($0.typeName)" }.joined(separator: "\n    "))
-                public init(\(raw: properties.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) {
-                    \(raw: properties.map { "self.\($0.name) = \($0.name)" }.joined(separator: "\n        "))
-                }
-            }
-
-            @MainActor
-            private static let _familyInternal = selectorFamily { (id: \(raw: idStructName), context: SKAtomTransactionContext) in
-                \(raw: className)(\(raw: properties.map { "\($0.name): id.\($0.name)" }.joined(separator: ", "))).value(context: context)
-            }
-
-            @MainActor
-            public static func family(\(raw: properties.map { "\($0.name): \($0.typeName)" }.joined(separator: ", "))) -> any SKValueAtom {
-                // Selector family usually returns an atom that computes a value.
-                // We return a proxy atom or the value itself?
-                // Actually, selectorFamily returns a function that returns an atom instance.
-                // Wait! selectorFamily works differently.
-                fatalError("selectorFamily not fully implemented in macro yet")
-            }
-            """)
-        }
-
-        return members
-    }
-
+/// @SelectorFamily: Declares a parameterized derived-value atom family.
+///
+/// Like @ValueAtom but accepts parameters (stored as `let` properties) to create
+/// a family of derived atom instances. Generates a `SKValueAtom` conformance with
+/// `Value` typealias inferred from `value(context:)`.
+/// Also synthesizes `Hashable` using the struct's stored properties.
+///
+/// ## Generated Conformances
+/// - `SKValueAtom` with `Value` typealias
+/// - `Hashable`
+///
+/// ## User Requirements
+/// - One or more `let` properties serving as family parameters.
+/// - A method `func value(context: SKAtomTransactionContext) -> T` returning the derived value.
+///
+/// ## Behavior
+/// - Access level propagates from the struct to the generated typealias.
+/// - `@MainActor` is automatically added to `value(context:)` unless the struct or method already has it.
+public struct SelectorFamilyMacro: ExtensionMacro, MemberAttributeMacro {
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
@@ -62,27 +28,49 @@ public struct SelectorFamilyMacro: MemberAttributeMacro, MemberMacro, ExtensionM
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        let stateAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): SKValueAtom {}")
+        // Extract the return type from value(context:) to determine Value
+        let returnType = try ReturnTypeExtractor.extract(from: declaration, methodName: "value")
+        let typeName = returnType.trimmedDescription
+        // Propagate the struct's access level to the generated typealias
+        let accessPrefix = AttributeHelper.accessLevel(from: declaration)
+
+        // Only add @MainActor prefix if the struct itself doesn't already have it
+        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: declaration) ? "" : "@MainActor "
+
+        // Generate: extension UserSelector: SKValueAtom { typealias Value = T }
+        let valueAtomExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("""
+        \(raw: mainActorAttr)extension \(type.trimmed): SKValueAtom {
+            \(raw: accessPrefix)typealias Value = \(raw: typeName)
+        }
+        """)
+        
+        // Generate: extension UserSelector: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 
-        return [stateAtomExtension, hashableExtension]
+        return [valueAtomExtension, hashableExtension]
     }
 
+    // MemberAttributeMacro: adds @MainActor to value(context:) if needed
     public static func expansion(
         of node: AttributeSyntax,
         attachedTo declaration: some DeclGroupSyntax,
         providingAttributesFor member: some DeclSyntaxProtocol,
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
+        // Only apply to the value(context:) method
         guard let funcDecl = member.as(FunctionDeclSyntax.self),
               funcDecl.name.text == "value" else {
             return []
         }
 
-        if !funcDecl.attributes.contains(where: { attr in
-            attr.as(AttributeSyntax.self)?.attributeName.as(IdentifierTypeSyntax.self)?.name.text == "MainActor"
-        }) {
-            return [AttributeSyntax("@MainActor\n")]
+        // Skip if the struct already has @MainActor
+        if AttributeHelper.hasAttribute("MainActor", on: declaration) {
+            return []
+        }
+
+        // Add @MainActor if the method doesn't already have it
+        if !AttributeHelper.hasAttribute("MainActor", on: funcDecl) {
+            return [AttributeHelper.mainActorNewline]
         }
 
         return []

@@ -2,7 +2,9 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
-public struct CustomHookMacro: PeerMacro {
+/// Validates that `@Hook` is applied to a function whose name starts with `use`.
+/// Generates no additional code — purely a compile-time validation marker.
+public struct CheckHookFunctionMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
         providingPeersOf declaration: some DeclSyntaxProtocol,

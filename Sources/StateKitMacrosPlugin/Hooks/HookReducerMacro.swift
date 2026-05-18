@@ -2,6 +2,36 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+// HookReducerMacro: @attached(peer, names: prefixed(use))
+//
+// Generates a peer function named "use<StructName>" that wraps useReducer.
+// The struct provides typealiases for State/Action and a reduce method.
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   @HookReducer struct Counter {
+//       typealias State = Int
+//       typealias Action = String
+//       func reduce(_ s: inout Int, action: String) {
+//           if action == "add" { s += 1 }
+//       }
+//   }
+//
+// Expands to:
+//   struct Counter { ... }
+//
+//   @MainActor
+//   func useCounter(initial: Int = Int()) -> (Int, (String) -> Void) {
+//       let reducer = Counter()
+//       return StateKit.useReducer(initial) { state, action in
+//           reducer.reduce(&state, action: action)
+//       }
+//   }
+//
+// Usage:
+//   var (count, dispatch) = useCounter(initial: 10)
+//   dispatch("add")
+//   (count, dispatch) = useCounter(initial: 10)  // still 11 (persisted)
+
 public struct HookReducerMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,
@@ -13,15 +43,13 @@ public struct HookReducerMacro: PeerMacro {
         }
 
         let className = structDecl.name.text
-        let hookName = "use" + className
-        
-        let modifiers = declaration.asProtocol(WithModifiersSyntax.self)?.modifiers
-        let isStatic = modifiers?.contains { $0.name.text == "static" } ?? false
-        let staticKeyword = isStatic ? "static " : ""
+        let funcName = "use" + className
 
-        // Extract State and Action typealiases (Trimming trivia to avoid comment leakage)
-        var stateType: String = "Any"
-        var actionType: String = "Any"
+        let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
+
+        // Extract State and Action typealiases from the struct body
+        var stateType = "Any"
+        var actionType = "Any"
 
         for member in structDecl.memberBlock.members {
             if let typealiasDecl = member.decl.as(TypeAliasDeclSyntax.self) {
@@ -35,9 +63,9 @@ public struct HookReducerMacro: PeerMacro {
 
         let hookDecl: DeclSyntax = """
         @MainActor
-        \(raw: staticKeyword)func \(raw: hookName)(initial: \(raw: stateType) = \(raw: stateType)()) -> (\(raw: stateType), (\(raw: actionType)) -> Void) {
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)(initial: \(raw: stateType) = \(raw: stateType)()) -> (\(raw: stateType), (\(raw: actionType)) -> Void) {
             let reducer = \(raw: className)()
-            return useReducer(initial) { state, action in
+            return StateKit.useReducer(initial) { state, action in
                 reducer.reduce(&state, action: action)
             }
         }

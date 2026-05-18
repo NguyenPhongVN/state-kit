@@ -19,14 +19,14 @@ private struct FlagsAtom {
 private struct EnabledCountAtom {
     @MainActor
     func compute(context: SKAtomTransactionContext) -> Int {
-        let flags = context.watch(FlagsAtom.shared)
+        let flags = context.watch(FlagsAtom())
         return [flags.newCheckout, flags.recommendations, flags.debugBanner].filter { $0 }.count
     }
 }
 
 struct FeatureFlagsExampleView: View {
-    @SKState(FlagsAtom.shared) private var flags
-    @SKValue(EnabledCountAtom.shared) private var enabledCount
+    @SKState(FlagsAtom()) private var flags
+    @SKValue(EnabledCountAtom()) private var enabledCount
 
     var body: some View {
         Form {

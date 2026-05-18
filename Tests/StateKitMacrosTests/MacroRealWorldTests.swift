@@ -16,18 +16,18 @@ final class MacroRealWorldTests: XCTestCase {
 
     func testSocialAppEcosystem() {
         // 1. Verify UserModule (Atoms)
-        let user = UserModule()
-        XCTAssertNotNil(UserModule.SessionAtom.shared)
-        XCTAssertNotNil(UserModule.FriendsReducer.shared)
-        XCTAssertNotNil(UserModule.UserPrefAtom.family("theme")) 
-        XCTAssertNotNil(UserModule.ProfileSummary.shared)
+        let _ = UserModule()
+        XCTAssertNotNil(UserModule.SessionAtom())
+        XCTAssertNotNil(UserModule.FriendsReducer())
+        XCTAssertNotNil(UserModule.UserPrefAtom(key: "theme")) 
+        XCTAssertNotNil(UserModule.ProfileSummary())
 
         // 2. Verify NetworkModule (Riverpods)
-        let net = NetworkModule()
-        XCTAssertNotNil(NetworkModule.AuthNotifier.provider)
-        XCTAssertNotNil(NetworkModule.currentHeader.provider)
-        XCTAssertNotNil(NetworkModule.PostNotifier.family)
-        XCTAssertNotNil(NetworkModule.likesProvider.family)
+        let _ = NetworkModule()
+        XCTAssertNotNil(NetworkModule.AuthNotifierProvider)
+        XCTAssertNotNil(NetworkModule.currentHeaderProvider)
+        XCTAssertNotNil(NetworkModule.PostNotifierFamily)
+        XCTAssertNotNil(NetworkModule.likesProviderFamily)
 
         // 3. Verify ProfileDashboard (Views & Hooks)
         let dashboard = ProfileDashboardView()
