@@ -100,7 +100,8 @@ enum AttributeHelper {
         let level = modifiers.first(where: {
             ["private", "fileprivate", "internal", "package", "public", "open"].contains($0.name.text)
         })
-        return level.map { "\($0.name.text) " } ?? ""
+        guard let keyword = level?.name.text else { return "" }
+        return keyword == "private" ? "fileprivate " : "\(keyword) "
     }
 
     /// Extract the access prefix and static keyword from any declaration with modifiers.
@@ -117,7 +118,12 @@ enum AttributeHelper {
         let accessLevel = decl.modifiers.first(where: {
             ["private", "fileprivate", "internal", "package", "public", "open"].contains($0.name.text)
         })
-        let accessPrefix = accessLevel.map { "\($0.name.text) " } ?? ""
+        let accessPrefix: String
+        if let keyword = accessLevel?.name.text {
+            accessPrefix = keyword == "private" ? "fileprivate " : "\(keyword) "
+        } else {
+            accessPrefix = ""
+        }
         let isStatic = decl.modifiers.contains { $0.name.text == "static" || $0.name.text == "class" }
         let staticKeyword = isStatic ? "static " : ""
         return (accessPrefix, staticKeyword)

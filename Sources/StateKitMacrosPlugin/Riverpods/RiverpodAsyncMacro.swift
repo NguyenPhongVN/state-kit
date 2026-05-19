@@ -33,20 +33,31 @@ public struct RiverpodAsyncMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
+
+        let isNested = context.lexicalContext.count > 0
 
         // Check if the function is throwing — need to prepend try if so
         let tryKeyword = funcDecl.signature.effectSpecifiers?.throwsClause != nil ? "try " : ""
 
-        // Generate: @MainActor [access] [static] let <name>Provider = FutureProvider { ref in ... }
-        let asyncProvider: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = FutureProvider { ref in
-            \(raw: tryKeyword)await \(raw: functionName)()
+        if isNested {
+            let asyncProvider: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = FutureProvider { ref in
+                \(raw: tryKeyword)await \(raw: functionName)()
+            }
+            """
+            return [asyncProvider]
+        } else {
+            let asyncProvider: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: providerName) = FutureProvider { ref in
+                    \(raw: tryKeyword)await \(raw: functionName)()
+                }
+            }
+            """
+            return [asyncProvider]
         }
-        """
-
-        return [asyncProvider]
     }
 }

@@ -33,8 +33,11 @@ public struct ProviderMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
+
+        // Check if the function is nested inside another type
+        let isNested = context.lexicalContext.count > 0
 
         // Validate that the return type is concrete (not opaque/some)
         guard let returnType = funcDecl.signature.returnClause?.type else {
@@ -66,14 +69,24 @@ public struct ProviderMacro: PeerMacro {
         let paramList = paramDecls.isEmpty ? "ref" : paramDecls.joined(separator: ", ")
         let argList = callArgs.isEmpty ? "ref" : callArgs.joined(separator: ", ")
 
-        // Generate: @MainActor [access] [static] let <name>Provider = Provider { ... }
-        let providerDecl: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = Provider { (\(raw: paramList)) -> \(raw: returnTypeDescription) in
-            \(raw: functionName)(\(raw: argList))
+        // Generate extension on RProvider (file scope) or static let member (nested)
+        if isNested {
+            let providerDecl: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = Provider { (\(raw: paramList)) -> \(raw: returnTypeDescription) in
+                \(raw: functionName)(\(raw: argList))
+            }
+            """
+            return [providerDecl]
+        } else {
+            let providerDecl: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: providerName) = Provider { (\(raw: paramList)) -> \(raw: returnTypeDescription) in
+                    \(raw: functionName)(\(raw: argList))
+                }
+            }
+            """
+            return [providerDecl]
         }
-        """
-
-        return [providerDecl]
     }
 }

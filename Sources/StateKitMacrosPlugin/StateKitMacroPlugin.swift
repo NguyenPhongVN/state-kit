@@ -29,6 +29,7 @@ struct StateKitMacrosPlugin: CompilerPlugin {
         HookStateMacro.self,
         HookRefMacro.self,
         HookEffectMacro.self,
+        HookLayoutEffectMacro.self,
         AsyncHookMacro.self,
         DebounceMacro.self,
         ThrottleMacro.self,

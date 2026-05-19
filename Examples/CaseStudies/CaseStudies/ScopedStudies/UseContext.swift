@@ -1,27 +1,31 @@
 import SwiftUI
+import StateKitMacros
 
 private enum DemoTheme: String {
     case ocean = "Ocean"
     case sunset = "Sunset"
 }
 
-private let demoThemeContext = HookContext(DemoTheme.ocean)
+@HookContext
+private struct DemoThemeContextValue {
+    var theme: DemoTheme = .ocean
+}
 
 struct UseContext: View {
     @State private var redrawNonce = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            ContextReader(title: "Reader A", context: demoThemeContext)
-            ContextReader(title: "Reader B", context: demoThemeContext)
+            ContextReader(title: "Reader A")
+            ContextReader(title: "Reader B")
 
-            Text("Hai view con doc cung mot `HookContext`.")
+            Text("Both child views read from the same shared HookContext.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             HStack {
                 Button("Toggle shared theme") {
-                    demoThemeContext.value = demoThemeContext.value == .ocean ? .sunset : .ocean
+                    _hookContext.value.theme = _hookContext.value.theme == .ocean ? .sunset : .ocean
                     redrawNonce += 1
                 }
                 .buttonStyle(.borderedProminent)
@@ -33,10 +37,9 @@ struct UseContext: View {
 
 private struct ContextReader: StateView {
     let title: String
-    let context: HookContext<DemoTheme>
 
     var stateBody: some View {
-        let theme = useContext(context)
+        let theme = useDemoThemeContextValue().theme
 
         Text("\(title): \(theme.rawValue)")
     }

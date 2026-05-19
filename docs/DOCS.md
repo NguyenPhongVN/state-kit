@@ -4,12 +4,14 @@ This file is the single entry point for all documentation.
 
 No original docs are deleted. They are grouped by purpose for cleaner navigation.
 
-## Grouped Documentation
+## Documentation Map
 
-1. `core/README.md` - product usage, architecture, and advanced integration guides
-2. `macros/README.md` - all macro references, examples, and macro implementation reports
-3. `release/README.md` - changelog, migration, API stability, and release readiness
-4. `engineering/README.md` - testing, standards, devtools, planning, and phase/status reports
+| Area | Path | Purpose |
+|---|---|---|
+| Core | `core/README.md` | Product usage, architecture, integration guides |
+| Macros | `macros/README.md` | Macro references, examples, stable API docs |
+| Release | `release/README.md` | Changelog, migration, stability, release readiness |
+| Engineering | `engineering/README.md` | Testing and verification guidance |
 
 ## Naming Standard (Canonical Labels)
 
@@ -22,13 +24,7 @@ To keep naming consistent without breaking existing links, use these canonical l
 
 If we decide to rename files later, these labels stay stable.
 
-## Phase Coverage Snapshot
+## Cleanup Status
 
-- `archive/PHASE3_PREVIEW.md`: present
-- `archive/PHASE3A_COMPLETION.md`: present
-- `archive/PHASE3B_COMPLETION.md`: present
-- `archive/PHASE4_COMPLETION.md`: present
-- `archive/PHASE5_COMPLETION.md`: present
-- `archive/PHASE6_COMPLETION.md`: present
-- `archive/PHASE7_COMPLETION.md`: present
-- `PHASE1`/`PHASE2` completion files: not found
+- Legacy phase and milestone docs were removed.
+- Only developer-facing, actively used docs are kept.

@@ -14,26 +14,11 @@ Docs in this group share one purpose: understanding and applying StateKit in rea
 
 ### Optional Deep Dive
 - `MODULARITY_GUIDE.md`
-- `ADVANCED_INTEGRATIONS_GUIDE.md`
-- `EXTENDED_FEATURES_GUIDE.md`
-- `RIVERPODS_REFACTORING_GUIDE.md`
 
-## Getting Started and Practical Usage
+## Coverage
 
-- `GUIDE.md`
-- `REAL_WORLD_GUIDE.md`
-
-## Architecture and Design
-
-- `ARCHITECTURE_GUIDE.md`
-- `MODULARITY_GUIDE.md`
-
-## Advanced and Extended Usage
-
-- `ADVANCED_INTEGRATIONS_GUIDE.md`
-- `EXTENDED_FEATURES_GUIDE.md`
-
-## Riverpods Core
-
-- `RIVERPOD_GUIDE.md`
-- `RIVERPODS_REFACTORING_GUIDE.md`
+| Topic | Files |
+|---|---|
+| Getting Started | `GUIDE.md`, `REAL_WORLD_GUIDE.md` |
+| Architecture | `ARCHITECTURE_GUIDE.md`, `MODULARITY_GUIDE.md` |
+| Riverpods Core | `RIVERPOD_GUIDE.md` |

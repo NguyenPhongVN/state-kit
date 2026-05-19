@@ -1,4 +1,4 @@
-# Real-World Guide - Phase 5 (v2.4)
+# Real-World Guide - Phase 5 (Post-V1)
 
 **Version**: 2.4.0-beta  
 **Date**: May 17, 2026  

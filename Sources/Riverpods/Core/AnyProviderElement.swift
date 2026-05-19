@@ -293,4 +293,6 @@ public protocol AnyProviderElement: AnyObject {
     /// - Important: After disposal, the element cannot be reused. A new element must be created if the provider is accessed again.
     /// - Note: Multiple calls to dispose() are safe (idempotent).
     func dispose()
+
+    func _addDependentRef(_ element: AnyObject)
 }

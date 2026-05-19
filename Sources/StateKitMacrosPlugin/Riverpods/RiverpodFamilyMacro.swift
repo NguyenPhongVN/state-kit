@@ -31,17 +31,12 @@ public struct RiverpodFamilyMacro: PeerMacro {
         }
 
         let className = classDecl.name.text
-        let familyName = className + "Family"
 
         // Propagate access level from the class to the generated constant
         let accessPrefix = AttributeHelper.accessLevel(from: classDecl)
 
-        // Determine if the generated constant needs `static` (nested types do)
+        // Check if the class is nested inside another type
         let isNested = context.lexicalContext.count > 0
-        let staticKeyword = isNested ? "static " : ""
-
-        // Only add @MainActor prefix if the class itself doesn't already have it
-        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: classDecl) ? "" : "@MainActor\n"
 
         // Extract the key type from the build method's first parameter
         var argType = "String"
@@ -54,13 +49,25 @@ public struct RiverpodFamilyMacro: PeerMacro {
             }
         }
 
-        // Generate: [@MainActor] [access] [static] let <name>Family = NotifierProvider.family { ... }
-        let familyDecl: DeclSyntax = """
-        \(raw: mainActorAttr)\(raw: accessPrefix)\(raw: staticKeyword)let \(raw: familyName) = NotifierProvider.family { (arg: \(raw: argType)) in
-            \(raw: className)()
+        // Generate extension (file scope) or static let member (nested)
+        if isNested {
+            let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: classDecl) ? "" : "@MainActor\n"
+            let familyDecl: DeclSyntax = """
+            \(raw: mainActorAttr)\(raw: accessPrefix)static let \(raw: className)Family = NotifierProvider.family { (arg: \(raw: argType)) in
+                \(raw: className)()
+            }
+            """
+            return [familyDecl]
+        } else {
+            let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: classDecl) ? "" : "@MainActor "
+            let familyDecl: DeclSyntax = """
+            extension \(raw: className) {
+                \(raw: mainActorAttr)\(raw: accessPrefix)static let family = NotifierProvider.family { (arg: \(raw: argType)) in
+                    \(raw: className)()
+                }
+            }
+            """
+            return [familyDecl]
         }
-        """
-
-        return [familyDecl]
     }
 }

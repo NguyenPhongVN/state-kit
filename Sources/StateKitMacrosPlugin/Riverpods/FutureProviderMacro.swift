@@ -30,17 +30,31 @@ public struct FutureProviderMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        // Generate: @MainActor [access] [static] let <name>Provider = FutureProvider { ... }
-        let providerDecl: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = FutureProvider { _ in
-            await \(raw: functionName)()
-        }
-        """
+        let isThrowing = funcDecl.signature.effectSpecifiers?.throwsSpecifier != nil
+        let tryKeyword = isThrowing ? "try " : ""
 
-        return [providerDecl]
+        let isNested = context.lexicalContext.count > 0
+
+        if isNested {
+            let providerDecl: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = FutureProvider { _ in
+                \(raw: tryKeyword)await \(raw: functionName)()
+            }
+            """
+            return [providerDecl]
+        } else {
+            let providerDecl: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: providerName) = FutureProvider { _ in
+                    \(raw: tryKeyword)await \(raw: functionName)()
+                }
+            }
+            """
+            return [providerDecl]
+        }
     }
 }

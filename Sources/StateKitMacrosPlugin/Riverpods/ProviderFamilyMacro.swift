@@ -33,8 +33,10 @@ public struct ProviderFamilyMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
+
+        let isNested = context.lexicalContext.count > 0
 
         // Validate that the return type is concrete (not opaque/some)
         guard let returnType = funcDecl.signature.returnClause?.type else {
@@ -66,14 +68,23 @@ public struct ProviderFamilyMacro: PeerMacro {
         let paramList = paramDecls.joined(separator: ", ")
         let argList = callArgs.joined(separator: ", ")
 
-        // Generate: @MainActor [access] [static] let <name>Provider = Provider.family { ... }
-        let providerDecl: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = Provider.family { (\(raw: paramList)) -> \(raw: returnTypeDescription) in
-            \(raw: functionName)(\(raw: argList))
+        if isNested {
+            let providerDecl: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = Provider.family { (\(raw: paramList)) -> \(raw: returnTypeDescription) in
+                \(raw: functionName)(\(raw: argList))
+            }
+            """
+            return [providerDecl]
+        } else {
+            let providerDecl: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: providerName) = Provider.family { (\(raw: paramList)) -> \(raw: returnTypeDescription) in
+                    \(raw: functionName)(\(raw: argList))
+                }
+            }
+            """
+            return [providerDecl]
         }
-        """
-
-        return [providerDecl]
     }
 }

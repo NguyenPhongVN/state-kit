@@ -1,4 +1,4 @@
-# StateKit v2.0 - API Stability Guide
+# StateKit V1 - API Stability Guide
 
 **Release Date**: May 2026  
 **Version**: 2.0.0  
@@ -92,7 +92,7 @@ StateKit APIs are marked with stability levels to indicate their maturity and li
 - ⚠️ `@HRef` - Property wrapper for refs
 - ⚠️ `@HEnvironment` - Property wrapper for environment
 
-**Status**: Under review, likely to stabilize in v2.1
+**Status**: Under review for post-V1 stabilization
 
 ### StateKitCombine
 - ⚠️ `SKPublisherAtom` - Combine publisher bridge
@@ -105,24 +105,24 @@ StateKit APIs are marked with stability levels to indicate their maturity and li
 - ⚠️ `StateDevScope` - Debug overlay
 - ⚠️ State inspection features
 
-**Status**: Enhanced in v2.2 with time-travel debugging
+**Status**: Planned enhancement in post-V1 line
 
 ---
 
 ## 🚀 EXPERIMENTAL APIs (Active Development)
 
-### Future Features (v2.1+)
-- 🚀 `StateKitDebugger` - Time-travel debugging (coming v2.2)
-- 🚀 `StateKitProfiler` - Performance profiling (coming v2.2)
-- 🚀 State persistence layer (coming v2.3)
-- 🚀 SwiftData integration (coming v2.4)
+### Future Features (Post-V1)
+- `StateKitDebugger` - time-travel debugging (post-V1)
+- `StateKitProfiler` - performance profiling (post-V1)
+- State persistence layer (post-V1)
+- SwiftData integration (post-V1)
 
 ---
 
 ## ⚠️ DEPRECATED APIs
 
 ### From v1.x
-None in v2.0. All v1.x APIs are either kept or replaced with clear migration path.
+None in V1. All supported APIs have a clear migration path.
 
 See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for upgrade instructions.
 
@@ -151,11 +151,11 @@ MAJOR.MINOR.PATCH
 ## 🎯 Commitment to Stability
 
 **Stable APIs** are committed to work unchanged for:
-- **Minimum**: 2 major versions (v2.x and v3.x)
+- **Minimum**: 2 major versions
 - **Expected**: 3+ major versions with deprecation notice
 
 **Beta APIs** will reach stability within:
-- **Target**: 2 minor versions (e.g., ⚠️ in v2.0 → ✅ in v2.2)
+- **Target**: 2 minor versions
 
 ---
 
@@ -181,4 +181,4 @@ If you find an API is unstable or breaks unexpectedly:
 ---
 
 **Last Updated**: May 17, 2026  
-**Next Review**: November 2026 (pre-v2.2)
+**Next Review**: next release planning cycle

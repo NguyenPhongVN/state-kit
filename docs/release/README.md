@@ -11,18 +11,9 @@ Docs in this group share one purpose: release lifecycle, compatibility, and stab
 ### Read Next
 - `API_STABILITY.md`
 
-### Release Operation
-- `V2_RELEASE_CHECKLIST.md`
+## Coverage
 
-## Versioning and Change History
-
-- `CHANGELOG.md`
-
-## Migration and Stability
-
-- `MIGRATION_GUIDE.md`
-- `API_STABILITY.md`
-
-## Release Readiness
-
-- `V2_RELEASE_CHECKLIST.md`
+| Topic | Files |
+|---|---|
+| Versioning and Change History | `CHANGELOG.md` |
+| Migration and Stability | `MIGRATION_GUIDE.md`, `API_STABILITY.md` |

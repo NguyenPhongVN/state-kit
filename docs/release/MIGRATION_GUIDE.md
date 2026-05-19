@@ -1,6 +1,6 @@
-# StateKit v1.x → v2.0 Migration Guide
+# StateKit V1 Migration Guide
 
-**Target Version**: v2.0.0  
+**Target Version**: v1.0.0  
 **Release Date**: May 2026  
 **Migration Difficulty**: Easy (No breaking changes expected)
 
@@ -8,7 +8,7 @@
 
 ## ✅ Good News
 
-**StateKit v2.0 is designed to be 100% backward compatible with v1.x**
+**StateKit V1 is the current stable release**
 
 If you're using v1.x, you can upgrade with no code changes in most cases.
 
@@ -47,9 +47,9 @@ If you see any deprecation warnings:
 
 ---
 
-## 📝 Notable Enhancements in v2.0
+## Notable Enhancements in V1
 
-While backward compatible, v2.0 adds new features you might want to adopt:
+V1 includes the following enhancements you might want to adopt:
 
 ### New Riverpods Features
 
@@ -102,13 +102,13 @@ If you were using APIs marked as Experimental in v1.x, check [API_STABILITY.md](
 If you used `@HState` in v1.x:
 
 ```swift
-// v1.x (still works in v2.0)
+// V1 baseline
 struct MyView: View {
     @HState var count = 0
     // ...
 }
 
-// v2.0 (preferred, more explicit)
+// V1 preferred, more explicit
 struct MyView: View {
     @State var count = 0
     // Or use Riverpods for more power
@@ -134,7 +134,7 @@ If any issues:
 
 ---
 
-## 📚 What's New in v2.0
+## What's New in V1
 
 See [CHANGELOG.md](CHANGELOG.md) for complete list of:
 - New features
@@ -158,11 +158,11 @@ See [CHANGELOG.md](CHANGELOG.md) for complete list of:
 1. **Run tests** to verify compatibility
 2. **Review new features** in [CHANGELOG.md](CHANGELOG.md)
 3. **Adopt new macros** for cleaner code
-4. **Plan Phase 2 upgrades** (v2.1) when ready:
+4. **Plan post-V1 upgrades** when ready:
    - Better composition patterns
    - Architecture guidelines
    - Enhanced DevTools
 
 ---
 
-**Upgrade is safe. Enjoy v2.0!** 🚀
+**Upgrade is safe. Enjoy V1!**

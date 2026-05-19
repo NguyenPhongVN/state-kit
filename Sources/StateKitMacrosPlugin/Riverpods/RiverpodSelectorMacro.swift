@@ -31,15 +31,24 @@ public struct RiverpodSelectorMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        // Generate: @MainActor [access] [static] let <name>Provider = Provider(<functionName>)
-        let providerDecl: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = Provider(\(raw: functionName))
-        """
+        let isNested = context.lexicalContext.count > 0
 
-        return [providerDecl]
+        if isNested {
+            let providerDecl: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = Provider(\(raw: functionName))
+            """
+            return [providerDecl]
+        } else {
+            let providerDecl: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: providerName) = Provider(\(raw: functionName))
+            }
+            """
+            return [providerDecl]
+        }
     }
 }

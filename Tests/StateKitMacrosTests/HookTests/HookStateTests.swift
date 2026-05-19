@@ -66,7 +66,7 @@ final class HookStateTests: XCTestCase {
             }
 
             @MainActor
-            private func useS(count: Int = 0) -> Binding<S> {
+            fileprivate func useS(count: Int = 0) -> Binding<S> {
                 return StateKit.useBinding(S(count: count))
             }
             """,

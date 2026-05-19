@@ -75,59 +75,30 @@ public final class ProviderContainer {
 
     // MARK: - Properties
 
-    /// All managed provider elements, keyed by ProviderID
-    ///
-    /// Each provider has at most one element per container.
-    /// Elements are created on first access and cached.
     private var elements: [ProviderID: any AnyProviderElement] = [:]
 
-    /// Provider overrides for testing
-    ///
-    /// Maps ProviderID to ProviderOverride, allowing test values
-    /// or replacement providers to be substituted.
     private let overrides: [ProviderID: ProviderOverride]
 
-    /// The parent container (for hierarchical container support)
-    ///
-    /// When looking up an element:
-    /// 1. Check this container
-    /// 2. If not found and parent exists, check parent
-    /// 3. If not found anywhere, create new
-    ///
-    /// This enables container inheritance for scoped state.
     public let parent: ProviderContainer?
 
-    /// Observers monitoring provider lifecycle events
-    ///
-    /// Called when providers are created, updated, or disposed.
-    /// Useful for logging, analytics, debugging.
     @ObservationIgnored
     private var observers: [ProviderObserver] = []
 
     // MARK: - Batching State
 
-    /// Whether update batching is currently active
-    ///
-    /// When true, changes accumulate in pendingChanges without immediately
-    /// flushing. Allows multiple updates to be processed together.
     @ObservationIgnored
     private var isBatching = false
 
-    /// Changes pending processing during batching
-    ///
-    /// Accumulated ProviderIDs that need update when batch ends.
     @ObservationIgnored
     private var pendingChanges = Set<ProviderID>()
 
     // MARK: - Cycle Detection
 
-    /// Stack tracking current recomputation path (for circular dependency detection)
-    ///
-    /// Used to detect and prevent infinite recomputation loops.
-    /// If a provider appears in its own dependency chain, a circular
-    /// dependency is detected.
+    /// Ordered path for debug traces.
     @ObservationIgnored
     var recomputePath = [ProviderID]()
+    @ObservationIgnored
+    var _recomputePathSet = Set<ProviderID>()
     
     // MARK: - Initialization
 
@@ -223,32 +194,27 @@ public final class ProviderContainer {
             return parent.ensureElement(for: provider)
         }
 
-        // Handle provider override (swap implementation)
         if let overrideRecord = overrides[id], let customProvider = overrideRecord.providerOverride {
             let element = customProvider.createElement(container: self)
             elements[id] = element
 
-            // Notify observers
             let value = (element as! ProviderElement<P>).getState()
-            for observer in observers {
-                observer.didAddProvider(provider, value: value, container: self)
+            if !observers.isEmpty {
+                for observer in observers { observer.didAddProvider(provider, value: value, container: self) }
             }
             return element
         }
 
-        // Create new element
         let element = provider.createElement(container: self)
         elements[id] = element
 
-        // Handle value override (replace initial value)
         if let overrideRecord = overrides[id], let value = overrideRecord.value, let stateElement = element as? ProviderElement<P> {
             stateElement.stateBox = StateBox(value as! P.State)
         }
 
-        // Notify observers
         let value = (element as! ProviderElement<P>).getState()
-        for observer in observers {
-            observer.didAddProvider(provider, value: value, container: self)
+        if !observers.isEmpty {
+            for observer in observers { observer.didAddProvider(provider, value: value, container: self) }
         }
 
         return element
@@ -404,17 +370,15 @@ public final class ProviderContainer {
     /// // it's automatically disposed to free resources
     /// ```
     func checkAutoDispose<P: ProviderProtocol>(id: ProviderID, element: any AnyProviderElement, provider: P) {
-        if element.listenersCount <= 0 && provider.autoDispose && !element.isKeepAlive {
-            if element.dependents.isEmpty {
-                // Notify observers before disposal
-                for observer in observers {
-                    observer.didDisposeProvider(provider, container: self)
-                }
+        guard element.listenersCount <= 0 && provider.autoDispose && !element.isKeepAlive else { return }
+        guard element.dependents.isEmpty else { return }
 
-                element.dispose()
-                elements.removeValue(forKey: id)
-            }
+        if !observers.isEmpty {
+            for observer in observers { observer.didDisposeProvider(provider, container: self) }
         }
+
+        element.dispose()
+        elements.removeValue(forKey: id)
     }
 
     /// Retrieves a provider element by its ID.
@@ -500,6 +464,7 @@ public final class ProviderContainer {
     ///
     /// - Important: Called internally during provider state updates
     func notifyProviderUpdated<P: ProviderProtocol>(provider: P, oldValue: P.State, newValue: P.State) {
+        guard !observers.isEmpty else { return }
         for observer in observers {
             observer.didUpdateProvider(provider, oldValue: oldValue, newValue: newValue, container: self)
         }
@@ -615,21 +580,17 @@ public final class ProviderContainer {
     /// // All in a single flush cycle
     /// ```
     private func flushChanges() {
-        if pendingChanges.isEmpty { return }
+        guard !pendingChanges.isEmpty else { return }
 
         isBatching = true
-        defer { isBatching = false }
-
-        while !pendingChanges.isEmpty {
+        repeat {
             let changes = pendingChanges
-            pendingChanges.removeAll()
-
+            pendingChanges = []
             for id in changes {
-                if let element = elements[id] {
-                    element.performUpdate()
-                }
+                elements[id]?.performUpdate()
             }
-        }
+        } while !pendingChanges.isEmpty
+        isBatching = false
     }
 }
 

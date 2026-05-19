@@ -173,7 +173,8 @@ extension WithModifiersSyntax {
     ///   func foo()           → ""
     ///   private func foo()   → "private "
     var accessPrefix: String {
-        accessLevelKeyword.map { "\($0) " } ?? ""
+        guard let keyword = accessLevelKeyword else { return "" }
+        return keyword == "private" ? "fileprivate " : "\(keyword) "
     }
 
     /// The `static` keyword followed by a space, or empty string.

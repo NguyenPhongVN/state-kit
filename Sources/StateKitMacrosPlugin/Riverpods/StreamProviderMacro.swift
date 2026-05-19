@@ -31,17 +31,28 @@ public struct StreamProviderMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let providerName = functionName + "Provider"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        // Generate: @MainActor [access] [static] let <name>Provider = StreamProvider { ... }
-        let providerDecl: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = StreamProvider { _ in
-            \(raw: functionName)()
-        }
-        """
+        let isNested = context.lexicalContext.count > 0
 
-        return [providerDecl]
+        if isNested {
+            let providerDecl: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = StreamProvider { _ in
+                \(raw: functionName)()
+            }
+            """
+            return [providerDecl]
+        } else {
+            let providerDecl: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: providerName) = StreamProvider { _ in
+                    \(raw: functionName)()
+                }
+            }
+            """
+            return [providerDecl]
+        }
     }
 }

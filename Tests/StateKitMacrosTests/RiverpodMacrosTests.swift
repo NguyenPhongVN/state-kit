@@ -32,9 +32,10 @@ final class RiverpodMacrosTests: XCTestCase {
                 func build() -> Bool { false }
             }
 
-            @MainActor
-            let AuthNotifierProvider = NotifierProvider {
-                AuthNotifier()
+            extension AuthNotifier {
+                @MainActor static let provider = NotifierProvider {
+                    AuthNotifier()
+                }
             }
             """,
             macros: testMacros
@@ -54,9 +55,10 @@ final class RiverpodMacrosTests: XCTestCase {
                 let initial: Int = 0
             }
 
-            @MainActor
-            let CounterProvider = StateProvider { _ in
-                0
+            extension Counter {
+                @MainActor static let provider = StateProvider { _ in
+                    0
+                }
             }
             """,
             macros: testMacros
@@ -76,9 +78,10 @@ final class RiverpodMacrosTests: XCTestCase {
                 return 0
             }
 
-            @MainActor
-            let settingsProvider = Provider { (ref: ProviderRef) -> Int in
-                settings(ref: ref)
+            extension RProvider {
+                @MainActor static let settingsProvider = Provider { (ref: ProviderRef) -> Int in
+                    settings(ref: ref)
+                }
             }
             """,
             macros: testMacros
@@ -94,9 +97,10 @@ final class RiverpodMacrosTests: XCTestCase {
             expandedSource: """
             func fetchUser() async -> String { "" }
 
-            @MainActor
-            let fetchUserProvider = FutureProvider { _ in
-                await fetchUser()
+            extension RProvider {
+                @MainActor static let fetchUserProvider = FutureProvider { _ in
+                    await fetchUser()
+                }
             }
             """,
             macros: testMacros
@@ -112,9 +116,10 @@ final class RiverpodMacrosTests: XCTestCase {
             expandedSource: """
             func userUpdates() -> AnyPublisher<Int, Never> { Empty().eraseToAnyPublisher() }
 
-            @MainActor
-            let userUpdatesProvider = StreamProvider { _ in
-                userUpdates()
+            extension RProvider {
+                @MainActor static let userUpdatesProvider = StreamProvider { _ in
+                    userUpdates()
+                }
             }
             """,
             macros: testMacros
@@ -134,9 +139,10 @@ final class RiverpodMacrosTests: XCTestCase {
                 return Profile()
             }
 
-            @MainActor
-            let userProfileProvider = Provider.family { (ref: ProviderRef, userId: String) -> Profile in
-                userProfile(ref: ref, userId: userId)
+            extension RProvider {
+                @MainActor static let userProfileProvider = Provider.family { (ref: ProviderRef, userId: String) -> Profile in
+                    userProfile(ref: ref, userId: userId)
+                }
             }
             """,
             macros: testMacros
@@ -156,9 +162,10 @@ final class RiverpodMacrosTests: XCTestCase {
                 func build(id: String) -> String { id }
             }
 
-            @MainActor
-            let UserNotifierFamily = NotifierProvider.family { (arg: String) in
-                UserNotifier()
+            extension UserNotifier {
+                @MainActor static let family = NotifierProvider.family { (arg: String) in
+                    UserNotifier()
+                }
             }
             """,
             macros: testMacros
@@ -174,8 +181,9 @@ final class RiverpodMacrosTests: XCTestCase {
             expandedSource: """
             func authStatus(ref: ProviderRef) -> Bool { true }
 
-            @MainActor
-            let authStatusProvider = Provider(authStatus)
+            extension RProvider {
+                @MainActor static let authStatusProvider = Provider(authStatus)
+            }
             """,
             macros: testMacros
         )
@@ -190,9 +198,10 @@ final class RiverpodMacrosTests: XCTestCase {
             expandedSource: """
             func fetchProfile() async -> String { "" }
 
-            @MainActor
-            let fetchProfileProvider = FutureProvider { ref in
-                await fetchProfile()
+            extension RProvider {
+                @MainActor static let fetchProfileProvider = FutureProvider { ref in
+                    await fetchProfile()
+                }
             }
             """,
             macros: testMacros
@@ -208,9 +217,10 @@ final class RiverpodMacrosTests: XCTestCase {
             expandedSource: """
             func fetchUserDetails(id: String) async -> String { id }
 
-            @MainActor
-            let fetchUserDetailsFamily = FutureProvider.family { (ref: ProviderRef, arg: String) in
-                await fetchUserDetails(id: arg)
+            extension RProvider {
+                @MainActor static let fetchUserDetailsFamily = FutureProvider.family { (ref: ProviderRef, arg: String) in
+                    await fetchUserDetails(id: arg)
+                }
             }
             """,
             macros: testMacros
@@ -226,9 +236,10 @@ final class RiverpodMacrosTests: XCTestCase {
             expandedSource: """
             func observeUser(id: String) -> AnyPublisher<Int, Never> { Empty().eraseToAnyPublisher() }
 
-            @MainActor
-            let observeUserFamily = StreamProvider.family { (ref: ProviderRef, arg: String) in
-                observeUser(id: arg)
+            extension RProvider {
+                @MainActor static let observeUserFamily = StreamProvider.family { (ref: ProviderRef, arg: String) in
+                    observeUser(id: arg)
+                }
             }
             """,
             macros: testMacros

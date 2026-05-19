@@ -44,19 +44,27 @@ public struct RiverpodNotifierMacro: PeerMacro {
         // Propagate access level from the class to the generated constant
         let accessPrefix = AttributeHelper.accessLevel(from: classDecl)
 
-        // Determine if the generated constant needs `static` (nested types do)
+        // Check if the class is nested inside another type
         let isNested = context.lexicalContext.count > 0
-        let staticKeyword = isNested ? "static " : ""
 
-        // Only add @MainActor prefix if the class itself doesn't already have it
-        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: classDecl) ? "" : "@MainActor\n"
-
-        // Generate: [@MainActor] [access] [static] let <name>Provider = <baseClass> { ... }
-        let providerDecl: DeclSyntax = """
-        \(raw: mainActorAttr)\(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = \(raw: baseClass) { \(raw: className)() }
-        """
-
-        return [providerDecl]
+        // Generate extension on the class (file scope) or a static let member (nested)
+        if isNested {
+            // Nested: peer can introduce names — keep old static member pattern
+            let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: classDecl) ? "" : "@MainActor\n"
+            let providerDecl: DeclSyntax = """
+            \(raw: mainActorAttr)\(raw: accessPrefix)static let \(raw: providerName) = \(raw: baseClass) { \(raw: className)() }
+            """
+            return [providerDecl]
+        } else {
+            // File scope: only extensions are allowed — generate extension on the class
+            let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: classDecl) ? "" : "@MainActor "
+            let providerDecl: DeclSyntax = """
+            extension \(raw: className) {
+                \(raw: mainActorAttr)\(raw: accessPrefix)static let provider = \(raw: baseClass) { \(raw: className)() }
+            }
+            """
+            return [providerDecl]
+        }
     }
 
     // Check whether the class inherits from a given base class name

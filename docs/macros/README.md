@@ -1,49 +1,18 @@
-# Macro Docs
+# StateKit Macros Docs (V1)
 
-Docs in this group share one purpose: macro capability, usage patterns, and macro delivery history.
+This folder contains the complete macro documentation for StateKit V1.
 
-## Read Priority
+## Read Order
 
-### Read First
-- `STATEKIT_COMPLETE_MACROS_GUIDE.md`
-- `STATEKIT_V2_FINAL_REFERENCE.md`
+1. `STATEKIT_COMPLETE_MACROS_GUIDE.md` - full macro catalog by category + usage guide.
+2. `STATEKIT_V1_REFERENCE.md` - compact reference matrix.
+3. `HOOK_MACROS_COMPLETE_LIST.md` - hook-only macro details.
+4. `HOOK_MACROS_EXAMPLES.md` - practical hook macro examples.
 
-### Read Next
-- `HOOK_MACROS_COMPLETE_LIST.md`
-- `HOOK_MACROS_EXAMPLES.md`
-- `STATEKIT_MACROS_ECOSYSTEM.md`
+## Source of Truth
 
-### Historical / Implementation Reports
-- `HOOK_MACROS_IMPLEMENTATION_COMPLETE.md`
-- `ATOM_FAMILY_MACROS_COMPLETE.md`
-- `VIEW_AND_RIVERPOD_MACROS_COMPLETE.md`
-- `NINE_NEW_MACROS_COMPLETE.md`
-- `SEVEN_NEW_MACROS_IMPLEMENTATION.md`
-- `ATOM_MACROS_ANALYSIS.md`
-- `VIEW_AND_RIVERPOD_MACROS_ANALYSIS.md`
-- `ALL_POSSIBLE_MACROS.md`
+All macro declarations are defined in:
 
-## Primary Macro References
+- `Sources/StateKitMacros/StateKitMacros.swift`
 
-- `STATEKIT_COMPLETE_MACROS_GUIDE.md`
-- `STATEKIT_V2_FINAL_REFERENCE.md`
-- `STATEKIT_MACROS_ECOSYSTEM.md`
-- `ALL_POSSIBLE_MACROS.md`
-
-## Hook Macro Docs
-
-- `HOOK_MACROS_COMPLETE_LIST.md`
-- `HOOK_MACROS_EXAMPLES.md`
-- `HOOK_MACROS_IMPLEMENTATION_COMPLETE.md`
-
-## Atom / Riverpod Macro Docs
-
-- `ATOM_FAMILY_MACROS_COMPLETE.md`
-- `ATOM_MACROS_ANALYSIS.md`
-- `VIEW_AND_RIVERPOD_MACROS_COMPLETE.md`
-- `VIEW_AND_RIVERPOD_MACROS_ANALYSIS.md`
-
-## Macro Expansion Reports
-
-- `NINE_NEW_MACROS_COMPLETE.md`
-- `SEVEN_NEW_MACROS_IMPLEMENTATION.md`
+When macro declarations change, update `STATEKIT_COMPLETE_MACROS_GUIDE.md` first, then sync the other files.

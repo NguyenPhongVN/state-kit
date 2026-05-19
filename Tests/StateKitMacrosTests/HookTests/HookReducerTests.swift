@@ -42,8 +42,39 @@ final class HookReducerTests: XCTestCase {
             }
 
             @MainActor
-            private func useRed(initial: Int = Int()) -> (Int, (Void) -> Void) {
+            fileprivate func useRed(initial: Int = Int()) -> (Int, (Void) -> Void) {
                 let reducer = Red()
+                return StateKit.useReducer(initial) { state, action in
+                    reducer.reduce(&state, action: action)
+                }
+            }
+            """,
+            macros: testMacros
+        )
+    }
+
+    func testHookReducerWithNestedStateAndAction() {
+        assertMacroExpansion(
+            """
+            @HookReducer
+            struct CounterReducer {
+                enum Action { case increment }
+                struct State { var number: Int = 0 }
+                func reduce(_ state: inout State, action: Action) {}
+            }
+            """,
+            expandedSource: """
+            struct CounterReducer {
+                enum Action { case increment 
+            }
+                struct State { var number: Int = 0 
+            }
+                func reduce(_ state: inout State, action: Action) {}
+            }
+
+            @MainActor
+            func useCounterReducer(initial: CounterReducer.State = CounterReducer.State()) -> (CounterReducer.State, (CounterReducer.Action) -> Void) {
+                let reducer = CounterReducer()
                 return StateKit.useReducer(initial) { state, action in
                     reducer.reduce(&state, action: action)
                 }

@@ -47,9 +47,11 @@ public struct HookReducerMacro: PeerMacro {
 
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
-        // Extract State and Action typealiases from the struct body
-        var stateType = "Any"
-        var actionType = "Any"
+        // Extract State and Action from either:
+        // 1) typealias State/Action
+        // 2) nested struct/enum/class State/Action
+        var stateType: String?
+        var actionType: String?
 
         for member in structDecl.memberBlock.members {
             if let typealiasDecl = member.decl.as(TypeAliasDeclSyntax.self) {
@@ -59,11 +61,32 @@ public struct HookReducerMacro: PeerMacro {
                     actionType = typealiasDecl.initializer.value.trimmedDescription
                 }
             }
+
+            if stateType == nil {
+                if let nestedStruct = member.decl.as(StructDeclSyntax.self), nestedStruct.name.text == "State" {
+                    stateType = "\(className).State"
+                } else if let nestedClass = member.decl.as(ClassDeclSyntax.self), nestedClass.name.text == "State" {
+                    stateType = "\(className).State"
+                }
+            }
+
+            if actionType == nil {
+                if let nestedEnum = member.decl.as(EnumDeclSyntax.self), nestedEnum.name.text == "Action" {
+                    actionType = "\(className).Action"
+                } else if let nestedStruct = member.decl.as(StructDeclSyntax.self), nestedStruct.name.text == "Action" {
+                    actionType = "\(className).Action"
+                } else if let nestedClass = member.decl.as(ClassDeclSyntax.self), nestedClass.name.text == "Action" {
+                    actionType = "\(className).Action"
+                }
+            }
         }
+
+        let resolvedStateType = stateType ?? "Any"
+        let resolvedActionType = actionType ?? "Any"
 
         let hookDecl: DeclSyntax = """
         @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)(initial: \(raw: stateType) = \(raw: stateType)()) -> (\(raw: stateType), (\(raw: actionType)) -> Void) {
+        \(raw: accessPrefix)\(raw: staticKeyword)func \(raw: funcName)(initial: \(raw: resolvedStateType) = \(raw: resolvedStateType)()) -> (\(raw: resolvedStateType), (\(raw: resolvedActionType)) -> Void) {
             let reducer = \(raw: className)()
             return StateKit.useReducer(initial) { state, action in
                 reducer.reduce(&state, action: action)

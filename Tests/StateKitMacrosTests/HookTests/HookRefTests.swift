@@ -73,7 +73,7 @@ final class HookRefTests: XCTestCase {
             }
 
             @MainActor
-            private func useR(value: Int = 0) -> StateKit.StateRef<R> {
+            fileprivate func useR(value: Int = 0) -> StateKit.StateRef<R> {
                 return StateKit.useRef(R(value: value))
             }
             """,

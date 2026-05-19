@@ -26,6 +26,7 @@
 /// `StateContext.states`. Callers receive the `StateRef` object directly
 /// from `useRef` and read or write `value` freely without triggering
 /// SwiftUI observation.
+@dynamicMemberLookup
 public final class StateRef<T> {
 
     /// The current stored value.
@@ -39,5 +40,19 @@ public final class StateRef<T> {
     /// - Parameter value: The initial value for this ref slot.
     public init(_ value: T) {
         self.value = value
+    }
+
+    /// Convenience passthrough to members of `value` via key paths.
+    ///
+    /// This enables `ref.count += 1` instead of `ref.value.count += 1`
+    /// when `T` is a struct or class with mutable members.
+    public subscript<Member>(dynamicMember keyPath: WritableKeyPath<T, Member>) -> Member {
+        get { value[keyPath: keyPath] }
+        set { value[keyPath: keyPath] = newValue }
+    }
+
+    /// Read-only passthrough for immutable key paths.
+    public subscript<Member>(dynamicMember keyPath: KeyPath<T, Member>) -> Member {
+        value[keyPath: keyPath]
     }
 }

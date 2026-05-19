@@ -33,8 +33,10 @@ public struct RiverpodStreamFamilyMacro: PeerMacro {
         let functionName = funcDecl.name.text
         let familyName = functionName + "Family"
 
-        // Extract access level and static from the function's modifiers
+        // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
+
+        let isNested = context.lexicalContext.count > 0
 
         // Find the first non-ProviderRef parameter — that's the family key
         guard let keyParam = funcDecl.signature.parameterClause.parameters.first(where: { $0.type.trimmedDescription != "ProviderRef" }) else {
@@ -43,14 +45,23 @@ public struct RiverpodStreamFamilyMacro: PeerMacro {
         let argType = keyParam.type.trimmedDescription
         let argName = keyParam.firstName.text
 
-        // Generate: @MainActor [access] [static] let <name>Family = StreamProvider.family { ... }
-        let familyDecl: DeclSyntax = """
-        @MainActor
-        \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: familyName) = StreamProvider.family { (ref: ProviderRef, arg: \(raw: argType)) in
-            \(raw: functionName)(\(raw: argName): arg)
+        if isNested {
+            let familyDecl: DeclSyntax = """
+            @MainActor
+            \(raw: accessPrefix)\(raw: staticKeyword)let \(raw: familyName) = StreamProvider.family { (ref: ProviderRef, arg: \(raw: argType)) in
+                \(raw: functionName)(\(raw: argName): arg)
+            }
+            """
+            return [familyDecl]
+        } else {
+            let familyDecl: DeclSyntax = """
+            extension RProvider {
+                @MainActor \(raw: accessPrefix)static let \(raw: familyName) = StreamProvider.family { (ref: ProviderRef, arg: \(raw: argType)) in
+                    \(raw: functionName)(\(raw: argName): arg)
+                }
+            }
+            """
+            return [familyDecl]
         }
-        """
-
-        return [familyDecl]
     }
 }

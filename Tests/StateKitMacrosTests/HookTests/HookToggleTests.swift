@@ -36,7 +36,7 @@ final class HookToggleTests: XCTestCase {
             private struct T {}
 
             @MainActor
-            private func useT() -> (Bool, () -> Void) {
+            fileprivate func useT() -> (Bool, () -> Void) {
                 let (value, setValue) = StateKit.useState(false)
                 let toggle = {
                     setValue(!value)

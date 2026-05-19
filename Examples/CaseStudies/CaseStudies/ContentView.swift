@@ -274,8 +274,6 @@ struct CaseStudyDetailView: View {
         Form {
             Section("Demo") {
                 item.makeDemo()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 8)
             }
 
             Section("Description") {

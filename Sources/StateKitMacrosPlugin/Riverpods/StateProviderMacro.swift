@@ -29,17 +29,12 @@ public struct StateProviderMacro: PeerMacro {
         }
 
         let className = structDecl.name.text
-        let providerName = className + "Provider"
 
         // Propagate access level from the struct to the generated constant
         let accessPrefix = AttributeHelper.accessLevel(from: structDecl)
 
-        // Determine if the generated constant needs `static` (nested types do)
+        // Check if the struct is nested inside another type
         let isNested = context.lexicalContext.count > 0
-        let staticKeyword = isNested ? "static " : ""
-
-        // Only add @MainActor prefix if the struct itself doesn't already have it
-        let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: structDecl) ? "" : "@MainActor\n"
 
         // Extract the initial value expression from the struct's `initial` property
         var initialValue = "initial"
@@ -55,13 +50,25 @@ public struct StateProviderMacro: PeerMacro {
             }
         }
 
-        // Generate: [@MainActor] [access] [static] let <name>Provider = StateProvider { _ in ... }
-        let providerDecl: DeclSyntax = """
-        \(raw: mainActorAttr)\(raw: accessPrefix)\(raw: staticKeyword)let \(raw: providerName) = StateProvider { _ in
-            \(raw: initialValue)
+        // Generate extension (file scope) or static let member (nested)
+        if isNested {
+            let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: structDecl) ? "" : "@MainActor\n"
+            let providerDecl: DeclSyntax = """
+            \(raw: mainActorAttr)\(raw: accessPrefix)static let \(raw: className)Provider = StateProvider { _ in
+                \(raw: initialValue)
+            }
+            """
+            return [providerDecl]
+        } else {
+            let mainActorAttr = AttributeHelper.hasAttribute("MainActor", on: structDecl) ? "" : "@MainActor "
+            let providerDecl: DeclSyntax = """
+            extension \(raw: className) {
+                \(raw: mainActorAttr)\(raw: accessPrefix)static let provider = StateProvider { _ in
+                    \(raw: initialValue)
+                }
+            }
+            """
+            return [providerDecl]
         }
-        """
-
-        return [providerDecl]
     }
 }

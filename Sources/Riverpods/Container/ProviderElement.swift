@@ -1,42 +1,19 @@
 import Foundation
 import Observation
 
+// MARK: - WeakElementRef
+
+/// A weak wrapper around an AnyProviderElement for dependency tracking.
+///
+/// Used by `notifyDependents()` to avoid dictionary lookups in the container.
+/// Dangling nil references are cleaned up lazily on the next notification.
+private struct WeakElementRef {
+    weak var element: (any AnyProviderElement)?
+    init(_ element: any AnyProviderElement) { self.element = element }
+}
+
 // MARK: - ProviderElement
 
-/// Base class managing the lifecycle, state, and dependencies of a provider.
-///
-/// `ProviderElement` is the runtime representation of a provider. It's responsible for:
-/// - Computing and caching the provider's state
-/// - Managing dependencies between providers
-/// - Tracking listeners (views, external subscribers)
-/// - Controlling lifecycle callbacks (onDispose, onCancel, onResume, etc.)
-/// - Implementing the ProviderRef interface for accessing other providers
-/// - Coordinating with the container for updates and disposal
-///
-/// **Key Responsibilities:**
-/// - **State Management**: Computes, caches, and updates the provider's value
-/// - **Dependency Tracking**: Maintains explicit dependencies and dependents
-/// - **Listener Management**: Tracks views and external listeners
-/// - **Lifecycle Control**: Manages all lifecycle callbacks
-/// - **Keep-Alive**: Supports preventing auto-disposal via keep-alive links
-/// - **Observation Integration**: Uses SwiftUI Observation for state changes
-///
-/// **Thread Safety:**
-/// Confined to the MainActor. All operations occur on the main thread.
-///
-/// **Lifecycle:**
-/// 1. Created: ProviderElement instantiated when provider first accessed
-/// 2. Initialized: getState() called, providerCreate() runs, state cached
-/// 3. Active: Listeners register/unregister, dependents notified of changes
-/// 4. Disposal: dispose() called, cleanup callbacks run, resources released
-///
-/// **Subclass Pattern:**
-/// Concrete provider types (Provider, StateProvider, FutureProvider, etc.) create
-/// specialized subclasses that override `providerCreate()` to compute state
-/// appropriate for that provider type.
-///
-/// - Note: This is primarily an internal framework class. Rarely used directly.
-/// - Important: All subclasses must override `providerCreate()`
 @MainActor
 @Observable
 open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef {
@@ -58,55 +35,31 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// Nil until first access or computation.
     public var stateBox: StateBox<P.State>?
 
+    /// Cached weak references to dependent elements (avoid dictionary lookup in notifyDependents).
+    @ObservationIgnored
+    private var _dependentRefs: [WeakElementRef] = []
+
     // MARK: - Lifecycle Callbacks
 
-    /// Callbacks to run when the provider is disposed or recomputed
-    @ObservationIgnored
-    private var onDisposeCallbacks: [() -> Void] = []
+    private enum CbType: Hashable { case dispose, cancel, resume, addListener, removeListener }
 
-    /// Callbacks to run when all listeners stop watching
+    /// Lifecycle callbacks, allocated lazily. 99% of elements never use them.
     @ObservationIgnored
-    private var onCancelCallbacks: [() -> Void] = []
-
-    /// Callbacks to run when listeners return after cancellation
-    @ObservationIgnored
-    private var onResumeCallbacks: [() -> Void] = []
-
-    /// Callbacks to run when the first listener is added
-    @ObservationIgnored
-    private var onAddListenerCallbacks: [() -> Void] = []
-
-    /// Callbacks to run when a listener is removed
-    @ObservationIgnored
-    private var onRemoveListenerCallbacks: [() -> Void] = []
+    private var _callbacks: [CbType: [() -> Void]]?
 
     // MARK: - Dependency Tracking
 
-    /// The set of providers depending on this element
-    ///
-    /// When this element's value changes, all dependents are invalidated.
-    /// Updated automatically as other providers call watch().
+    @ObservationIgnored
     public var dependents: Set<ProviderID> = []
 
-    /// Number of active listeners (views, external subscribers)
-    ///
-    /// - 0: No one listening; may be disposed if autoDispose is true
-    /// - > 0: Active listeners; provider kept alive
     public private(set) var listenersCount: Int = 0
 
-    /// External listeners registered via listen() method
-    ///
-    /// Each listener is called with (oldValue, newValue) when state changes.
     @ObservationIgnored
     private var externalListeners: [UUID: (P.State?, P.State) -> Void] = [:]
 
-    /// Number of active keep-alive links
-    ///
-    /// When > 0, the provider is kept alive regardless of listeners.
     @ObservationIgnored
     private var keepAliveLinksCount = 0
 
-    /// Task handling deferred disposal after cache time expires
     @ObservationIgnored
     private var disposeDelayTask: Task<Void, Never>?
 
@@ -115,59 +68,27 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     
     // MARK: - Listener Management
 
-    /// Increments the listener count and triggers resume callbacks if needed.
-    ///
-    /// Called when a new listener (view, external subscriber) starts watching.
-    ///
-    /// **Side Effects:**
-    /// - Increments listenersCount
-    /// - Cancels any pending disposal
-    /// - When count transitions 0 → 1:
-    ///   - Calls onAddListener callbacks
-    ///   - Calls onResume callbacks
     public func incrementListeners() {
-        disposeDelayTask?.cancel()
-        disposeDelayTask = nil
-
         listenersCount += 1
         if listenersCount == 1 {
-            onAddListenerCallbacks.forEach { $0() }
-            notifyResume()
+            fireCallbacks(.addListener)
+            fireCallbacks(.resume)
         }
     }
 
-    /// Notifies that listeners have resumed after cancellation.
-    ///
-    /// Called when the listener count transitions from 0 to positive,
-    /// triggering any onResume callbacks that were registered.
-    private func notifyResume() {
-        onResumeCallbacks.forEach { $0() }
-    }
-
-    /// Decrements the listener count and triggers cancel callbacks if needed.
-    ///
-    /// Called when a listener (view, external subscriber) stops watching.
-    ///
-    /// **Side Effects:**
-    /// - Decrements listenersCount
-    /// - Calls onRemoveListener callbacks
-    /// - When count transitions to 0:
-    ///   - Calls onCancel callbacks
-    ///   - Schedules disposal if autoDispose and cacheTime > 0
     public func decrementListeners() {
         guard listenersCount > 0 else { return }
         listenersCount -= 1
-        onRemoveListenerCallbacks.forEach { $0() }
+        fireCallbacks(.removeListener)
 
         if listenersCount == 0 {
-            onCancelCallbacks.forEach { $0() }
+            fireCallbacks(.cancel)
 
-            // Schedule deferred disposal if cacheTime is set
             if provider.autoDispose && provider.cacheTime > 0 {
                 disposeDelayTask = Task { @MainActor in
                     do {
                         try await Task.sleep(nanoseconds: UInt64(provider.cacheTime * 1_000_000_000))
-                        if Task.isCancelled { return }
+                        guard !Task.isCancelled else { return }
                         self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
                     } catch {}
                 }
@@ -215,15 +136,10 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     ///
     /// - Returns: The provider's current state value
     public func getState() -> P.State {
-        let isFirstAccess = stateBox == nil
-        if isFirstAccess {
+        if stateBox == nil {
             recompute()
-            // Trigger onResume if listeners already registered
-            if listenersCount > 0 {
-                notifyResume()
-            }
+            if listenersCount > 0 { fireCallbacks(.resume) }
         }
-        // ALWAYS access via stateBox to enable SwiftUI Observation tracking
         return stateBox!.value
     }
 
@@ -245,8 +161,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// - Returns: The newly computed state value
     @discardableResult
     open func recompute() -> P.State {
-        // Detect circular dependencies
-        if container.recomputePath.contains(id) {
+        if container._recomputePathSet.contains(id) {
             #if DEBUG
             assertionFailure("Circular dependency detected involving: \(id)")
             #endif
@@ -254,7 +169,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
 
         container.recomputePath.append(id)
-        defer { container.recomputePath.removeLast() }
+        container._recomputePathSet.insert(id)
+        defer {
+            container.recomputePath.removeLast()
+            container._recomputePathSet.remove(id)
+        }
 
         let oldState = stateBox?.value
 
@@ -263,6 +182,19 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
 
         // Compute new state
         let newState = providerCreate()
+
+        // Skip notification if old and new are equal (via any Equatable)
+        if let oldState = oldState,
+           let oldEq = oldState as? any Equatable,
+           let newEq = newState as? any Equatable {
+            func isEqual<T: Equatable>(_ lhs: T, _ rhs: any Equatable) -> Bool {
+                guard let rhs = rhs as? T else { return false }
+                return lhs == rhs
+            }
+            if isEqual(oldEq, newEq) {
+                return stateBox!.value
+            }
+        }
 
         // Update cache and notify container
         if let box = stateBox {
@@ -273,8 +205,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             stateBox = StateBox(newState)
         }
 
-        // Notify external listeners
-        if let oldState = oldState {
+        if let oldState = oldState, !externalListeners.isEmpty {
             for listener in externalListeners.values {
                 listener(oldState, newState)
             }
@@ -317,14 +248,17 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     }
 
     /// Notifies all dependent providers that this element has changed.
-    ///
-    /// Called when the value actually changes (not just invalidated).
-    /// Invalidates all dependent providers in the dependency graph.
     public func notifyDependents() {
-        for dependentID in dependents {
-            if let element = container.element(for: dependentID) {
-                element.invalidate()
+        var needsCleanup = false
+        for ref in _dependentRefs {
+            if let el = ref.element {
+                el.invalidate()
+            } else {
+                needsCleanup = true
             }
+        }
+        if needsCleanup {
+            _dependentRefs.removeAll { $0.element == nil }
         }
     }
 
@@ -339,7 +273,6 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     public func dispose() {
         runDisposeCallbacks()
 
-        // Unregister from dependencies
         for depID in dependencies {
             if let depElement = container.element(for: depID) {
                 depElement.dependents.remove(id)
@@ -347,23 +280,26 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
         dependencies.removeAll()
 
-        // Close internal subscriptions
         internalSubscriptions.forEach { $0.close() }
         internalSubscriptions.removeAll()
 
         stateBox = nil
+        _dependentRefs.removeAll()
     }
 
-    /// Runs and clears all lifecycle callbacks.
-    ///
-    /// Callbacks are one-time use; this clears them after running.
+    private func fireCallbacks(_ type: CbType) {
+        guard let arr = _callbacks?[type], !arr.isEmpty else { return }
+        for cb in arr { cb() }
+    }
+
     private func runDisposeCallbacks() {
-        onDisposeCallbacks.forEach { $0() }
-        onDisposeCallbacks.removeAll()
-        onCancelCallbacks.removeAll()
-        onResumeCallbacks.removeAll()
-        onAddListenerCallbacks.removeAll()
-        onRemoveListenerCallbacks.removeAll()
+        fireCallbacks(.dispose)
+        _callbacks = nil
+    }
+
+    private func appendCallback(_ type: CbType, _ cb: @escaping () -> Void) {
+        if _callbacks == nil { _callbacks = [:] }
+        _callbacks![type, default: []].append(cb)
     }
     
     // MARK: - ProviderRef
@@ -374,8 +310,14 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         
         let depElement = container.ensureElement(for: depProvider)
         depElement.dependents.insert(id)
+        depElement._addDependentRef(self)
         
         return (depElement as! ProviderElement<Dep>).getState()
+    }
+
+    public func _addDependentRef(_ element: AnyObject) {
+        guard let providerElement = element as? (any AnyProviderElement) else { return }
+        _dependentRefs.append(WeakElementRef(providerElement))
     }
     
     public func read<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
@@ -391,25 +333,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         internalSubscriptions.append(subscription)
     }
 
-    public func onDispose(_ cleanup: @escaping () -> Void) {
-        onDisposeCallbacks.append(cleanup)
-    }
-    
-    public func onCancel(_ callback: @escaping () -> Void) {
-        onCancelCallbacks.append(callback)
-    }
-    
-    public func onResume(_ callback: @escaping () -> Void) {
-        onResumeCallbacks.append(callback)
-    }
-    
-    public func onAddListener(_ callback: @escaping () -> Void) {
-        onAddListenerCallbacks.append(callback)
-    }
-    
-    public func onRemoveListener(_ callback: @escaping () -> Void) {
-        onRemoveListenerCallbacks.append(callback)
-    }
+    public func onDispose(_ cleanup: @escaping () -> Void) { appendCallback(.dispose, cleanup) }
+    public func onCancel(_ callback: @escaping () -> Void) { appendCallback(.cancel, callback) }
+    public func onResume(_ callback: @escaping () -> Void) { appendCallback(.resume, callback) }
+    public func onAddListener(_ callback: @escaping () -> Void) { appendCallback(.addListener, callback) }
+    public func onRemoveListener(_ callback: @escaping () -> Void) { appendCallback(.removeListener, callback) }
     
     public func keepAlive() -> KeepAliveLink {
         keepAliveLinksCount += 1

@@ -452,6 +452,10 @@ public macro HookToggle() = #externalMacro(module: "StateKitMacrosPlugin", type:
 @attached(peer, names: prefixed(use))
 public macro HookEffect() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookEffectMacro")
 
+/// @HookLayoutEffect: Generates layout-effect hook 'use<StructName>' (Peer).
+@attached(peer, names: prefixed(use))
+public macro HookLayoutEffect() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookLayoutEffectMacro")
+
 /// @AsyncHook: Generates async hook 'use<StructName>' (Peer).
 @attached(peer, names: prefixed(use))
 public macro AsyncHook() = #externalMacro(module: "StateKitMacrosPlugin", type: "AsyncHookMacro")
