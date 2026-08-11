@@ -211,6 +211,14 @@ struct ContentView: View {
         }
     }
 
+    private var infoToolbarPlacement: ToolbarItemPlacement {
+#if os(macOS)
+        .primaryAction
+#else
+        .topBarTrailing
+#endif
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -236,9 +244,13 @@ struct ContentView: View {
                 }
             }
             .navigationTitle("StateKit")
+#if os(macOS)
+            .searchable(text: $query)
+#else
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always))
+#endif
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: infoToolbarPlacement) {
                     Button {
                         showingInfo = true
                     } label: {
@@ -253,7 +265,9 @@ struct ContentView: View {
                             .padding()
                     }
                     .navigationTitle("Overview")
+#if !os(macOS)
                     .navigationBarTitleDisplayMode(.inline)
+#endif
                     .toolbar {
                         ToolbarItem(placement: .confirmationAction) {
                             Button("Done") { showingInfo = false }
@@ -295,7 +309,9 @@ struct CaseStudyDetailView: View {
             }
         }
         .navigationTitle(item.title)
+#if !os(macOS)
         .navigationBarTitleDisplayMode(.inline)
+#endif
     }
 }
 
