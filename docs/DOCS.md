@@ -25,6 +25,15 @@ To keep naming consistent without breaking existing links, use these canonical l
 
 If we decide to rename files later, these labels stay stable.
 
+## Reference Sources ( inspiration )
+
+StateKit models its three systems on these projects — consult them for the underlying concepts:
+
+- React hooks: https://react.dev/reference/react
+- Recoil: https://recoiljs.org/
+- Jotai atoms: https://jotai.org/docs/core/atom
+- Riverpod: https://riverpod.dev/
+
 ## Cleanup Status
 
 - Legacy phase and milestone docs were removed.

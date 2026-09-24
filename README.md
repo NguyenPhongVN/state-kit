@@ -122,6 +122,17 @@ Macro docs:
 - Swift 6.2+
 - Apple platforms aligned with package targets
 
+## References & Inspiration
+
+StateKit's three models are deliberately modeled on these proven systems — when a concept feels familiar, that's why:
+
+| Reference | What StateKit borrows from it |
+|---|---|
+| [React — Reference](https://react.dev/reference/react) | The hooks model in `StateKit` (`useState`, `useEffect`, `useReducer`, …): positional hooks, effect cleanup, run-once defaults |
+| [Recoil](https://recoiljs.org/) | The atom graph in `StateKitAtoms`: derived atoms, dependency tracking, topological recomputation |
+| [Jotai — Core `atom`](https://jotai.org/docs/core/atom) | The minimal-atom authoring style (`@StateAtom`, `@Computed`) — small atoms composed into bigger ones |
+| [Riverpod](https://riverpod.dev/) | The provider system in `Riverpods`: providers/notifiers, `read` vs `watch` semantics, auto-dispose/keepAlive lifecycle, overrides for testing |
+
 ## License
 
 MIT. See `LICENSE`.
