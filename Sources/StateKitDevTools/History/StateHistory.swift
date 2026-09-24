@@ -82,8 +82,12 @@ public protocol StateHistory {
     /// Returns the current state value.
     var currentState: AnyCodable? { get }
 
-    /// Replays all actions from the beginning.
-    func replay() async
+    /// Replays all recorded actions through `handler`.
+    ///
+    /// - Parameter handler: Executes one recorded action; returns whether it
+    ///   was handled.
+    /// - Returns: A report of executed/skipped actions and any failure.
+    func replay(using handler: @Sendable (String) async throws -> Bool) async -> ReplayReport
 }
 
 // MARK: - History Entry
@@ -367,12 +371,56 @@ public struct InMemoryStateHistory: StateHistory {
     }
 
     /// Walks entries, pacing by their recorded compute times.
-    public func replay() async {
-        // Implementation for replaying actions
-        // This would typically re-execute stored actions
+    /// Re-executes the recorded actions through `handler`.
+    ///
+    /// The history cannot know how to run app actions by itself, so the host
+    /// supplies the mapping: return `true` when the action was executed,
+    /// `false` when it cannot be handled (counted as skipped). If the handler
+    /// throws, replay stops at that entry and the report carries the error
+    /// together with the progress made so far — nothing is silently dropped.
+    ///
+    /// - Parameter handler: Executes one recorded action; returns whether it
+    ///   was handled.
+    /// - Returns: A `ReplayReport` describing what ran, what was skipped, and
+    ///   any failure that stopped the run.
+    public func replay(
+        using handler: @Sendable (String) async throws -> Bool
+    ) async -> ReplayReport {
+        var report = ReplayReport()
         for entry in entries {
-            // Simulate replay delay
+            guard let action = entry.action else {
+                report.skipped.append("<no action>")
+                continue
+            }
+            // Pace the replay by the recorded compute time so it mirrors the
+            // original run.
             try? await Task.sleep(nanoseconds: UInt64(entry.computeTime * 1_000_000))
+            do {
+                if try await handler(action) {
+                    report.executed.append(action)
+                } else {
+                    report.skipped.append(action)
+                }
+            } catch {
+                report.failure = error
+                break
+            }
         }
+        return report
     }
+}
+
+
+// MARK: - Replay Report
+
+/// The outcome of an `InMemoryStateHistory.replay(using:)` run.
+public struct ReplayReport: Sendable {
+    /// Actions the handler executed, in recorded order.
+    public var executed: [String] = []
+    /// Actions skipped: the handler rejected them, or the entry recorded none.
+    public var skipped: [String] = []
+    /// The handler error that stopped the replay, if any.
+    public var failure: Error?
+
+    public init() {}
 }

@@ -158,6 +158,17 @@ public final class ProviderContainer {
         observers.append(observer)
     }
 
+    /// Removes a previously added lifecycle observer.
+    ///
+    /// Removal is by identity (`===`); removing an observer that is not
+    /// attached — or removing it twice — is a harmless no-op. Observers of
+    /// other containers are never affected.
+    ///
+    /// - Parameter observer: The observer to detach.
+    public func removeObserver(_ observer: ProviderObserver) {
+        observers.removeAll { $0 === observer }
+    }
+
     // MARK: - Element Management
 
     /// Gets or creates a provider element, handling overrides and parent lookup.

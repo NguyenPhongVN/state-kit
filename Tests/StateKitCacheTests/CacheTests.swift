@@ -182,6 +182,26 @@ final class CacheTests: XCTestCase {
         XCTAssertEqual(expiredKeys, ["k"], "background cleanup must still run for live instances")
     }
 
+    func testLRUStressTenThousandMixedOperations() {
+        // Mixed churn at capacity: with O(1) bookkeeping this finishes in
+        // milliseconds; the old O(n) array bookkeeping degraded linearly.
+        let cache = LeastRecentlyUsedCache<String, Int>(capacity: 100)
+
+        for i in 0..<10_000 {
+            let key = "key\(i % 500)"
+            if i % 3 == 0 {
+                _ = cache.get(key)
+            } else {
+                cache.set(key, i)
+            }
+            if i % 1_000 == 0 {
+                XCTAssertLessThanOrEqual(cache.count, 100, "capacity must never be exceeded mid-run")
+            }
+        }
+
+        XCTAssertEqual(cache.count, 100)
+    }
+
     func testSlidingWindowCacheStillExpiresWhileAlive() async throws {
         var expiredKeys: [String] = []
         let cache = SlidingWindowTTLCache<String, Int>(ttl: 0.1) { key, _, _ in

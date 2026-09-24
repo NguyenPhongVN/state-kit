@@ -41,9 +41,9 @@ struct SKAtomStoreTaskTests {
         let atom = ControlledRefreshAtom(source: source)
         let box = store.taskBox(for: atom)
 
-        await Task.yield()
+        await waitUntil(!source.pendingRequestIDs.isEmpty)
         source.resolve(source.pendingRequestIDs[0], with: "initial")
-        await Task.yield()
+        await waitUntil(box.value.value == "initial")
 
         store.restartTask(for: atom)
         #expect(box.value.isLoading)
@@ -51,7 +51,7 @@ struct SKAtomStoreTaskTests {
 
         let requestID = source.pendingRequestIDs[0]
         source.resolve(requestID, with: "restarted")
-        await Task.yield()
+        await waitUntil(box.value.value == "restarted")
 
         #expect(box.value.value == "restarted")
     }
@@ -63,9 +63,9 @@ struct SKAtomStoreTaskTests {
         let atom = ControlledThrowingRefreshAtom(source: source)
         let box = store.throwingTaskBox(for: atom)
 
-        await Task.yield()
+        await waitUntil(!source.pendingRequestIDs.isEmpty)
         source.resolve(source.pendingRequestIDs[0], with: "initial")
-        await Task.yield()
+        await waitUntil(box.value.value == "initial")
 
         store.restartThrowingTask(for: atom)
         #expect(box.value.isLoading)
@@ -73,7 +73,7 @@ struct SKAtomStoreTaskTests {
 
         let requestID = source.pendingRequestIDs[0]
         source.resolve(requestID, with: "restarted")
-        await Task.yield()
+        await waitUntil(box.value.value == "restarted")
 
         #expect(box.value.value == "restarted")
     }
@@ -85,7 +85,7 @@ struct SKAtomStoreTaskTests {
         let atom = ControlledRefreshAtom(source: source)
 
         _ = store.taskBox(for: atom)
-        await Task.yield()
+        await waitUntil(!source.pendingRequestIDs.isEmpty)
         source.resolve(source.pendingRequestIDs[0], with: "initial")
         await Task.yield()
 
@@ -120,7 +120,7 @@ struct SKAtomStoreTaskTests {
         let atom = ControlledThrowingRefreshAtom(source: source)
 
         _ = store.throwingTaskBox(for: atom)
-        await Task.yield()
+        await waitUntil(!source.pendingRequestIDs.isEmpty)
         source.resolve(source.pendingRequestIDs[0], with: "initial")
         await Task.yield()
 

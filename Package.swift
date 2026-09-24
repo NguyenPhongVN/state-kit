@@ -243,5 +243,9 @@ let package = Package(
             name: "StateKitPersistenceTests",
             dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitPersistence")]
         ),
+        PackageDescription.Target.testTarget(
+            name: "StateKitDevToolsTests",
+            dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitDevTools")]
+        ),
     ]
 )
