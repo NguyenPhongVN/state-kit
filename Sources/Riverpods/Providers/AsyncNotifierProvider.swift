@@ -723,6 +723,8 @@ public final class AsyncNotifierInstanceElement<N: AsyncNotifier<T>, T: Sendable
     ///
     /// - Returns: The notifier instance
     public override func providerCreate() -> N {
+        // Invariant: ensureElement(for:) builds an element for exactly this
+        // provider type.
         let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
         // Ensure the notifier and its state exist
         _ = parentElement.getState()
@@ -798,6 +800,8 @@ final class AsyncNotifierFutureElement<N: AsyncNotifier<T>, T: Sendable>: Provid
     /// - Returns: A Task that completes when the notifier's async operation completes
     override func providerCreate() -> Task<T, Error> {
         // Ensure the parent AsyncNotifierProvider element exists
+        // Invariant: ensureElement(for:) builds an element for exactly this
+        // provider type.
         let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
         _ = parentElement.getState()
 

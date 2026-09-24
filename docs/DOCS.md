@@ -9,6 +9,7 @@ No original docs are deleted. They are grouped by purpose for cleaner navigation
 | Area | Path | Purpose |
 |---|---|---|
 | Core | `core/README.md` | Product usage, architecture, integration guides |
+| Core | `core/HOOKS_VS_MACROS.md` | Choosing between function hooks and `@Hook*` macros |
 | Macros | `macros/README.md` | Macro references, examples, stable API docs |
 | Release | `release/README.md` | Changelog, migration, stability, release readiness |
 | Engineering | `engineering/README.md` | Testing and verification guidance |

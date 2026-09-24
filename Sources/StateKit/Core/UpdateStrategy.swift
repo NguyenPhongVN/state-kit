@@ -36,6 +36,26 @@ public struct UpdateStrategy {
 
 public extension UpdateStrategy {
 
+    /// Choosing a `preserved(by:)` form
+    /// ---------------------------------
+    /// All overloads express one intent — "re-run when this changes" — for
+    /// different dependency input shapes. Pick by what you already have:
+    ///
+    /// | You have                                  | Use |
+    /// |-------------------------------------------|-----|
+    /// | A single `Equatable` value (not Hashable) | `preserved(by: someEquatable)` |
+    /// | A single `Hashable` value                 | `preserved(by: someHashable)` |
+    /// | Several values, inline                    | `preserved(by: a, b, c)` (variadic `AnyHashable`) |
+    /// | An array of hashable values               | `preserved(by: [a, b])` |
+    /// | A value computed at the call site         | `preserved(by: { compute() })` |
+    /// | Several computed values                   | `preserved(by: { a() }, { b() })` |
+    /// | An array produced by a closure            | `preserved(by: { [a, b] })` |
+    ///
+    /// No form is deprecated: each serves a distinct input shape. Values with
+    /// a custom `Equatable` but no `Hashable` conformance MUST use the
+    /// Equatable form — the variadic/array forms require `Hashable` to key
+    /// the dependency list.
+
     /// A strategy that runs the hook operation exactly once — on the first
     /// render — and never re-runs it on subsequent renders.
     ///

@@ -94,6 +94,8 @@ public func useReducer<Action, State>(
         box = _HookReducerBox(initial: initial, reduce: reduce)
         context.states.append(box)
     } else {
+        // Positional slot invariant: created by this hook on first render;
+        // stable hook order guarantees the type.
         box = context.states[index] as! _HookReducerBox<State, Action>
         // Keep the latest reducer to match the current hook call site.
         box.reduce = reduce

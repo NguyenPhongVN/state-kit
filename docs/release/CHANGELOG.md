@@ -8,7 +8,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### ⚠️ Behavior Changes
+
+- **`ProviderContainer.watch(_:)` is now genuinely reactive** (Riverpod idiom: read = pure,
+  watch = reactive). It registers a listener — keeping auto-dispose providers alive — and
+  returns the current value; balance every `watch` with `removeListener(for:)`. Previously
+  `watch` was an exact synonym of `read` and registered nothing, so callers using it as a
+  throwaway read MUST now release the listener (SwiftUI wrappers `@Watch` and `useRiverpod`
+  handle this internally and are unaffected).
+
+### Deprecated
+
+- **`ProviderContainer.addListener(for:)`** — exact duplicate of `watch(_:)`; use `watch(_:)`
+  balanced with `removeListener(for:)`. No behavior difference; removed at the next MAJOR.
+
 ### Fixed
+
+- **Override type mismatches now fail with a precise diagnostic** instead of an unexplained
+  cast crash: `ProviderContainer.ensureElement` validates override element/value types and
+  names the provider, role, and both types in the failure message.
+- Docs: `KeychainStateProvider.clearAll()` documented as deleting exactly its own key (never a
+  pattern wipe); the full `preserved(by:)` overload family gained a selection table (nothing
+  deprecated, per design decision); new guide `docs/core/HOOKS_VS_MACROS.md` explains when to
+  use function hooks vs `@Hook*` macros.
+- Public API audit shipped with this feature (`specs/002-clean-public-api/audit.md`): all P1
+  findings closed; remaining force-conversions carry written invariant justifications;
+  deferred P3 items recorded (per-symbol review of UI/Combine/Testing/Concurrency modules,
+  `SKSubscriberToken.Box` surface, `SC*` prefix convention exception).
+
+### Fixed (feature 001 — keychain/cache/rollout)
 
 - **Memory leak in `TimeToLiveCache`, `SlidingWindowTTLCache`, `EventTracker`**: the periodic
   housekeeping/auto-flush task captured `self` strongly in a non-terminating loop and was only
@@ -30,7 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   trap and negative-modulo hazard).
 - **README** stated 47 public macros; the actual count is 48.
 
-### ⚠️ Behavior Changes (accepted, documented)
+### ⚠️ Behavior Changes (feature 001 — accepted, documented)
 
 - `KeychainAccessibility` raw values changed from invented `"com.apple.keychain.*"` strings to
   the platform's canonical codes (`"ak"`, `"aku"`, `"ck"`, `"cku"`, `"dk"`). Hosts persisting

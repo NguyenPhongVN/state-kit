@@ -53,5 +53,7 @@ public func useRef<T>(_ initial: T) -> StateRef<T> {
         context.states.append(StateRef(initial))
     }
 
+    // Positional slot invariant: this hook created states[index] on first
+    // render; stable hook order (documented requirement) guarantees the type.
     return context.states[index] as! StateRef<T>
 }

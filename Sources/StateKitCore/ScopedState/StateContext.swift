@@ -79,6 +79,13 @@ public final class StateContext {
     /// next position in `states`. The `defer` ensures the increment
     /// happens after the current value is returned, so the returned index
     /// is always the one the hook should read or write.
+    ///
+    /// Slot types are guaranteed by this positional protocol: a hook that
+    /// created `states[n]` on first render reads back exactly the type it
+    /// stored, provided hooks are called in a stable order across renders.
+    /// Hook implementations may therefore force-cast their slot back to the
+    /// type they stored — the only way to break it is the documented
+    /// programming error of calling hooks conditionally.
     public func nextIndex() -> Int {
         defer { index += 1 }
         return index

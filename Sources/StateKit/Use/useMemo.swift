@@ -91,6 +91,8 @@ public func useMemo<T>(
         context.states.append(_HookMemoBox(value, updateStrategy: updateStrategy))
         return value
     } else {
+        // Positional slot invariant: created by this hook on first render;
+        // stable hook order guarantees the type.
         let box = context.states[index] as! _HookMemoBox<T>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {
             box.value = compute()

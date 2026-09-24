@@ -360,6 +360,8 @@ public struct StateProviderNotifier<T: Sendable>: ProviderProtocol, @unchecked S
     public func createElement(container: ProviderContainer) -> AnyProviderElement {
         SimpleProviderElement(provider: self, container: container) { ref in
             // Get the state provider's element
+            // Invariant: ensureElement(for:) builds an element for exactly
+            // this provider type.
             let element = container.ensureElement(for: provider) as! StateProviderElement<T>
             let initialState = element.getState()
 

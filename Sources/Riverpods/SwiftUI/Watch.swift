@@ -153,7 +153,9 @@ public struct Watch<P: ProviderProtocol>: DynamicProperty {
     /// - Only rebuilds if actual value changes (not just provider recomputation)
     /// - Listener automatically removed when view is destroyed
     public var wrappedValue: P.State {
-        container.watch(provider)
+        // Pure value read — the reactive registration happens exactly once in
+        // `ProviderListener.setup` (via container.watch), not on every access.
+        container.read(provider)
     }
 
     // MARK: - Update Hook
@@ -229,7 +231,7 @@ final class ProviderListener<P: ProviderProtocol> {
         // Register new listener
         self.container = container
         self.provider = provider
-        _ = container.addListener(for: provider)
+        _ = container.watch(provider)
     }
 
     // MARK: - Cleanup
@@ -324,11 +326,11 @@ public func useRiverpod<P: ProviderProtocol>(_ provider: P) -> P.State {
 
     // Register listener and clean up when hook is destroyed
     useEffect(updateStrategy: .preserved(by: ProviderID(provider))) {
-        _ = container.addListener(for: provider)
+        _ = container.watch(provider)
         return { container.removeListener(for: provider) }
     }
 
-    return container.watch(provider)
+    return container.read(provider)
 }
 
 // MARK: - ProviderContainer Environment Key

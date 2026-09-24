@@ -108,7 +108,11 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
         return status == errSecSuccess
     }
 
-    /// Clears all values for this provider's key pattern.
+    /// Deletes this provider's single keychain value.
+    ///
+    /// Deletes exactly the item stored under this provider's key — nothing
+    /// else in the keychain is touched. (Despite the name, this is not a
+    /// pattern-based wipe; for batched deletion use `KeychainBatch`.)
     public func clearAll() throws {
         try delete()
     }

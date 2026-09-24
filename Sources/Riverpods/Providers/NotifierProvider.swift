@@ -318,6 +318,8 @@ public final class NotifierInstanceElement<N: Notifier<T>, T: Sendable>: Provide
     ///
     /// - Returns: The notifier instance
     public override func providerCreate() -> N {
+        // Invariant: ensureElement(for:) builds an element for exactly this
+        // provider type.
         let parentElement = container.ensureElement(for: provider.provider) as! NotifierProviderElement<N, T>
         // Ensure the notifier and its state exist
         _ = parentElement.getState()

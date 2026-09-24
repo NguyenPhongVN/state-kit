@@ -196,8 +196,18 @@ public final class ProviderContainer {
 
         if let overrideRecord = overrides[id], let customProvider = overrideRecord.providerOverride {
             let element = customProvider.createElement(container: self)
+            if let diagnostic = ProviderOverrideDiagnostics.mismatchDiagnostic(
+                providerID: id,
+                role: "element",
+                actualType: type(of: element),
+                expectedType: ProviderElement<P>.self
+            ) {
+                fatalError(diagnostic)
+            }
             elements[id] = element
 
+            // Justified conversion: validated above — a non-ProviderElement<P>
+            // override element already failed with a precise diagnostic.
             let value = (element as! ProviderElement<P>).getState()
             if !observers.isEmpty {
                 for observer in observers { observer.didAddProvider(provider, value: value, container: self) }
@@ -208,10 +218,25 @@ public final class ProviderContainer {
         let element = provider.createElement(container: self)
         elements[id] = element
 
-        if let overrideRecord = overrides[id], let value = overrideRecord.value, let stateElement = element as? ProviderElement<P> {
-            stateElement.stateBox = StateBox(value as! P.State)
+        if let overrideRecord = overrides[id], let value = overrideRecord.value {
+            if let diagnostic = ProviderOverrideDiagnostics.mismatchDiagnostic(
+                providerID: id,
+                role: "value",
+                actualType: type(of: value),
+                expectedType: P.State.self
+            ) {
+                fatalError(diagnostic)
+            }
+            // Justified conversion: validated above — a wrongly-typed override
+            // value already failed with a precise diagnostic.
+            if let stateElement = element as? ProviderElement<P> {
+                stateElement.stateBox = StateBox(value as! P.State)
+            }
         }
 
+        // Invariant: provider.createElement(container:) builds an element for
+        // exactly this provider and state type, and any override mismatch has
+        // already been rejected with a diagnostic above.
         let value = (element as! ProviderElement<P>).getState()
         if !observers.isEmpty {
             for observer in observers { observer.didAddProvider(provider, value: value, container: self) }
@@ -235,6 +260,8 @@ public final class ProviderContainer {
     /// ```
     @discardableResult
     public func refresh<P: ProviderProtocol>(_ provider: P) -> P.State {
+        // Invariant: ensureElement(for:) created this element for exactly this
+        // provider and state type, so the conversion below cannot fail.
         let element = ensureElement(for: provider) as! ProviderElement<P>
         return element.recompute()
     }
@@ -243,6 +270,8 @@ public final class ProviderContainer {
     ///
     /// One-time read that doesn't create a listener.
     /// Useful for configuration values or conditional reads.
+    /// For reactive access that keeps auto-dispose providers alive, use
+    /// `watch(_:)` instead.
     ///
     /// - Parameter provider: The provider to read
     /// - Returns: The provider's current value
@@ -252,19 +281,32 @@ public final class ProviderContainer {
     /// let config = container.read(configProvider)
     /// ```
     public func read<P: ProviderProtocol>(_ provider: P) -> P.State {
+        // Invariant: ensureElement(for:) created this element for exactly this
+        // provider and state type, so the conversion below cannot fail.
         let element = ensureElement(for: provider) as! ProviderElement<P>
         return element.getState()
     }
 
-    /// Watches a provider's current value.
+    /// Watches a provider's value, registering the caller as a reactive listener.
     ///
-    /// Used primarily by @Watch property wrapper internally.
-    /// Direct use is rare; @Watch is preferred in SwiftUI.
+    /// This is the Riverpod-idiom reactive accessor: `read(_:)` is a pure
+    /// one-shot read, while `watch(_:)` increments the provider's listener
+    /// count — keeping auto-dispose providers alive — and returns the current
+    /// value. Balance every `watch` with `removeListener(for:)` when the
+    /// interest ends (SwiftUI wrappers such as `@Watch` do this for you).
+    ///
+    /// ⚠️ Behavior change: previous releases treated `watch` as a synonym of
+    /// `read` and registered nothing. Callers using `watch` as a throwaway
+    /// read now register a listener and MUST release it, or auto-disposable
+    /// providers will stay alive indefinitely. See the changelog.
     ///
     /// - Parameter provider: The provider to watch
     /// - Returns: The provider's current value
     public func watch<P: ProviderProtocol>(_ provider: P) -> P.State {
+        // Invariant: ensureElement(for:) created this element for exactly this
+        // provider and state type, so the conversion below cannot fail.
         let element = ensureElement(for: provider) as! ProviderElement<P>
+        element.incrementListeners()
         return element.getState()
     }
 
@@ -294,21 +336,19 @@ public final class ProviderContainer {
         fireImmediately: Bool = false,
         listener: @escaping (P.State?, P.State) -> Void
     ) -> ProviderSubscription {
+        // Invariant: ensureElement(for:) created this element for exactly this
+        // provider and state type, so the conversion below cannot fail.
         let element = ensureElement(for: provider) as! ProviderElement<P>
         return element.addListener(fireImmediately: fireImmediately, listener: listener)
     }
 
-    /// Registers a SwiftUI listener (used internally by @Watch).
+    /// Registers a reactive listener for the provider.
     ///
-    /// Called by @Watch property wrapper to establish reactivity.
-    /// Not typically called directly.
-    ///
-    /// - Parameter provider: The provider to listen to
-    /// - Returns: The current provider value
+    /// - Deprecated: `addListener(for:)` is an exact duplicate of `watch(_:)`.
+    ///   Use `watch(_:)` (balanced with `removeListener(for:)`) instead.
+    @available(*, deprecated, renamed: "watch(_:)", message: "addListener(for:) duplicates watch(_:); use watch(_:) balanced with removeListener(for:).")
     public func addListener<P: ProviderProtocol>(for provider: P) -> P.State {
-        let element = ensureElement(for: provider) as! ProviderElement<P>
-        element.incrementListeners()
-        return element.getState()
+        watch(provider)
     }
 
     /// Unregisters a SwiftUI listener (used internally by @Watch).
@@ -591,6 +631,32 @@ public final class ProviderContainer {
             }
         } while !pendingChanges.isEmpty
         isBatching = false
+    }
+}
+
+// MARK: - Override Diagnostics
+
+/// Internal diagnostics for override type mismatches.
+///
+/// Constitution Principle V.3: caller-reachable inputs must fail with a
+/// precise message naming the provider and both types — never a bare cast
+/// crash with no explanation.
+enum ProviderOverrideDiagnostics {
+
+    /// Returns a diagnostic message when `actualType` does not match
+    /// `expectedType`, or `nil` when the override is type-correct.
+    static func mismatchDiagnostic(
+        providerID: ProviderID,
+        role: String,
+        actualType: Any.Type,
+        expectedType: Any.Type
+    ) -> String? {
+        guard actualType != expectedType else { return nil }
+        return """
+        StateKit: the \(role) override for provider \(providerID) supplies \
+        \(actualType), but the provider's state type is \(expectedType). \
+        Rejecting the mismatched override — fix its type.
+        """
     }
 }
 

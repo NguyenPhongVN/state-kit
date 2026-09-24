@@ -37,6 +37,8 @@ private func _useState<T>(_ initial: T) -> StateSignal<T> {
         context.states.append(StateSignal(initial))
     }
 
+    // Positional slot invariant: this hook created states[index] on first
+    // render; stable hook order (documented requirement) guarantees the type.
     return context.states[index] as! StateSignal<T>
 }
 

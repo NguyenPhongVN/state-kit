@@ -89,6 +89,8 @@ public func useCallback<T>(
         context.states.append(_HookCallbackBox(callback, updateStrategy: updateStrategy))
         return callback
     } else {
+        // Positional slot invariant: created by this hook on first render;
+        // stable hook order guarantees the type.
         let box = context.states[index] as! _HookCallbackBox<T>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {
             box.fn = callback

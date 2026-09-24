@@ -312,6 +312,8 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         depElement.dependents.insert(id)
         depElement._addDependentRef(self)
         
+        // Invariant: ensureElement(for:) above created depElement for
+        // exactly this Dep provider and state type.
         return (depElement as! ProviderElement<Dep>).getState()
     }
 

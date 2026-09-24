@@ -68,6 +68,8 @@ public func useOnChange<T: Equatable>(
     if context.states.count <= index {
         context.states.append(_HookOnChangeBox(value))
     } else {
+        // Positional slot invariant: created by this hook on first render;
+        // stable hook order guarantees the type.
         let box = context.states[index] as! _HookOnChangeBox<T>
         if box.previousValue != value {
             box.previousValue = value
@@ -122,6 +124,8 @@ public func useOnChange<T: Equatable>(
     if context.states.count <= index {
         context.states.append(_HookOnChangeBox(value))
     } else {
+        // Positional slot invariant: created by this hook on first render;
+        // stable hook order guarantees the type.
         let box = context.states[index] as! _HookOnChangeBox<T>
         if box.previousValue != value {
             let old = box.previousValue
@@ -181,6 +185,8 @@ public func useOnChange<T: Equatable>(
             action(value)
         }
     } else {
+        // Positional slot invariant: created by this hook on first render;
+        // stable hook order guarantees the type.
         let box = context.states[index] as! _HookOnChangeBox<T>
         if box.previousValue != value {
             box.previousValue = value

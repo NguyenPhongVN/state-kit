@@ -462,6 +462,8 @@ final class FutureFutureElement<T: Sendable>: ProviderElement<FutureFutureProvid
     /// - Returns: A Task that completes when the FutureProvider's operation completes
     override func providerCreate() -> Task<T, Error> {
         // Ensure the parent FutureProvider element exists
+        // Invariant: ensureElement(for:) builds an element for exactly this
+        // provider type.
         let parentElement = container.ensureElement(for: provider.provider) as! FutureProviderElement<T>
         _ = parentElement.getState()
 
