@@ -1,5 +1,5 @@
 import XCTest
-import StateKitFeatureFlags
+@testable import StateKitFeatureFlags
 
 @MainActor
 final class FeatureFlagsTests: XCTestCase {
@@ -66,15 +66,16 @@ final class FeatureFlagsTests: XCTestCase {
         let rollout = PercentageRollout(percentage: 50)
 
         var enabledCount = 0
-        for i in 0..<100 {
+        for i in 0..<10_000 {
             if rollout.isEnabled(for: "user\(i)") {
                 enabledCount += 1
             }
         }
 
-        // Should be roughly 50% (allow 10% variance)
-        XCTAssertGreaterThan(enabledCount, 35)
-        XCTAssertLessThan(enabledCount, 65)
+        // Should be roughly 50% (allow ±5 percentage points — a 100-user
+        // sample is too small for a deterministic hash to bound this tightly).
+        XCTAssertGreaterThan(enabledCount, 4_500)
+        XCTAssertLessThan(enabledCount, 5_500)
     }
 
     func testCohortRollout() {
@@ -156,5 +157,51 @@ final class FeatureFlagsTests: XCTestCase {
         let isSignificant = StatisticalTest.isSignificant(chi2)
 
         XCTAssertTrue(isSignificant)
+    }
+
+    // MARK: - International User ID Bucketing (Hash Fix)
+
+    /// 10,000 distinct IDs whose non-ASCII content must participate in bucketing.
+    private let internationalIDs: [String] = {
+        let scripts = ["Phạm", "Nguyễn", "Trần", "Lê", "姚明", "李小龍", "Иван", "Αλέξανδρος"]
+        return (0..<1250).flatMap { i in scripts.map { "\($0)-user-\(i)" } }
+    }()
+
+    func testDistributionMatchesConfiguredPercentageForNonASCIIIDs() {
+        let rollout = PercentageRollout(percentage: 10)
+
+        let enabled = internationalIDs.filter { rollout.isEnabled(for: $0) }.count
+        let share = Double(enabled) / Double(internationalIDs.count) * 100
+
+        XCTAssertTrue((9.0...11.0).contains(share), "Expected ~10% enabled, got \(share)%")
+    }
+
+    func testBucketAssignmentIsStable() {
+        let rollout = PercentageRollout(percentage: 10)
+
+        let first = internationalIDs.map { rollout.isEnabled(for: $0) }
+        let second = internationalIDs.map { rollout.isEnabled(for: $0) }
+
+        XCTAssertEqual(first, second, "same ID must always get the same assignment")
+    }
+
+    func testEligibilityIsMonotonicInPercentage() {
+        let five = PercentageRollout(percentage: 5)
+        let fifty = PercentageRollout(percentage: 50)
+
+        for id in internationalIDs {
+            if five.isEnabled(for: id) {
+                XCTAssertTrue(fifty.isEnabled(for: id), "\(id) enabled at 5% must stay enabled at 50%")
+            }
+        }
+    }
+
+    func testDistinctNonASCIIIDsDoNotCollapseToOneBucket() {
+        // Same-length pure non-ASCII IDs: the old hash reduced every
+        // character to 0, collapsing all of these onto one bucket.
+        let pureNonASCII = ["姚一", "姚二", "姚三", "姚四", "姚五", "姚六", "姚七", "姚八"]
+        let buckets = Set(pureNonASCII.map { djb2Hash($0) % 100 })
+
+        XCTAssertGreaterThan(buckets.count, 1, "distinct non-ASCII IDs collapsed onto \(buckets.count) bucket(s)")
     }
 }

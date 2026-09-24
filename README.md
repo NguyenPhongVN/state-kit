@@ -57,7 +57,7 @@ targets: [
 | `StateKitUI` | UI integration (`StateScope`, `StateView`, phase views) |
 | `StateKitAtoms` | Atom store, atom protocols, selectors, atom hooks |
 | `Riverpods` | Provider container, notifiers, families, overrides, SwiftUI wrappers |
-| `StateKitMacros` | Macro declarations (47 public macros in V1) |
+| `StateKitMacros` | Macro declarations (48 public macros in V1) |
 | `StateKitMacrosPlugin` | Macro implementation plugin |
 | `StateConcurrency` | `Task` helpers (`retry`, `timeout`, `gather`, `race`) + async streams |
 | `StateKitSupport` | Property wrappers and helper hooks |
@@ -104,7 +104,7 @@ struct CounterAtom {
 
 ## Macros (V1)
 
-StateKit V1 ships **47 public macros** across:
+StateKit V1 ships **48 public macros** across:
 
 - Atoms
 - Riverpods

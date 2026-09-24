@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **Memory leak in `TimeToLiveCache`, `SlidingWindowTTLCache`, `EventTracker`**: the periodic
+  housekeeping/auto-flush task captured `self` strongly in a non-terminating loop and was only
+  cancelled in `deinit`, so instances were never deallocated and kept waking the CPU forever.
+  The loop now captures `self` weakly and exits as soon as the instance is released. Live
+  instances behave unchanged.
+- **`KeychainBatch.deleteAll(matching:)` ignored its `pattern` parameter** (and the batch's
+  items) and deleted *every* generic-password keychain item the app could access — including
+  auth tokens. Deletion is now scoped to the items the batch stored; `pattern` is a prefix
+  match, `nil`/empty deletes all batch items. Foreign keychain items are unreachable by
+  construction.
+- **`KeychainAccessibility` applied invalid `kSecAttrAccessible` values**
+  (`"com.apple.keychain.*"` strings are not valid Keychain attributes), making store fail on
+  device or set an unintended protection level. Each case now applies the official
+  `kSecAttrAccessible*` constant via a new internal `secAttr` mapping.
+- **`djb2Hash` mapped every non-ASCII character to 0**, collapsing distinct international
+  user IDs (Vietnamese, CJK, Cyrillic, …) onto the same rollout/A-B bucket. The hash now runs
+  over the ID's UTF-8 bytes in unsigned 32-bit arithmetic (also removing the `abs(Int.min)`
+  trap and negative-modulo hazard).
+- **README** stated 47 public macros; the actual count is 48.
+
+### ⚠️ Behavior Changes (accepted, documented)
+
+- `KeychainAccessibility` raw values changed from invented `"com.apple.keychain.*"` strings to
+  the platform's canonical codes (`"ak"`, `"aku"`, `"ck"`, `"cku"`, `"dk"`). Hosts persisting
+  raw values must remap. Items written by previous builds either failed to store or used an
+  unintended protection level, so no migration is possible or needed.
+- Rollout/A-B bucket assignments may change for some users due to the `djb2Hash` fix — a
+  one-time re-bucketing.
+
+---
+
 ## [2.0.0] - May 2026 (Current Release)
 
 ### ✨ New Features

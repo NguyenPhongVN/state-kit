@@ -123,4 +123,75 @@ final class CacheTests: XCTestCase {
         XCTAssertNil(cache.get("b"))
         XCTAssertEqual(cache.get("c"), 3)
     }
+
+    // MARK: - Housekeeping Loop Lifetime (Leak Fix)
+
+    private final class WeakTTLRef {
+        weak var cache: TimeToLiveCache<String, Int>?
+        init(_ cache: TimeToLiveCache<String, Int>) { self.cache = cache }
+    }
+
+    private final class WeakSlidingRef {
+        weak var cache: SlidingWindowTTLCache<String, Int>?
+        init(_ cache: SlidingWindowTTLCache<String, Int>) { self.cache = cache }
+    }
+
+    func testTimeToLiveCacheDeallocatesAfterRelease() async throws {
+        weak var weakCache: TimeToLiveCache<String, Int>?
+        var cache: TimeToLiveCache<String, Int>? = TimeToLiveCache(ttl: 60)
+        weakCache = cache
+        cache = nil
+
+        for _ in 0..<50 { await Task.yield() }
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertNil(weakCache, "TimeToLiveCache leaked: housekeeping task captures self strongly")
+    }
+
+    func testSlidingWindowCacheDeallocatesAfterRelease() async throws {
+        weak var weakCache: SlidingWindowTTLCache<String, Int>?
+        var cache: SlidingWindowTTLCache<String, Int>? = SlidingWindowTTLCache(ttl: 60)
+        weakCache = cache
+        cache = nil
+
+        for _ in 0..<50 { await Task.yield() }
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertNil(weakCache, "SlidingWindowTTLCache leaked: housekeeping task captures self strongly")
+    }
+
+    func testThousandTimeToLiveCachesDeallocate() {
+        var refs: [WeakTTLRef] = []
+        for _ in 0..<1_000 {
+            refs.append(WeakTTLRef(TimeToLiveCache<String, Int>(ttl: 0.02)))
+        }
+
+        XCTAssertTrue(refs.allSatisfy { $0.cache == nil }, "1,000 instances must all deallocate after release")
+    }
+
+    func testTimeToLiveCacheStillExpiresWhileAlive() async throws {
+        var expiredKeys: [String] = []
+        let cache = TimeToLiveCache<String, Int>(ttl: 0.1) { key, _, _ in
+            expiredKeys.append(key)
+        }
+        cache.set("k", 1)
+
+        try await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertNil(cache.get("k"), "entry must expire while the cache is alive")
+        XCTAssertEqual(expiredKeys, ["k"], "background cleanup must still run for live instances")
+    }
+
+    func testSlidingWindowCacheStillExpiresWhileAlive() async throws {
+        var expiredKeys: [String] = []
+        let cache = SlidingWindowTTLCache<String, Int>(ttl: 0.1) { key, _, _ in
+            expiredKeys.append(key)
+        }
+        cache.set("k", 1)
+
+        try await Task.sleep(nanoseconds: 500_000_000)
+
+        XCTAssertNil(cache.get("k"), "entry must expire while the cache is alive")
+        XCTAssertEqual(expiredKeys, ["k"], "background cleanup must still run for live instances")
+    }
 }

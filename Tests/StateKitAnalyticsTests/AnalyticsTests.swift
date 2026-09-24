@@ -168,4 +168,36 @@ final class AnalyticsTests: XCTestCase {
         XCTAssertEqual(config.flushInterval, 60)
         XCTAssertEqual(config.batchSize, 100)
     }
+
+    // MARK: - Auto-Flush Loop Lifetime (Leak Fix)
+
+    func testEventTrackerDeallocatesAfterRelease() async throws {
+        weak var weakTracker: EventTracker?
+        var tracker: EventTracker? = EventTracker(config: AnalyticsConfig(flushInterval: 0.05))
+        weakTracker = tracker
+        tracker = nil
+
+        for _ in 0..<50 { await Task.yield() }
+        try await Task.sleep(nanoseconds: 100_000_000)
+
+        XCTAssertNil(weakTracker, "EventTracker leaked: auto-flush task captures self strongly")
+    }
+
+    func testAutoFlushStopsAfterRelease() async throws {
+        final class Counter { var flushes = 0 }
+        let counter = Counter()
+
+        weak var weakTracker: EventTracker?
+        var tracker: EventTracker? = EventTracker(config: AnalyticsConfig(flushInterval: 0.05))
+        tracker?.onFlush { _ in counter.flushes += 1 }
+        weakTracker = tracker
+
+        tracker?.track("pending_event")  // Below batch size: only the auto-flush would send it
+        tracker = nil
+
+        try await Task.sleep(nanoseconds: 300_000_000)
+
+        XCTAssertNil(weakTracker, "released tracker must deallocate")
+        XCTAssertEqual(counter.flushes, 0, "no auto-flush may fire after the tracker is released")
+    }
 }

@@ -63,7 +63,7 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
 
         let attributes: [String: Any] = [
             kSecValueData as String: data,
-            kSecAttrAccessible as String: accessibility.rawValue,
+            kSecAttrAccessible as String: accessibility.secAttr,
         ]
 
         var status = SecItemUpdate(updateQuery as CFDictionary, attributes as CFDictionary)
@@ -72,7 +72,7 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
         if status == errSecItemNotFound {
             var insertQuery = updateQuery
             insertQuery[kSecValueData as String] = data
-            insertQuery[kSecAttrAccessible as String] = accessibility.rawValue
+            insertQuery[kSecAttrAccessible as String] = accessibility.secAttr
 
             status = SecItemAdd(insertQuery as CFDictionary, nil)
         }
@@ -117,21 +117,36 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
 // MARK: - Keychain Accessibility Levels
 
 /// Security level for Keychain items.
+///
+/// Raw values follow the platform's canonical accessibility codes. The value
+/// applied to Keychain items is `secAttr`, which references the official
+/// `kSecAttrAccessible*` constants — never use the raw value as an attribute.
 public enum KeychainAccessibility: String, Sendable {
     /// Item is inaccessible after device restart until user unlocks device.
-    case afterFirstUnlock = "com.apple.keychain.after-first-unlock"
+    case afterFirstUnlock = "ck"
 
     /// Item is inaccessible after device restart, and while device is locked.
-    case afterFirstUnlockThisDeviceOnly = "com.apple.keychain.after-first-unlock-this-device-only"
+    case afterFirstUnlockThisDeviceOnly = "cku"
 
     /// Item is always accessible (least secure).
-    case always = "com.apple.keychain.always"
+    case always = "dk"
 
     /// Item is accessible when device is unlocked (most common).
-    case whenUnlocked = "com.apple.keychain.when-unlocked"
+    case whenUnlocked = "ak"
 
     /// Item is accessible when device is unlocked, this device only.
-    case whenUnlockedThisDeviceOnly = "com.apple.keychain.when-unlocked-this-device-only"
+    case whenUnlockedThisDeviceOnly = "aku"
+
+    /// The official `kSecAttrAccessible` constant for this protection level.
+    var secAttr: CFString {
+        switch self {
+        case .afterFirstUnlock: kSecAttrAccessibleAfterFirstUnlock
+        case .afterFirstUnlockThisDeviceOnly: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        case .always: kSecAttrAccessibleAlways
+        case .whenUnlocked: kSecAttrAccessibleWhenUnlocked
+        case .whenUnlockedThisDeviceOnly: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+        }
+    }
 }
 
 // MARK: - Keychain Errors
@@ -270,7 +285,7 @@ public struct KeychainBatch: Sendable {
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrAccount as String: key,
                 kSecValueData as String: data,
-                kSecAttrAccessible as String: accessibility.rawValue,
+                kSecAttrAccessible as String: accessibility.secAttr,
             ]
 
             SecItemDelete(query as CFDictionary)  // Remove old value first
@@ -282,15 +297,40 @@ public struct KeychainBatch: Sendable {
         }
     }
 
-    /// Deletes all items in batch.
-    public func deleteAll(matching pattern: String? = nil) throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-        ]
+    /// Returns the batch keys selected for deletion.
+    ///
+    /// Only keys this batch stored can ever be selected — keychain items the
+    /// batch did not create are out of scope by construction.
+    ///
+    /// - Parameter pattern: `nil` or empty selects every batch key; otherwise
+    ///   only keys starting with `pattern` (prefix match) are selected.
+    func keysToDelete(matching pattern: String?) -> [String] {
+        let allKeys = Array(items.keys)
+        guard let pattern, !pattern.isEmpty else { return allKeys }
+        return allKeys.filter { $0.hasPrefix(pattern) }
+    }
 
-        let status = SecItemDelete(query as CFDictionary)
-        guard status == errSecSuccess || status == errSecItemNotFound else {
-            throw KeychainError.deleteFailed(status)
+    /// Deletes matching items previously added to this batch.
+    ///
+    /// Deletion is scoped to this batch's `items`: a key that was never added
+    /// to the batch is never touched, so unrelated keychain content (auth
+    /// tokens, credentials) cannot be affected.
+    ///
+    /// - Parameter pattern: `nil` or empty deletes every batch item;
+    ///   otherwise only batch items whose key starts with `pattern`
+    ///   (prefix match). Aborts on the first failed delete; already-deleted
+    ///   items stay deleted.
+    public func deleteAll(matching pattern: String? = nil) throws {
+        for key in keysToDelete(matching: pattern) {
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrAccount as String: key,
+            ]
+
+            let status = SecItemDelete(query as CFDictionary)
+            guard status == errSecSuccess || status == errSecItemNotFound else {
+                throw KeychainError.deleteFailed(status)
+            }
         }
     }
 }

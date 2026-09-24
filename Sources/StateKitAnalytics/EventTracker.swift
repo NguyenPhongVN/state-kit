@@ -13,7 +13,7 @@ public final class EventTracker: Sendable {
 
     public init(config: AnalyticsConfig = AnalyticsConfig()) {
         self.config = config
-        startAutoFlush()
+        startAutoFlush(interval: config.flushInterval)
     }
 
     deinit {
@@ -88,13 +88,19 @@ public final class EventTracker: Sendable {
 
     // MARK: - Auto Flush
 
-    private func startAutoFlush() {
-        flushTask = Task {
+    /// Runs `flush()` every `config.flushInterval` until the tracker is
+    /// deallocated.
+    ///
+    /// The interval is captured by value and `self` weakly: releasing the
+    /// tracker must let it deallocate and stop the loop (no orphan wakeups).
+    private func startAutoFlush(interval: TimeInterval) {
+        flushTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(config.flushInterval * 1_000_000_000))
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
 
-                if !Task.isCancelled && !batch.isEmpty {
-                    flush()
+                guard let self, !Task.isCancelled else { break }
+                if !self.batch.isEmpty {
+                    self.flush()
                 }
             }
         }

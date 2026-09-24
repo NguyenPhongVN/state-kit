@@ -34,7 +34,7 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
         self.ttl = max(0.001, ttl)
         self.onEvict = onEvict
         self.onExpire = onExpire
-        startBackgroundCleanup()
+        startBackgroundCleanup(interval: self.ttl)
     }
 
     deinit {
@@ -128,14 +128,17 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
 
     // MARK: - Background Cleanup
 
-    private func startBackgroundCleanup() {
-        cleanupTask = Task { @MainActor in
+    /// Runs `cleanup()` every half-TTL until the cache is deallocated.
+    ///
+    /// The interval is captured by value and `self` weakly: releasing the
+    /// cache must let it deallocate and stop the loop (no orphan wakeups).
+    private func startBackgroundCleanup(interval: TimeInterval) {
+        cleanupTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(ttl * 1_000_000_000 / 2))  // Cleanup every half TTL
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000 / 2))
 
-                if !Task.isCancelled {
-                    cleanup()
-                }
+                guard let self, !Task.isCancelled else { break }
+                self.cleanup()
             }
         }
     }
@@ -163,7 +166,7 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
     public init(ttl: TimeInterval = 300, onEvict: CacheEvictionCallback<Key, Value>? = nil) {
         self.ttl = max(0.001, ttl)
         self.onEvict = onEvict
-        startBackgroundCleanup()
+        startBackgroundCleanup(interval: self.ttl)
     }
 
     deinit {
@@ -232,14 +235,17 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
 
     // MARK: - Background Cleanup
 
-    private func startBackgroundCleanup() {
-        cleanupTask = Task { @MainActor in
+    /// Runs `cleanup()` every half-TTL until the cache is deallocated.
+    ///
+    /// The interval is captured by value and `self` weakly: releasing the
+    /// cache must let it deallocate and stop the loop (no orphan wakeups).
+    private func startBackgroundCleanup(interval: TimeInterval) {
+        cleanupTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(ttl * 1_000_000_000 / 2))  // Cleanup every half TTL
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000 / 2))
 
-                if !Task.isCancelled {
-                    cleanup()
-                }
+                guard let self, !Task.isCancelled else { break }
+                self.cleanup()
             }
         }
     }
