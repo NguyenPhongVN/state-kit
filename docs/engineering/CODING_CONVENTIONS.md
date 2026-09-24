@@ -63,9 +63,8 @@ public final class Example { ... }
 
 ### 2.3 Renames
 
-Public renames ship only in a MAJOR release with a migration guide (constitution V.5). The
-3.0.0 rename table (`SC*` → `SK*` in StateConcurrency) lives in
-`docs/release/MIGRATION_GUIDE.md`.
+Public renames ship with a migration guide entry (constitution V.5). The `SC*` → `SK*`
+rename table for StateConcurrency lives in `docs/release/MIGRATION_GUIDE.md`.
 
 ## 3. Documentation (doc comments)
 
@@ -134,7 +133,7 @@ CI/PR expectation: lint clean or violations explicitly acknowledged in review.
 
 ## 9. Rollout & Coverage ledger
 
-The 3.0.0 conventions pass covered all 16 modules (MARK skeleton + 100% public-symbol docs).
+The V1 conventions pass covered all 16 modules (MARK skeleton + 100% public-symbol docs).
 Per-module status is recorded below and refreshed when conventions change:
 
 | Module | MARK skeleton | Public docs |

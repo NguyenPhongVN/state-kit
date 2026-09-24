@@ -1,15 +1,14 @@
 # StateKit V1 Migration Guide
 
-**Target Version**: v3.0.0 (Conventions Release)
-**Previous Guide**: v1→v2 (below)
+**Target Version**: V1 (current)
 **Release Date**: September 2026
 **Migration Difficulty**: Easy — mechanical renames only, zero logic changes
 
 ---
 
-## 🔄 3.0.0 — Coding Conventions Release
+## 🔄 Naming standardization within V1
 
-3.0.0 standardizes naming across the library (constitution V). **No logic changed** — only
+V1 standardizes naming across the library (constitution V). **No logic changed** — only
 symbols were renamed. Apply the find/replace table below (whole-word) and you are done.
 
 ### Rename Table — StateConcurrency (`SC*` → `SK*`)
@@ -36,7 +35,7 @@ grep -rl "SCTaskDuration\|SCTimeoutError\|SCGlobalActor\|SCLocalActor\|SCRetryPo
       -e 's/\bSCConcurrencyLimiter\b/SKConcurrencyLimiter/g'
 ```
 
-### Other 3.0.0 changes
+### Other recent changes
 
 - `Function.swift` helpers consolidated: `replayNonNil/ignore/identity/absurd/apply` were dead
   and removed; `guardFunction` lives in StateKitCore, `sourceId` in StateKitSupport.
@@ -45,7 +44,7 @@ grep -rl "SCTaskDuration\|SCTimeoutError\|SCGlobalActor\|SCLocalActor\|SCRetryPo
 
 ---
 
-# StateKit V1→V2 Guide (archived)
+# Archived: v1→v2 notes
 
 **Target Version**: v1.0.0  
 **Release Date**: May 2026  
@@ -72,7 +71,7 @@ In your `Package.swift`:
 .package(url: "https://github.com/NguyenPhongVN/state-kit", from: "1.0.0")
 
 // After
-.package(url: "https://github.com/NguyenPhongVN/state-kit", from: "2.0.0")
+.package(url: "https://github.com/NguyenPhongVN/state-kit", from: "1.0.0")
 ```
 
 Or in Xcode: Package Dependencies → StateKit → Version Rules → "Up to Next Major"

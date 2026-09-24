@@ -1,7 +1,7 @@
 # StateKit V1 - API Stability Guide
 
 **Release Date**: May 2026  
-**Version**: 2.0.0  
+**Version**: 1.0.0  
 **Stability Level**: Production Ready
 
 ---

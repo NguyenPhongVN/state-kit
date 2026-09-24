@@ -6,9 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [3.0.0] — Coding Conventions Release (Unreleased)
+## Unreleased (part of V1)
 
-### 💥 Breaking (MAJOR — renames only, zero logic changes)
+### 💥 Renames (applied within V1 development — zero logic changes)
 
 - **StateConcurrency renamed to the `SK*` convention** (resolves audit F9):
 
@@ -39,11 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   `Function.swift` helpers into single homes (`guardFunction` → StateKitCore, `sourceId` →
   StateKitSupport, ~330 lines of dead duplicates deleted).
 
----
-
-## [Unreleased]
-
-### Added
+### Added (examples)
 
 - **"Start Here" learning path** in the Examples app: 19 tiny lessons across 6 progressive
   chapters (local state → atoms → providers → async & derived → persistence & cache →
@@ -112,7 +108,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
-## [2.0.0] - May 2026 (Current Release)
+## [1.0.0] — V1 (Current Release)
 
 ### ✨ New Features
 
@@ -290,6 +286,6 @@ Contributors: Mike Packard and Claude AI assistant team
 
 ---
 
-**Current Version**: 2.0.0  
+**Current Version**: 1.0.0  
 **Release Date**: May 17, 2026  
 **Next Review**: next release planning cycle

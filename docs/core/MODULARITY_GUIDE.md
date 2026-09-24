@@ -1,6 +1,6 @@
 # StateKit Modularity Guide
 
-**Version**: 2.0.0  
+**Version**: 1.0.0  
 **Date**: May 2026  
 **Status**: Phase 2 Complete
 
@@ -988,5 +988,5 @@ Is this code used by multiple features?
 ---
 
 **Last Updated**: May 17, 2026  
-**Version**: 2.0.0  
+**Version**: 1.0.0  
 **Next Review**: June 2026 (Phase 3 planning)

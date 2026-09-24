@@ -20,7 +20,7 @@ helpers, and **48 compile-time macros**.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/NguyenPhongVN/state-kit", from: "2.0.0")
+    .package(url: "https://github.com/NguyenPhongVN/state-kit", from: "1.0.0")
 ]
 ```
 
@@ -38,10 +38,6 @@ Then add only the products you need:
     ]
 )
 ```
-
-> **3.0.0 (on `main`)** is a conventions release: the `StateConcurrency` `SC*` types are
-> renamed to `SK*` (e.g. `SKTaskDuration`, `SKConcurrencyLimiter`). See
-> [MIGRATION_GUIDE.md](docs/release/MIGRATION_GUIDE.md) for a one-command migration.
 
 ## Modules
 
