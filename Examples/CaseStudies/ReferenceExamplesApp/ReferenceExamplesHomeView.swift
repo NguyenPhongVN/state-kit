@@ -57,6 +57,22 @@ struct ReferenceExamplesHomeView: View {
     var body: some View {
         NavigationStack {
             List {
+                // ─── Start Here — the fresher learning path ───────────
+                // NEW LEARNERS: begin here. The advanced reference below
+                // is for after you finish the path.
+                Section {
+                    NavigationLink(value: StartHereRoute.roadmap) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("Start Here — learn StateKit step by step", systemImage: "graduationcap.fill")
+                                .font(.headline)
+                            Text("19 tiny lessons in 6 chapters: local state → atoms → providers → async → persistence → architecture, ending in a capstone app.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+
                 Section("Reference Folder") {
                     Text("Examples/CaseStudies/ReferenceExamplesApp/ReferenceExamples")
                         .font(.system(.footnote, design: .monospaced))
@@ -103,6 +119,9 @@ struct ReferenceExamplesHomeView: View {
                 }
             }
             .navigationTitle("ReferenceExamples")
+            .navigationDestination(for: StartHereRoute.self) { route in
+                StartHereScreen(route: route)
+            }
             .navigationDestination(for: ExampleScreen.self) { screen in
                 switch screen {
                 case .computed: ComputedMacroExampleView()

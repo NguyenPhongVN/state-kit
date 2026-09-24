@@ -28,6 +28,7 @@ let package = Package(
                 .product(name: "StateKitAnalytics", package: "state-kit"),
                 .product(name: "StateKitCache", package: "state-kit"),
                 .product(name: "StateKitFeatureFlags", package: "state-kit"),
+                .product(name: "StateKitPersistence", package: "state-kit"),
             ],
             path: "CaseStudies/ReferenceExamplesApp"
         )

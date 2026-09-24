@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **"Start Here" learning path** in the Examples app: 19 tiny lessons across 6 progressive
+  chapters (local state → atoms → providers → async & derived → persistence & cache →
+  architecture) ending in a capstone mini-app. Each lesson is one concept, one screen, with
+  plain-language why-explanations and a next-lesson pointer. The existing advanced examples are
+  unchanged and remain available below the path.
+
 ### ⚠️ Behavior Changes
 
 - **`ProviderContainer.watch(_:)` is now genuinely reactive** (Riverpod idiom: read = pure,
