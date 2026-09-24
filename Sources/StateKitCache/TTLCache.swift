@@ -48,9 +48,9 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
                 hits += 1
                 return entry.value
             } else {
-                // Expired
+                // Expired — reports through onExpire only (onEvict is
+                // reserved for capacity pressure and manual removal).
                 cache.removeValue(forKey: key)
-                onEvict?(key, entry.value, .expired)
                 onExpire?(key, entry.value)
                 misses += 1
                 return nil
@@ -120,7 +120,6 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
 
         for key in expired {
             if let entry = cache.removeValue(forKey: key) {
-                onEvict?(key, entry.value, .expired)
                 onExpire?(key, entry.value)
             }
         }

@@ -104,6 +104,10 @@ public struct FeatureFlag<T: Sendable>: Sendable {
 public final class FeatureFlagRegistry: Sendable {
     private var flags: [String: Any] = [:]
     private var overrides: [String: Any] = [:]
+    /// Bool overrides pulled from remote sources (see RemoteFlags.swift).
+    private var boolOverrides: [String: Bool] = [:]
+
+    /// Bool-only overrides applied from remote flag sources (internal).
 
     /// Creates an empty registry.
     public init() {}
@@ -118,7 +122,17 @@ public final class FeatureFlagRegistry: Sendable {
         if let override = overrides[flag.id] as? T {
             return override
         }
+        if let boolValue = boolOverrides[flag.id] as? T {
+            return boolValue
+        }
         return flag.defaultValue
+    }
+
+    /// Applies raw Bool overrides by flag id (used by remote flag sources).
+    func applyRawBoolOverrides(_ map: [String: Bool]) {
+        for (id, enabled) in map {
+            boolOverrides[id] = enabled
+        }
     }
 
     /// Sets override for flag.

@@ -1,4 +1,5 @@
 import XCTest
+import Testing
 @testable import StateKitFeatureFlags
 
 @MainActor
@@ -203,5 +204,27 @@ final class FeatureFlagsTests: XCTestCase {
         let buckets = Set(pureNonASCII.map { djb2Hash($0) % 100 })
 
         XCTAssertGreaterThan(buckets.count, 1, "distinct non-ASCII IDs collapsed onto \(buckets.count) bucket(s)")
+    }
+
+    // MARK: - Geolocation Region Resolver (Polish Pass)
+
+    func testGeolocationResolverAllows() {
+        let resolver: @Sendable () -> String? = { "VN" }
+        let rollout = GeolocationRollout(allowedRegions: ["VN", "US"], regionResolver: resolver)
+
+        XCTAssertTrue(rollout.isEnabled(for: "any-user"))
+    }
+
+    func testGeolocationResolverRejects() {
+        let resolver: @Sendable () -> String? = { "FR" }
+        let rollout = GeolocationRollout(allowedRegions: ["VN", "US"], regionResolver: resolver)
+
+        XCTAssertFalse(rollout.isEnabled(for: "any-user"))
+    }
+
+    func testGeolocationNilResolverStaysFalse() {
+        let rollout = GeolocationRollout(allowedRegions: ["VN"], regionResolver: nil)
+
+        XCTAssertFalse(rollout.isEnabled(for: "any-user"))
     }
 }

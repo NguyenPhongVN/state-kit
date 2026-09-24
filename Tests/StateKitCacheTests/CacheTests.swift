@@ -171,15 +171,36 @@ final class CacheTests: XCTestCase {
 
     func testTimeToLiveCacheStillExpiresWhileAlive() async throws {
         var expiredKeys: [String] = []
-        let cache = TimeToLiveCache<String, Int>(ttl: 0.1) { key, _, _ in
+        let cache = TimeToLiveCache<String, Int>(ttl: 0.1, onExpire: { key, _ in
             expiredKeys.append(key)
-        }
+        })
         cache.set("k", 1)
 
         try await Task.sleep(nanoseconds: 500_000_000)
 
         XCTAssertNil(cache.get("k"), "entry must expire while the cache is alive")
         XCTAssertEqual(expiredKeys, ["k"], "background cleanup must still run for live instances")
+    }
+
+    func testTTLExpiryFiresOnlyOnExpire() {
+        var evictCount = 0
+        var expireCount = 0
+        let cache = TimeToLiveCache<String, Int>(
+            ttl: 0.05,
+            onEvict: { _, _, reason in
+                if reason == .expired { evictCount += 1 }
+            },
+            onExpire: { _, _ in expireCount += 1 }
+        )
+        cache.set("k", 1)
+
+        let deadline = Date().addingTimeInterval(1.0)
+        while Date() < deadline, expireCount == 0 {
+            RunLoop.main.run(until: Date().addingTimeInterval(0.01))
+        }
+
+        XCTAssertEqual(expireCount, 1, "expiry must fire onExpire exactly once")
+        XCTAssertEqual(evictCount, 0, "expiry must NOT fire onEvict (capacity/manual only)")
     }
 
     func testLRUStressTenThousandMixedOperations() {

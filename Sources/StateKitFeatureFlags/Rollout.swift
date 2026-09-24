@@ -89,25 +89,35 @@ public struct TimeBasedRollout: RolloutStrategy {
 // MARK: - Geolocation Rollout
 
 /// Enables feature for specific regions.
+///
+/// The host supplies the user's region through `regionResolver` — the rollout
+/// itself never performs geolocation. Region matching is exact string
+/// equality (case-sensitive). Without a resolver (or with one returning nil),
+/// the rollout evaluates to false.
 public struct GeolocationRollout: RolloutStrategy {
     /// Configured share (informational; eligibility is region-based).
     public let percentage: Int
     /// Region codes that would qualify — region resolution is external.
     public let allowedRegions: Set<String>
+    /// Host-supplied resolver returning the user's current region (or nil).
+    private let regionResolver: (@Sendable () -> String?)?
 
     /// Creates a region rollout (requires external region resolution).
-    public init(allowedRegions: Set<String>, percentage: Int = 100) {
+    public init(
+        allowedRegions: Set<String>,
+        percentage: Int = 100,
+        regionResolver: (@Sendable () -> String?)? = nil
+    ) {
         self.allowedRegions = allowedRegions
         self.percentage = max(0, min(100, percentage))
+        self.regionResolver = regionResolver
     }
 
-    /// Checks if region is allowed.
-    /// - Note: This implementation requires additional context to determine user region.
-    /// You must resolve the user's region (via IP geolocation, user preferences, etc.)
-    /// and check against `allowedRegions` manually, or override this method
-    /// in a subclass that has access to location data.
+    /// Checks if the resolved region is allowed. Requires a region resolver;
+    /// without one this evaluates to false.
     public func isEnabled(for userId: String) -> Bool {
-        false
+        guard let region = regionResolver?() else { return false }
+        return allowedRegions.contains(region)
     }
 }
 

@@ -8,6 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Added (polish pass)
+
+- **`useDeferred(_:)`** — deferred value hook: keeps urgent renders responsive while an
+  expensive derived part catches up at lower task priority; rapid changes coalesce to the
+  latest value (React `useDeferredValue` idiom).
+- **`useTransition()`** — `(isPending, start)` pair for marking non-urgent work; `isPending`
+  is observable while the awaited work is in flight.
+- **`SKAsyncCache`** (StateKitCache) — actor-isolated, race-free key-value cache usable from
+  any isolation domain, with optional LRU capacity and TTL expiry.
+- **`RemoteFlagSource` protocol + `InMemoryRemoteFlagSource`** (StateKitFeatureFlags) — hosts
+  can pull flag overrides from any backend; `FeatureFlagRegistry.applyRemoteOverrides(from:)`
+  merges them with remote entries winning over local.
+- **`GeolocationRollout` region resolver** — `init(allowedRegions:percentage:regionResolver:)`
+  makes the rollout actually usable; default (nil resolver) keeps the documented false.
+
+### Changed (polish pass — behavior fix)
+
+- **TTL cache expiry now fires only `onExpire`** — previously it double-fired both `onEvict`
+  and `onExpire`. `onEvict` is now reserved for capacity eviction and manual removal. Hosts
+  relying on the double fire should migrate to `onExpire`.
+
 ### Added (DX essentials)
 
 - **`SKFocusAtom` + `.focus(_:)`** — a read/write lens over one field of a state atom
