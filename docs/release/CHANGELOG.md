@@ -8,6 +8,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Added (DX essentials)
+
+- **`SKFocusAtom` + `.focus(_:)`** — a read/write lens over one field of a state atom
+  (Jotai `focusAtom` idiom): reads derive reactively from the base, writes update the base
+  with only the focused field changed and notify its dependents.
+- **`fileAtom` / `FileAtomStorage`** — JSON-file-backed atom persistence for payloads beyond
+  UserDefaults limits; falls back to the documented default on missing/corrupt files.
+- **`ErrorBoundary` view** (StateKitUI) — wraps a throwing content closure, renders a
+  fallback with the caught error, optional `onError` hook.
+- **DocC publishing** — `docs.yml` workflow builds and publishes API documentation to GitHub
+  Pages on push to `main` (no package dependency); local command documented in the rulebook.
+
+### Added (health bundle)
+
+- **GitHub Actions CI** (`.github/workflows/ci.yml`): build + full test suite + Examples build
+  on every push/PR; SwiftLint runs non-blocking until the codebase is fully clean.
+- **`ProviderContainer.removeObserver(_:)`** — detaches a lifecycle observer by identity;
+  double-removal is a safe no-op (pairs `addObserver`).
+- **`InMemoryStateHistory.replay(using:)`** with `ReplayReport` — real action replay through a
+  host-supplied handler; reports executed/skipped actions and surfaces handler errors.
+- LRU cache stress test (10,000 mixed operations).
+
+### Changed (health bundle)
+
+- **`InMemoryStateHistory.replay()` replaced** with the handler-based `replay(using:)` — the
+  old no-argument version only slept through recorded timings and executed nothing.
+- **`LeastRecentlyUsedCache` internals rewritten to O(1)** (dictionary + doubly linked list);
+  behavior identical, existing tests unchanged.
+- Hardened the timing-sensitive atom task tests with bounded-polling assertions.
+
 ### 💥 Renames (applied within V1 development — zero logic changes)
 
 - **StateConcurrency renamed to the `SK*` convention** (resolves audit F9):

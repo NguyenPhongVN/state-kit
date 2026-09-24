@@ -1,0 +1,46 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Build & publish DocC
+    runs-on: macos-14
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build documentation
+        run: |
+          xcodebuild docbuild \
+            -scheme StateKit \
+            -destination 'generic/platform=macOS' \
+            DOCC_HTML_DIR=docs-archive
+
+      - name: Find documentation archive
+        id: archive
+        run: |
+          archive=$(find .build -path "*StateKit.doccarchive" | head -1)
+          echo "path=$archive" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.archive.outputs.path }}
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

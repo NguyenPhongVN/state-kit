@@ -131,6 +131,16 @@ swiftformat .                          # apply formatting
 
 CI/PR expectation: lint clean or violations explicitly acknowledged in review.
 
+Documentation (DocC) builds from the doc comments — locally:
+
+```bash
+xcodebuild docbuild -scheme StateKit \
+  -destination 'generic/platform=macOS' DOCC_HTML_DIR=docs-archive
+```
+
+CI/PR expectation for docs: the `docs.yml` workflow publishes the DocC archive to GitHub
+Pages on every push to `main`.
+
 ## 9. Rollout & Coverage ledger
 
 The V1 conventions pass covered all 16 modules (MARK skeleton + 100% public-symbol docs).
