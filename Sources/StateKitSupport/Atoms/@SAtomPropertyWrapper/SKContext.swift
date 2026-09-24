@@ -45,6 +45,7 @@ public struct SKContext: DynamicProperty {
 
     // MARK: - Init
 
+    /// Connects to the ambient atom context provided by the enclosing view.
     public init() {}
 
     // MARK: - DynamicProperty

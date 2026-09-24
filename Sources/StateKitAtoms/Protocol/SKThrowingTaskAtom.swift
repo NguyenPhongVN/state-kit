@@ -36,6 +36,7 @@ import StateKit
 ///     }
 /// }
 /// ```
+// MARK: - SKThrowingTaskAtom
 public protocol SKThrowingTaskAtom: SKAsyncPhaseAtom {
     /// Performs the async, potentially throwing work and returns the result.
     ///
@@ -46,7 +47,9 @@ public protocol SKThrowingTaskAtom: SKAsyncPhaseAtom {
     func task(context: SKAtomTransactionContext) async throws -> TaskSuccess
 }
 
+// MARK: - SKThrowingTaskAtom
 extension SKThrowingTaskAtom {
+    /// Compiler-facing: returns (or builds) this atom's cached box in `store`.
     public func _getOrCreateBox(in store: SKAtomStore) -> SKAtomBox<Value> {
         MainActor.assumeIsolated { store.throwingTaskBox(for: self) }
     }

@@ -3,6 +3,7 @@ import Riverpods
 
 // MARK: - Public Namespace
 
+/// Namespace for the dev tools public surface.
 public enum StateKitDevTools {
     public static let version = "2.2.0-beta"
 

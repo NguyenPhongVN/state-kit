@@ -11,6 +11,7 @@ public final class EventTracker: Sendable {
     private var flushTask: Task<Void, Never>?
     private var onFlush: (([AnalyticsEvent]) -> Void)?
 
+    /// Creates a tracker; auto-flush starts immediately.
     public init(config: AnalyticsConfig = AnalyticsConfig()) {
         self.config = config
         startAutoFlush(interval: config.flushInterval)
@@ -114,6 +115,7 @@ public final class EventTracker: Sendable {
 public struct EventLogger: Sendable {
     private let tracker: EventTracker
 
+    /// Wraps a tracker for logging its events.
     public init(tracker: EventTracker) {
         self.tracker = tracker
     }
@@ -157,6 +159,7 @@ public struct EventLogger: Sendable {
 public struct EventFilter: Sendable {
     private let events: [AnalyticsEvent]
 
+    /// Wraps an event list for reporting.
     public init(events: [AnalyticsEvent]) {
         self.events = events
     }

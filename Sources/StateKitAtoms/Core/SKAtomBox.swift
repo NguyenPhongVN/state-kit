@@ -12,6 +12,7 @@ import Observation
 ///   store methods). The type itself is not `@MainActor`-isolated so it can
 ///   be returned from protocol methods without actor-isolation constraints on
 ///   the protocol requirement.
+// MARK: - SKAtomBox
 public final class SKAtomBox<Value>: @unchecked Sendable {
 
     private var _value: Value
@@ -33,9 +34,11 @@ public final class SKAtomBox<Value>: @unchecked Sendable {
         }
     }
 
+    /// Wraps `value` as the atom's observable state.
     public init(_ value: Value) {
         _value = value
     }
 }
 
+// MARK: - SKAtomBox
 extension SKAtomBox: Observable {}

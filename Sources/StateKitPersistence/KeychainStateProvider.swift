@@ -25,6 +25,7 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
     private let encoder: JSONEncoder = JSONEncoder()
     private let decoder: JSONDecoder = JSONDecoder()
 
+    /// - Parameters: unique storage `key`, and the item's protection level.
     public init(key: String, accessibility: KeychainAccessibility = .afterFirstUnlock) {
         self.key = key
         self.accessibility = accessibility
@@ -162,6 +163,7 @@ public enum KeychainError: Error, Sendable {
     case deleteFailed(OSStatus)
     case decodingFailed
 
+    /// Human-readable failure message including the OSStatus code.
     public var localizedDescription: String {
         switch self {
         case .retrievalFailed(let status):
@@ -198,6 +200,7 @@ public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, @unchec
     private let provider: KeychainStateProvider<T>
     private let initial: T
 
+    /// Creates a notifier backed by keychain persistence under `key`.
     public init(
         provider: KeychainStateProvider<T>,
         initial: T
@@ -229,16 +232,21 @@ public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, @unchec
 
 /// AuthToken for API authentication.
 public struct AuthToken: Codable, Sendable {
+    /// The bearer token for API calls.
     public let accessToken: String
+    /// Token used to obtain a new access token, if the server issues one.
     public let refreshToken: String?
+    /// Moment after which the access token must be renewed.
     public let expiresAt: Date
 
+    /// Creates an auth token payload.
     public init(accessToken: String, refreshToken: String? = nil, expiresAt: Date) {
         self.accessToken = accessToken
         self.refreshToken = refreshToken
         self.expiresAt = expiresAt
     }
 
+    /// True once `expiresAt` has passed.
     public var isExpired: Bool {
         Date() > expiresAt
     }
@@ -246,10 +254,14 @@ public struct AuthToken: Codable, Sendable {
 
 /// SecureCredentials for user authentication.
 public struct SecureCredentials: Codable, Sendable {
+    /// The account's user name.
     public let username: String
+    /// The account's secret.
     public let password: String
+    /// When these credentials were last written.
     public let lastUpdated: Date
 
+    /// Whether biometric unlock is turned on.
     public init(username: String, password: String, lastUpdated: Date = Date()) {
         self.username = username
         self.password = password
@@ -259,9 +271,12 @@ public struct SecureCredentials: Codable, Sendable {
 
 /// BiometricState for Touch/Face ID.
 public struct BiometricState: Codable, Sendable {
+    /// Whether biometric unlock is turned on.
     public let isEnabled: Bool
+    /// When the user last passed biometric verification.
     public let lastVerified: Date?
 
+    /// Creates an empty batch; add items with `add(_:forKey:)`.
     public init(isEnabled: Bool = false, lastVerified: Date? = nil) {
         self.isEnabled = isEnabled
         self.lastVerified = lastVerified
@@ -274,6 +289,7 @@ public struct BiometricState: Codable, Sendable {
 public struct KeychainBatch: Sendable {
     private var items: [String: Data] = [:]
 
+    /// Creates an empty batch; add items with `add(_:forKey:)`.
     public init() {}
 
     /// Adds item to batch.

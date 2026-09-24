@@ -178,6 +178,7 @@ extension PublisherPhase: Equatable where Output: Equatable {
 // MARK: - PublisherPhase — Hashable
 
 extension PublisherPhase: Hashable where Output: Hashable {
+    /// Hashes the phase's case and associated value so phases work in sets/dictionaries.
     public func hash(into hasher: inout Hasher) {
         switch self {
         case .idle:            hasher.combine(0)

@@ -1,15 +1,15 @@
 import Foundation
 
 @available(iOS 16.0, macOS 13.0, tvOS 16.0, watchOS 9.0, *)
-extension SCTaskDuration {
-    /// Initializes a SCTaskDuration from a native Swift Duration
+extension SKTaskDuration {
+    /// Initializes a SKTaskDuration from a native Swift Duration
     /// - Parameter duration: The native Swift duration
     public init(_ duration: Swift.Duration) {
         let nanoseconds = duration.components.seconds * 1_000_000_000 + (duration.components.attoseconds / 1_000_000_000)
         self = .nanoseconds(UInt64(nanoseconds))
     }
     
-    /// Converts the SCTaskDuration to a native Swift Duration
+    /// Converts the SKTaskDuration to a native Swift Duration
     public var asDuration: Swift.Duration {
         switch self {
         case .never:

@@ -2,6 +2,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+/// Implements `@StateView`: generates the hook runtime glue for `stateBody`.
 public struct StateViewMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,

@@ -45,6 +45,7 @@ import SwiftSyntaxMacros
 //   form.name.wrappedValue = "Alice"
 //   form.isValid          // true
 
+/// Implements `@HookForm`: form state with validation and submission helpers.
 public struct HookFormMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

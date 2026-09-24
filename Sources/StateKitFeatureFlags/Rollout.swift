@@ -15,9 +15,11 @@ public protocol RolloutStrategy: Sendable {
 
 /// Enables feature for a percentage of users.
 public struct PercentageRollout: RolloutStrategy {
+    /// Configured share of users (0–100).
     public let percentage: Int
     private let userHasher: @Sendable (String) -> Int
 
+    /// - Parameters: target percentage and an optional custom hasher.
     public init(percentage: Int, userHasher: @escaping @Sendable (String) -> Int = { djb2Hash($0) }) {
         self.percentage = max(0, min(100, percentage))
         self.userHasher = userHasher
@@ -35,9 +37,11 @@ public struct PercentageRollout: RolloutStrategy {
 
 /// Enables feature for specific cohorts/user IDs.
 public struct CohortRollout: RolloutStrategy {
+    /// Documentation-only field; cohort membership decides eligibility.
     public let percentage: Int
     private let cohorts: Set<String>
 
+    /// Creates a cohort rollout (percentage is informational).
     public init(cohorts: Set<String>, percentage: Int = 100) {
         self.cohorts = cohorts
         self.percentage = max(0, min(100, percentage))
@@ -53,10 +57,14 @@ public struct CohortRollout: RolloutStrategy {
 
 /// Enables feature at specific times.
 public struct TimeBasedRollout: RolloutStrategy {
+    /// Documentation-only field; the time window decides eligibility.
     public let percentage: Int
+    /// Eligibility opens at this moment.
     public let startDate: Date
+    /// Eligibility closes at this moment, if bounded.
     public let endDate: Date?
 
+    /// Creates a time-window rollout.
     public init(
         percentage: Int,
         startDate: Date,
@@ -82,9 +90,12 @@ public struct TimeBasedRollout: RolloutStrategy {
 
 /// Enables feature for specific regions.
 public struct GeolocationRollout: RolloutStrategy {
+    /// Configured share (informational; eligibility is region-based).
     public let percentage: Int
+    /// Region codes that would qualify — region resolution is external.
     public let allowedRegions: Set<String>
 
+    /// Creates a region rollout (requires external region resolution).
     public init(allowedRegions: Set<String>, percentage: Int = 100) {
         self.allowedRegions = allowedRegions
         self.percentage = max(0, min(100, percentage))
@@ -104,12 +115,17 @@ public struct GeolocationRollout: RolloutStrategy {
 
 /// Gradual rollout: start small, increase over time.
 public struct CanaryRollout: RolloutStrategy {
+    /// Rollout share at the start date.
     public let startPercentage: Int
+    /// Rollout share at the end date.
     public let endPercentage: Int
+    /// When the ramp begins.
     public let startDate: Date
+    /// When the ramp completes.
     public let endDate: Date
     private let userHasher: @Sendable (String) -> Int
 
+    /// Creates a time-based ramp between start and end percentages.
     public init(
         startPercentage: Int = 1,
         endPercentage: Int = 100,
@@ -144,10 +160,6 @@ public struct CanaryRollout: RolloutStrategy {
         let bucket = hash % 100
         return bucket < percentage
     }
-
-    private static let defaultHasher: @Sendable (String) -> Int = { userId in
-        djb2Hash(userId)
-    }
 }
 
 // MARK: - Rollout Manager
@@ -157,6 +169,7 @@ public struct CanaryRollout: RolloutStrategy {
 public final class RolloutManager: Sendable {
     private var rollouts: [String: RolloutStrategy] = [:]
 
+    /// Creates an empty manager.
     public init() {}
 
     /// Registers rollout strategy.
@@ -184,17 +197,23 @@ public final class RolloutManager: Sendable {
 
 /// Rollout stages: internal → beta → general.
 public struct StagedRollout: RolloutStrategy {
+    /// Progressive access levels for a staged rollout.
     public enum Stage: String, Sendable {
         case team   // Internal team only
         case beta   // Beta users
         case general    // All users
     }
 
+    /// Configured share (informational; stage membership decides access).
     public let percentage: Int
+    /// The access stage in effect.
     public let stage: Stage
+    /// Users with team-stage access.
     public let internalUsers: Set<String>
+    /// Users with beta-stage access.
     public let betaUsers: Set<String>
 
+    /// Creates a staged rollout.
     public init(
         stage: Stage,
         percentage: Int = 100,

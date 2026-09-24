@@ -29,6 +29,7 @@
 /// ```
 public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
 
+    /// The awaited result type.
     public typealias TaskSuccess = Success
 
     // MARK: - Storage
@@ -48,6 +49,7 @@ public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
 
     // MARK: - SKTaskAtom
 
+    /// Runs the captured async computation (non-throwing variant).
     public func task(context: SKAtomTransactionContext) async -> Success {
         await _task(context)
     }
@@ -58,6 +60,7 @@ public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
         lhs === rhs
     }
 
+    /// Hashes on the captured identity, not the closure reference.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
     }
@@ -69,6 +72,7 @@ public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
 /// `.failure(error)` in the `AsyncPhase<Success, Error>` value.
 public final class SKThrowingAsyncAtomRef<Success>: SKThrowingTaskAtom, @unchecked Sendable {
 
+    /// The awaited result type.
     public typealias TaskSuccess = Success
 
     // MARK: - Storage
@@ -87,6 +91,7 @@ public final class SKThrowingAsyncAtomRef<Success>: SKThrowingTaskAtom, @uncheck
 
     // MARK: - SKThrowingTaskAtom
 
+    /// Runs the captured async computation (throwing variant).
     public func task(context: SKAtomTransactionContext) async throws -> Success {
         try await _task(context)
     }
@@ -97,6 +102,7 @@ public final class SKThrowingAsyncAtomRef<Success>: SKThrowingTaskAtom, @uncheck
         lhs === rhs
     }
 
+    /// Hashes on the captured identity, not the closure reference.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
     }

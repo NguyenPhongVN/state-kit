@@ -440,6 +440,7 @@ public struct CompositionMetadata {
         case modular
     }
 
+    /// Creates the composed notifier from its child notifiers.
     public init(
         domains: [String],
         debugEnabled: Bool = false,

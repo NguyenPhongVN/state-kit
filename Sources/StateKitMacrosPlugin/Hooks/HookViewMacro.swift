@@ -2,6 +2,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+/// Implements `@HookView`: converts a plain View into a hook-enabled StateView.
 public struct HookViewMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,

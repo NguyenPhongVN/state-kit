@@ -71,6 +71,7 @@ import StateKit
 ///         .eraseToAnyPublisher()
 /// }
 /// ```
+// MARK: - SKPublisherAtom
 public protocol SKPublisherAtom: SKAtom where Value == PublisherPhase<PublisherOutput> {
 
     /// The type of values emitted by this atom's publisher.
@@ -92,7 +93,9 @@ public protocol SKPublisherAtom: SKAtom where Value == PublisherPhase<PublisherO
     func publisher(context: SKAtomTransactionContext) -> AtomPublisher
 }
 
+// MARK: - SKPublisherAtom
 extension SKPublisherAtom {
+    /// Compiler-facing: returns (or builds) this atom's cached box in `store`.
     public func _getOrCreateBox(in store: SKAtomStore) -> SKAtomBox<Value> {
         MainActor.assumeIsolated { store.publisherBox(for: self) }
     }

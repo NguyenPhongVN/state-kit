@@ -21,6 +21,7 @@ import SwiftUI
 ///     }
 /// }
 /// ```
+// MARK: - StateView
 public protocol StateView: View {
     /// The type of view representing the body of this view that can use hooks.
     associatedtype StateBody: View
@@ -32,6 +33,7 @@ public protocol StateView: View {
 /// Default implementation that wires `stateBody` into SwiftUI's `body`
 /// by wrapping it in a `StateScope`.
 @MainActor
+// MARK: - StateView
 public extension StateView {
     var body: some View {
         StateScope {

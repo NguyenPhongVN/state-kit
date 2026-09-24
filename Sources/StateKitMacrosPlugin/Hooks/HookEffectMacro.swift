@@ -33,6 +33,7 @@ import SwiftSyntaxMacros
 //   useLogger()                    // prints "loaded"
 //   useLogger(message: "hello")    // re-runs, prints "hello"
 
+/// Implements `@HookEffect`: post-render effect with optional cleanup.
 public struct HookEffectMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

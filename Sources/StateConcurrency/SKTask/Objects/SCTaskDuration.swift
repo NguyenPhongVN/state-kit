@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Task Duration Enum
 /// Enumeration representing different time durations for task operations
 /// This enum provides a type-safe way to specify time intervals with various units
-public enum SCTaskDuration: Comparable, Sendable {
+public enum SKTaskDuration: Comparable, Sendable {
     case never
     case now
     case nanoseconds(UInt64)
@@ -119,7 +119,7 @@ public enum SCTaskDuration: Comparable, Sendable {
     ///   - lhs: Left-hand side duration
     ///   - rhs: Right-hand side duration
     /// - Returns: Sum of the durations, or .never if overflow occurs
-    public static func + (lhs: SCTaskDuration, rhs: SCTaskDuration) -> SCTaskDuration {
+    public static func + (lhs: SKTaskDuration, rhs: SKTaskDuration) -> SKTaskDuration {
         let (nanoseconds, didOverflow): (UInt64, Bool) = lhs.asNanoseconds.addingReportingOverflow(rhs.asNanoseconds)
         return didOverflow ? .never : .nanoseconds(nanoseconds)
     }
@@ -129,7 +129,7 @@ public enum SCTaskDuration: Comparable, Sendable {
     ///   - lhs: Left-hand side duration
     ///   - rhs: Right-hand side duration
     /// - Returns: Difference of the durations, or .now if underflow occurs
-    public static func - (lhs: SCTaskDuration, rhs: SCTaskDuration) -> SCTaskDuration {
+    public static func - (lhs: SKTaskDuration, rhs: SKTaskDuration) -> SKTaskDuration {
         let (nanoseconds, didOverflow): (UInt64, Bool) = lhs.asNanoseconds.subtractingReportingOverflow(rhs.asNanoseconds)
         return didOverflow ? .now : .nanoseconds(nanoseconds)
     }
@@ -139,7 +139,7 @@ public enum SCTaskDuration: Comparable, Sendable {
     ///   - lhs: Left-hand side duration
     ///   - rhs: Right-hand side duration
     /// - Returns: true if lhs is less than rhs
-    public static func < (lhs: SCTaskDuration, rhs: SCTaskDuration) -> Bool {
+    public static func < (lhs: SKTaskDuration, rhs: SKTaskDuration) -> Bool {
         lhs.asNanoseconds < rhs.asNanoseconds
     }
     
@@ -148,7 +148,7 @@ public enum SCTaskDuration: Comparable, Sendable {
     ///   - lhs: Left-hand side duration
     ///   - rhs: Right-hand side duration
     /// - Returns: true if the durations are equal
-    public static func == (lhs: SCTaskDuration, rhs: SCTaskDuration) -> Bool {
+    public static func == (lhs: SKTaskDuration, rhs: SKTaskDuration) -> Bool {
         lhs.asNanoseconds == rhs.asNanoseconds
     }
 }
@@ -161,7 +161,7 @@ public enum SCTaskDuration: Comparable, Sendable {
 ///   - a: First duration
 ///   - b: Second duration
 /// - Returns: The smaller duration
-func min(_ a: SCTaskDuration, _ b: SCTaskDuration) -> SCTaskDuration {
+func min(_ a: SKTaskDuration, _ b: SKTaskDuration) -> SKTaskDuration {
     a.asNanoseconds <= b.asNanoseconds ? a : b
 }
 
@@ -170,6 +170,6 @@ func min(_ a: SCTaskDuration, _ b: SCTaskDuration) -> SCTaskDuration {
 ///   - a: First duration
 ///   - b: Second duration
 /// - Returns: The larger duration
-func max(_ a: SCTaskDuration, _ b: SCTaskDuration) -> SCTaskDuration {
+func max(_ a: SKTaskDuration, _ b: SKTaskDuration) -> SKTaskDuration {
     a.asNanoseconds <= b.asNanoseconds ? a : b
 }

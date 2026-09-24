@@ -111,15 +111,18 @@ public final class SKAtomStore: @unchecked Sendable {
 
     // MARK: - Init
 
+    /// Creates an empty store; use `.shared` for the process-wide default.
     public init() {}
 
     // MARK: - Box access
 
+    /// Returns the cached box for `key`, or nil if the atom was never accessed.
     @MainActor
     public func existingBox<Value>(for key: SKAtomKey) -> SKAtomBox<Value>? {
         boxes[key] as? SKAtomBox<Value>
     }
 
+    /// Caches `box` under `key` (used by atom protocols on first access).
     @MainActor
     public func storeBox<Value>(_ box: SKAtomBox<Value>, for key: SKAtomKey) {
         boxes[key] = box
@@ -192,12 +195,14 @@ public final class SKAtomStore: @unchecked Sendable {
         }
     }
 
+    /// Records `dependent → dependency` so changes propagate in order.
     @MainActor
     public func addGraphDependency(from dependent: SKAtomKey, to dependency: SKAtomKey) {
         graph.addDependency(from: dependent, to: dependency)
     }
 
     @MainActor
+    /// Drops all edges out of `key` (recomputed on the next evaluation).
     public func clearGraphDependencies(of key: SKAtomKey) {
         let oldDeps = graph.dependencies[key] ?? []
         graph.clearDependencies(of: key)
@@ -214,6 +219,7 @@ public final class SKAtomStore: @unchecked Sendable {
 
     // MARK: - Recomputer registration
 
+    /// Installs the closure that recomputes a derived atom on invalidation.
     @MainActor
     public func registerRecomputer(for key: SKAtomKey, _ body: @escaping @MainActor () -> Void) {
         recomputers[key] = body
@@ -585,13 +591,17 @@ public final class SKSubscriberToken: @unchecked Sendable {
     /// Initializing the contents of this box does not trigger SwiftUI re-renders,
     /// avoiding "Modifying state during view update" warnings.
     public final class Box {
+    /// The live subscriber token; nil until subscribed.
         public var token: SKSubscriberToken?
+        /// The live subscriber token; nil until subscribed.
         public init() {}
+        /// Creates the box; SwiftUI ignores mutations here (no Observation).
     }
 
     private let store: SKAtomStore
     private let key: SKAtomKey
 
+        /// Subscribes to `key` in `store`; releasing the token unsubscribes.
     @MainActor
     public init(store: SKAtomStore, key: SKAtomKey) {
         self.store = store

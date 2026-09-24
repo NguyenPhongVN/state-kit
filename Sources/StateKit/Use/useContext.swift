@@ -30,11 +30,14 @@ import SwiftUI
 ///     }
 /// }
 /// ```
+// MARK: - HookContext
 public final class HookContext<Value>: @unchecked Sendable {
 
     private var _value: Value
     private let _registrar = ObservationRegistrar()
 
+    /// The current shared value. Reading registers this access point for
+    /// change notifications; writing notifies every reader of the same context.
     public var value: Value {
         get {
             _registrar.access(self, keyPath: \.value)
@@ -47,12 +50,16 @@ public final class HookContext<Value>: @unchecked Sendable {
         }
     }
 
+    /// Creates a context holding `value` as its initial shared value.
     public init(_ value: Value) {
         _value = value
     }
 }
 
+// MARK: - HookContext
 extension HookContext {
+    /// Mutates the shared value in place, notifying readers exactly once
+    /// for the whole batch of changes made inside `body`.
     public func update(_ body: (inout Value) -> Void) {
         _registrar.withMutation(of: self, keyPath: \.value) {
             body(&_value)
@@ -61,6 +68,7 @@ extension HookContext {
 }
 
 
+// MARK: - HookContext
 extension HookContext: Observable {}
 
 /// Returns the current value of the given `HookContext`.

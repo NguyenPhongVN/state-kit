@@ -36,6 +36,7 @@ public final class DebugProviderObserver: ProviderObserver {
         filter.map { $0(provider) } ?? true
     }
 
+    /// Logs provider creation.
     public func didAddProvider<P: ProviderProtocol>(
         _ provider: P,
         value: P.State,
@@ -46,6 +47,7 @@ public final class DebugProviderObserver: ProviderObserver {
         print("  value: \(value)")
     }
 
+    /// Logs value changes.
     public func didUpdateProvider<P: ProviderProtocol>(
         _ provider: P,
         oldValue: P.State,
@@ -58,6 +60,7 @@ public final class DebugProviderObserver: ProviderObserver {
         print("  new: \(newValue)")
     }
 
+    /// Logs disposal.
     public func didDisposeProvider<P: ProviderProtocol>(
         _ provider: P,
         container: ProviderContainer

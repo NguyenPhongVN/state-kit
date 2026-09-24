@@ -1,5 +1,52 @@
 # StateKit V1 Migration Guide
 
+**Target Version**: v3.0.0 (Conventions Release)
+**Previous Guide**: v1→v2 (below)
+**Release Date**: September 2026
+**Migration Difficulty**: Easy — mechanical renames only, zero logic changes
+
+---
+
+## 🔄 3.0.0 — Coding Conventions Release
+
+3.0.0 standardizes naming across the library (constitution V). **No logic changed** — only
+symbols were renamed. Apply the find/replace table below (whole-word) and you are done.
+
+### Rename Table — StateConcurrency (`SC*` → `SK*`)
+
+| Before | After |
+|--------|-------|
+| `SCTaskDuration` | `SKTaskDuration` |
+| `SCTimeoutError` | `SKTimeoutError` |
+| `SCGlobalActor` | `SKGlobalActor` |
+| `SCLocalActor` | `SKLocalActor` |
+| `SCRetryPolicy` | `SKRetryPolicy` |
+| `SCConcurrencyLimiter` | `SKConcurrencyLimiter` |
+
+One-command migration:
+
+```bash
+grep -rl "SCTaskDuration\|SCTimeoutError\|SCGlobalActor\|SCLocalActor\|SCRetryPolicy\|SCConcurrencyLimiter" . \
+  | xargs sed -i '' \
+      -e 's/\bSCTaskDuration\b/SKTaskDuration/g' \
+      -e 's/\bSCTimeoutError\b/SKTimeoutError/g' \
+      -e 's/\bSCGlobalActor\b/SKGlobalActor/g' \
+      -e 's/\bSCLocalActor\b/SKLocalActor/g' \
+      -e 's/\bSCRetryPolicy\b/SKRetryPolicy/g' \
+      -e 's/\bSCConcurrencyLimiter\b/SKConcurrencyLimiter/g'
+```
+
+### Other 3.0.0 changes
+
+- `Function.swift` helpers consolidated: `replayNonNil/ignore/identity/absurd/apply` were dead
+  and removed; `guardFunction` lives in StateKitCore, `sourceId` in StateKitSupport.
+- Dead code removed: `CanaryRollout.defaultHasher`.
+- Full doc-comment + MARK sweep across all modules (no API changes).
+
+---
+
+# StateKit V1→V2 Guide (archived)
+
 **Target Version**: v1.0.0  
 **Release Date**: May 2026  
 **Migration Difficulty**: Easy (No breaking changes expected)

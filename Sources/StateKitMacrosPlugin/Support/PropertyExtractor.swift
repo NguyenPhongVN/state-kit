@@ -8,6 +8,7 @@ import SwiftSyntax
 ///
 ///   For `var name: String`:
 ///     PropertyInfo(name: "name", typeName: "String", defaultValue: nil)
+// MARK: - PropertyInfo
 struct PropertyInfo {
     let name: String
     let typeName: String
@@ -29,6 +30,7 @@ struct PropertyInfo {
 /// - Static/class properties
 /// - Lazy properties (Swift memberwise init excludes them)
 /// - Property wrappers (`@State`, `@Binding`, etc.) — handled by their own macro
+// MARK: - PropertyExtractor
 enum PropertyExtractor {
 
     /// Returns the names of all stored properties in a declaration group.

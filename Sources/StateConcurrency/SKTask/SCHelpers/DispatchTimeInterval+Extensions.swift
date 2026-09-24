@@ -1,5 +1,6 @@
 import Foundation
 
+// MARK: - DispatchTimeInterval
 extension DispatchTimeInterval {
     
     /// Creates a `DispatchTimeInterval` from a `TimeInterval` with millisecond precision.
@@ -88,5 +89,6 @@ func - (lhs: DispatchTimeInterval, rhs: DispatchTimeInterval) -> DispatchTimeInt
 // `DispatchTimeInterval` is not `Sendable` as of Swift 5.8.
 // Its conformance is safe since it only represents data
 // See https://github.com/apple/swift/issues/65044
+// MARK: - DispatchTimeInterval
 extension DispatchTimeInterval: @unchecked Sendable {}
 #endif

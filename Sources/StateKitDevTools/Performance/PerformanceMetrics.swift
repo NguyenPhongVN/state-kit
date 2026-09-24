@@ -114,6 +114,7 @@ public struct PerformanceData: Sendable, Comparable {
     /// When this provider was last updated.
     public let lastUpdateTime: Date
 
+        /// Creates an aggregate from recorded per-provider samples.
     public init(
         providerName: String,
         updateFrequency: Double,
@@ -180,14 +181,17 @@ public struct InMemoryPerformanceMetrics: PerformanceMetrics {
     /// Maximum number of records per provider (default: 1000).
     public var maxRecordsPerProvider: Int = 1000
 
+    /// Providers ranked by average compute time.
     public var slowestProviders: [PerformanceData] {
         allMetrics.sorted().prefix(10).map { $0 }
     }
 
+    /// Providers ranked by update count.
     public var mostUpdated: [PerformanceData] {
         allMetrics.sorted { $0.updateFrequency > $1.updateFrequency }.prefix(10).map { $0 }
     }
 
+    /// Every recorded sample.
     public var allMetrics: [PerformanceData] {
         metrics.compactMap { providerName, records in
             guard !records.isEmpty else { return nil }
@@ -219,18 +223,22 @@ public struct InMemoryPerformanceMetrics: PerformanceMetrics {
         }
     }
 
+    /// Updates per second for the named provider.
     public func updateFrequency(for providerName: String) -> Double {
         allMetrics.first(where: { $0.providerName == providerName })?.updateFrequency ?? 0
     }
 
+    /// Average compute time in milliseconds.
     public func computeTime(for providerName: String) -> Double {
         allMetrics.first(where: { $0.providerName == providerName })?.averageComputeTime ?? 0
     }
 
+    /// Total recomputations recorded.
     public func callCount(for providerName: String) -> Int {
         allMetrics.first(where: { $0.providerName == providerName })?.totalCallCount ?? 0
     }
 
+    /// Estimated retained bytes for the provider.
     public func memoryUsage(for providerName: String) -> Int {
         allMetrics.first(where: { $0.providerName == providerName })?.estimatedMemory ?? 0
     }
@@ -269,6 +277,7 @@ public struct InMemoryPerformanceMetrics: PerformanceMetrics {
         lastUpdateTimes = [:]
     }
 
+    /// Renders a human-readable performance report.
     public func generateReport() -> String {
         var report = "Performance Report\n"
         report += "==================\n\n"

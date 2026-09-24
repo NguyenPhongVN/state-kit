@@ -2,6 +2,7 @@ import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
+/// Implements `@AsyncView`: generates phase-driven view members for async atoms.
 public struct AsyncViewMacro: MemberMacro {
     public static func expansion(
         of node: AttributeSyntax,

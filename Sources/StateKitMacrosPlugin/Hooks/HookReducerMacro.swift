@@ -32,6 +32,7 @@ import SwiftSyntaxMacros
 //   dispatch("add")
 //   (count, dispatch) = useCounter(initial: 10)  // still 11 (persisted)
 
+/// Implements `@HookReducer`: reducer-style state updates.
 public struct HookReducerMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

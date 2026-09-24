@@ -65,6 +65,7 @@ public struct SKAtomScopeView<Content: View>: View {
 
     // MARK: - Body
 
+    /// Renders the content with the scoped store available to descendant atom hooks.
     public var body: some View {
         let activeStore = injectedStore ?? ownedStore
         content

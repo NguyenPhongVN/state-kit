@@ -19,11 +19,11 @@ extension Task where Success == Never, Failure == Never {
     /// // Sleep for 100 nanoseconds
     /// try await Task.sleep(duration: .nanoseconds(100))
     /// ```
-     public static func sleep(duration value: SCTaskDuration) async throws {
+     public static func sleep(duration value: SKTaskDuration) async throws {
         try await Task.sleep(nanoseconds: value.asNanoseconds)
     }
     
      public static func sleep(seconds: TimeInterval) async throws {
-        try await Task.sleep(duration: SCTaskDuration(seconds))
+        try await Task.sleep(duration: SKTaskDuration(seconds))
     }
 }

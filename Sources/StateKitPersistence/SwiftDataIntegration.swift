@@ -17,6 +17,7 @@ import StateKit
 /// }
 /// ```
 public struct SwiftDataProvider<T: Sendable> {
+    /// Async factory the provider runs on first access.
     public typealias Build = (SwiftDataProviderRef) async throws -> T
 
     private let build: Build
@@ -29,8 +30,10 @@ public struct SwiftDataProvider<T: Sendable> {
 
 /// Reference type for SwiftData provider context.
 public final class SwiftDataProviderRef: @unchecked Sendable {
+    /// The SwiftData context this feature reads and writes.
     public let modelContext: ModelContext
 
+    /// Wraps an existing context for provider access.
     public init(modelContext: ModelContext) {
         self.modelContext = modelContext
     }
@@ -59,6 +62,7 @@ public struct SwiftDataSync<T: Sendable & Codable> {
     private let encoder: JSONEncoder = JSONEncoder()
     private let decoder: JSONDecoder = JSONDecoder()
 
+    /// Bundles persisted state with its SwiftData context.
     public init(state: T, context: ModelContext) {
         self.state = state
         self.context = context
@@ -107,6 +111,7 @@ public final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, @unchecked 
     private let initialState: T
     private let context: ModelContext
 
+    /// Creates the notifier starting from `initialState`.
     public init(initialState: T, context: ModelContext) {
         self.initialState = initialState
         self.context = context
@@ -178,6 +183,7 @@ public struct AutoPersist<T: Sendable & Codable> {
     private let key: String
     private var cachedData: T
 
+    /// Creates a notifier bound to the SwiftData-backed key.
     public init(key: String, initial: T) {
         self.key = key
         self.cachedData = initial

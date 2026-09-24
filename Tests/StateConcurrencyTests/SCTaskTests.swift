@@ -2,8 +2,8 @@ import Testing
 import Foundation
 @testable import StateConcurrency
 
-@Suite("StateConcurrency — SCTask Extensions")
-struct SCTaskTests {
+@Suite("StateConcurrency — SKTask Extensions")
+struct SKTaskTests {
     
     final class AtomicCounter: @unchecked Sendable {
         private var _count = 0

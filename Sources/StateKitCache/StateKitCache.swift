@@ -43,16 +43,22 @@ public protocol CacheProtocol<Key, Value>: Sendable {
 
 /// Statistics about cache performance.
 public struct CacheStats: Sendable {
+    /// Number of successful lookups.
     public let hits: Int
+    /// Number of failed lookups.
     public let misses: Int
+    /// Current number of cached entries.
     public let size: Int
+    /// Maximum entries before eviction (`Int.max` = unbounded).
     public let capacity: Int
 
+    /// Successful lookups as a fraction of all lookups (0 when empty).
     public var hitRate: Double {
         let total = Double(hits + misses)
         return total > 0 ? Double(hits) / total : 0
     }
 
+    /// Creates a statistics snapshot.
     public init(hits: Int = 0, misses: Int = 0, size: Int = 0, capacity: Int = 0) {
         self.hits = hits
         self.misses = misses
@@ -75,5 +81,7 @@ public enum EvictionReason: String, Sendable {
 }
 
 // Re-export main cache types
+    /// Convenience alias.
 public typealias LRUCache = LeastRecentlyUsedCache
+    /// Convenience alias.
 public typealias TTLCache = TimeToLiveCache

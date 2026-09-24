@@ -3,8 +3,10 @@ import Combine
 
 nonisolated(unsafe) private var cancellablesKey: UInt8 = 0
 
+// MARK: - CancellableStore
 protocol CancellableStore: AnyObject {}
 
+// MARK: - CancellableStore
 extension CancellableStore {
     var cancellables: Set<AnyCancellable> {
         get {
@@ -33,6 +35,7 @@ extension CancellableStore {
     }
 }
 
+// MARK: - AnyCancellable
 extension AnyCancellable {
     func store<Object: CancellableStore>(in object: Object) {
         var cancellables = object.cancellables

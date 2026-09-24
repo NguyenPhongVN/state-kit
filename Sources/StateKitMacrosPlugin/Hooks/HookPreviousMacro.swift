@@ -30,6 +30,7 @@ import SwiftSyntaxMacros
 //   let prev = useScore(score: 10)  // nil (first render)
 //   let prev = useScore(score: 20)  // 10 (previous render)
 
+/// Implements `@HookPrevious`: exposes the previous render's value.
 public struct HookPreviousMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

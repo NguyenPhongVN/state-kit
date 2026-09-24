@@ -34,6 +34,7 @@ import SwiftSyntaxMacros
 //   useUploader()                          // default URL
 //   useUploader(url: "https://other.com")  // re-runs effect
 
+/// Implements `@AsyncHook`: generates the async hook peer with phase state.
 public struct AsyncHookMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

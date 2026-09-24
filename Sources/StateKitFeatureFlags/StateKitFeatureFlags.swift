@@ -44,22 +44,26 @@ public enum FeatureFlagValue: Sendable {
     case double(Double)
     case percentage(Int)  // 0-100
 
+    /// Typed read for boolean flags.
     public var boolValue: Bool? {
         if case .boolean(let value) = self { return value }
         return nil
     }
 
+    /// Typed read for string flags.
     public var stringValue: String? {
         if case .string(let value) = self { return value }
         return nil
     }
 
+    /// Typed read for integer flags.
     public var intValue: Int? {
         if case .integer(let value) = self { return value }
         if case .percentage(let value) = self { return value }
         return nil
     }
 
+    /// Typed read for double flags.
     public var doubleValue: Double? {
         if case .double(let value) = self { return value }
         return nil
@@ -70,11 +74,16 @@ public enum FeatureFlagValue: Sendable {
 
 /// Type-safe feature flag.
 public struct FeatureFlag<T: Sendable>: Sendable {
+    /// Stable flag identifier.
     public let id: String
+    /// Human-readable flag name.
     public let name: String
+    /// What toggling the flag controls.
     public let description: String
+    /// Value used when no override or rollout applies.
     public let defaultValue: T
 
+    /// Defines a flag with its default and metadata.
     public init(
         id: String,
         name: String,
@@ -96,6 +105,7 @@ public final class FeatureFlagRegistry: Sendable {
     private var flags: [String: Any] = [:]
     private var overrides: [String: Any] = [:]
 
+    /// Creates an empty registry.
     public init() {}
 
     /// Registers a feature flag.
@@ -140,12 +150,18 @@ public final class FeatureFlagRegistry: Sendable {
 
 /// Status of a feature flag rollout.
 public struct FeatureFlagStatus: Sendable {
+    /// The evaluated flag.
     public let flagId: String
+    /// The evaluation result.
     public let isEnabled: Bool
+    /// The rollout share in effect.
     public let rolloutPercentage: Int
+    /// Explicitly enabled users (overrides the percentage).
     public let enabledFor: Set<String>
+    /// When the snapshot was taken.
     public let lastUpdated: Date
 
+    /// Captures a point-in-time evaluation snapshot.
     public init(
         flagId: String,
         isEnabled: Bool,

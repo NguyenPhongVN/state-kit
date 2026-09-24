@@ -79,6 +79,7 @@ public final class ProviderContainer {
 
     private let overrides: [ProviderID: ProviderOverride]
 
+    /// Fallback container consulted when a provider has no local override here.
     public let parent: ProviderContainer?
 
     @ObservationIgnored

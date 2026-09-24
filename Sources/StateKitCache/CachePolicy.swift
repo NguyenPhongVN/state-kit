@@ -9,6 +9,7 @@ public struct CacheAsidePattern<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let fetcher: (Key) async throws -> Value
 
+    /// Read-through policy: fetches on miss, stores into the LRU cache.
     public init(cache: LeastRecentlyUsedCache<Key, Value>, fetcher: @escaping (Key) async throws -> Value) {
         self.cache = cache
         self.fetcher = fetcher
@@ -32,6 +33,7 @@ public struct WriteThroughPattern<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let writer: (Key, Value) async throws -> Void
 
+    /// Write-through policy: writes go to both the source of truth and the cache.
     public init(cache: LeastRecentlyUsedCache<Key, Value>, writer: @escaping (Key, Value) async throws -> Void) {
         self.cache = cache
         self.writer = writer
@@ -96,6 +98,7 @@ public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let targetSize: Int
 
+    /// Eviction policy: trims the cache when it exceeds `targetSize`.
     public init(cache: LeastRecentlyUsedCache<Key, Value>, targetSize: Int = 10) {
         self.cache = cache
         self.targetSize = targetSize
@@ -123,6 +126,7 @@ public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
 public struct CachePreloader<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
 
+    /// Refresh-all policy: re-runs the fetcher for every cached key.
     public init(cache: LeastRecentlyUsedCache<Key, Value>) {
         self.cache = cache
     }
@@ -146,6 +150,7 @@ public struct CachePreloader<Key: Hashable & Sendable, Value: Sendable> {
 public struct CacheWarmer<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
 
+    /// Refresh-all policy: re-runs the fetcher for every cached key.
     public init(cache: LeastRecentlyUsedCache<Key, Value>) {
         self.cache = cache
     }
@@ -167,6 +172,7 @@ public enum CacheInvalidationStrategy {
     case debounced(TimeInterval)  // Invalidate after delay
     case batch(Int)            // Invalidate in batches
 
+    /// Applies the policy against a snapshot of current cache statistics.
     @MainActor
     public func apply<K: Hashable & Sendable, V: Sendable>(
         to cache: LeastRecentlyUsedCache<K, V>,
@@ -196,6 +202,7 @@ public enum CacheInvalidationStrategy {
 public struct CacheMonitor<Key: Hashable & Sendable, Value: Sendable> {
     private let cache: LeastRecentlyUsedCache<Key, Value>
 
+    /// Refresh-all policy: re-runs the fetcher for every cached key.
     public init(cache: LeastRecentlyUsedCache<Key, Value>) {
         self.cache = cache
     }

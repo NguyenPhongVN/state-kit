@@ -96,6 +96,7 @@ public protocol SKAtomWithEffect: SKAtom {
 public protocol SKStateAtomWithEffect: SKStateAtom, SKAtomWithEffect {}
 
 extension SKAtomWithEffect {
+    /// Compiler-facing: installs lifecycle effects for the conforming atom.
     @MainActor
     public func _registerEffect(in store: SKAtomStore, key: SKAtomKey) {
         // This is tricky because we need the box, but box creation is atom-kind specific.
@@ -106,6 +107,7 @@ extension SKAtomWithEffect {
 }
 
 extension SKStateAtomWithEffect {
+    /// Compiler-facing: installs lifecycle effects for the conforming atom.
     @MainActor
     public func _registerEffect(in store: SKAtomStore, key: SKAtomKey) {
         let box = store.stateBox(for: self)
@@ -119,6 +121,7 @@ extension SKStateAtomWithEffect {
 public protocol SKValueAtomWithEffect: SKValueAtom, SKAtomWithEffect {}
 
 extension SKValueAtomWithEffect {
+    /// Compiler-facing: installs lifecycle effects for the conforming atom.
     @MainActor
     public func _registerEffect(in store: SKAtomStore, key: SKAtomKey) {
         let box = store.valueBox(for: self)

@@ -607,11 +607,11 @@ Task helpers (retry/timeout/gather/race/debounce/throttle) + async streams.
 - **struct `AsyncValueStream<Element: Sendable>`** — `StateConcurrency/SCAsyncSequence/AsyncValueStream.swift`
 - **class `ObservableTask<Success: Sendable, Failure: Error>`** — `StateConcurrency/SCTask/Objects/ObservableTask.swift`
 - **enum `State`** — `StateConcurrency/SCTask/Objects/ObservableTask.swift`
-- **actor `SCConcurrencyLimiter`** — `StateConcurrency/SCTask/Objects/SCConcurrencyLimiter.swift`
-- **actor `SCLocalActor`** — `StateConcurrency/SCTask/Objects/SCLocalActor.swift`
-- **enum `SCRetryPolicy`** — `StateConcurrency/SCTask/Objects/SCRetryPolicy.swift`
-- **enum `SCTaskDuration`** — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift`
-- **struct `SCTimeoutError`** — `StateConcurrency/SCTask/Objects/TimeoutError.swift`
+- **actor `SKConcurrencyLimiter`** — `StateConcurrency/SCTask/Objects/SKConcurrencyLimiter.swift`
+- **actor `SKLocalActor`** — `StateConcurrency/SCTask/Objects/SKLocalActor.swift`
+- **enum `SKRetryPolicy`** — `StateConcurrency/SCTask/Objects/SKRetryPolicy.swift`
+- **enum `SKTaskDuration`** — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift`
+- **struct `SKTimeoutError`** — `StateConcurrency/SCTask/Objects/TimeoutError.swift`
 - **struct `AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>`** — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift`
 - **typealias `Element`** — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift`
 - **struct `Iterator`** — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift`
@@ -657,29 +657,29 @@ Task helpers (retry/timeout/gather/race/debounce/throttle) + async streams.
 - `init(operation: @Sendable @escaping () async throws(Failure) -> Success)` — `StateConcurrency/SCTask/Objects/ObservableTask.swift:72`
 - `func run()` — `StateConcurrency/SCTask/Objects/ObservableTask.swift:77`
 - `func cancel()` — `StateConcurrency/SCTask/Objects/ObservableTask.swift:96`
-- `init(maxConcurrentTasks: Int)` — `StateConcurrency/SCTask/Objects/SCConcurrencyLimiter.swift:16`
-- `func execute<T: Sendable>(_ operation: @Sendable () async throws -> T) async throws -> T` — `StateConcurrency/SCTask/Objects/SCConcurrencyLimiter.swift:23`
-- `init()` — `StateConcurrency/SCTask/Objects/SCLocalActor.swift:138`
-- `func withLock<T>(_ body: () throws -> T) rethrows -> T` — `StateConcurrency/SCTask/Objects/SCLocalActor.swift:158`
-- `func delay(forAttempt attempt: Int) -> SCTaskDuration?` — `StateConcurrency/SCTask/Objects/SCRetryPolicy.swift:23`
-- `init(_ duration: Swift.Duration)` — `StateConcurrency/SCTask/Objects/SCTaskDuration+Native.swift:7`
-- `var asDuration: Swift.Duration` — `StateConcurrency/SCTask/Objects/SCTaskDuration+Native.swift:13`
-- `init(_ seconds: TimeInterval)` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:23`
-- `var asTimeInterval: TimeInterval` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:38`
-- `var asMilliseconds: UInt64` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:68`
-- `var asNanoseconds: UInt64` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:98`
-- `static func + (lhs: SCTaskDuration, rhs: SCTaskDuration) -> SCTaskDuration` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:122`
-- `static func - (lhs: SCTaskDuration, rhs: SCTaskDuration) -> SCTaskDuration` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:132`
-- `static func < (lhs: SCTaskDuration, rhs: SCTaskDuration) -> Bool` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:142`
-- `static func == (lhs: SCTaskDuration, rhs: SCTaskDuration) -> Bool` — `StateConcurrency/SCTask/Objects/SCTaskDuration.swift:151`
+- `init(maxConcurrentTasks: Int)` — `StateConcurrency/SCTask/Objects/SKConcurrencyLimiter.swift:16`
+- `func execute<T: Sendable>(_ operation: @Sendable () async throws -> T) async throws -> T` — `StateConcurrency/SCTask/Objects/SKConcurrencyLimiter.swift:23`
+- `init()` — `StateConcurrency/SCTask/Objects/SKLocalActor.swift:138`
+- `func withLock<T>(_ body: () throws -> T) rethrows -> T` — `StateConcurrency/SCTask/Objects/SKLocalActor.swift:158`
+- `func delay(forAttempt attempt: Int) -> SKTaskDuration?` — `StateConcurrency/SCTask/Objects/SKRetryPolicy.swift:23`
+- `init(_ duration: Swift.Duration)` — `StateConcurrency/SCTask/Objects/SKTaskDuration+Native.swift:7`
+- `var asDuration: Swift.Duration` — `StateConcurrency/SCTask/Objects/SKTaskDuration+Native.swift:13`
+- `init(_ seconds: TimeInterval)` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:23`
+- `var asTimeInterval: TimeInterval` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:38`
+- `var asMilliseconds: UInt64` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:68`
+- `var asNanoseconds: UInt64` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:98`
+- `static func + (lhs: SKTaskDuration, rhs: SKTaskDuration) -> SKTaskDuration` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:122`
+- `static func - (lhs: SKTaskDuration, rhs: SKTaskDuration) -> SKTaskDuration` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:132`
+- `static func < (lhs: SKTaskDuration, rhs: SKTaskDuration) -> Bool` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:142`
+- `static func == (lhs: SKTaskDuration, rhs: SKTaskDuration) -> Bool` — `StateConcurrency/SCTask/Objects/SKTaskDuration.swift:151`
 - `let seconds: TimeInterval` — `StateConcurrency/SCTask/Objects/TimeoutError.swift:43`
 - `let fileID: String` — `StateConcurrency/SCTask/Objects/TimeoutError.swift:47`
 - `let line: UInt` — `StateConcurrency/SCTask/Objects/TimeoutError.swift:51`
 - `init( _ seconds: TimeInterval, fileID: String = #fileID, line: UInt = #line )` — `StateConcurrency/SCTask/Objects/TimeoutError.swift:68`
 - `var debugDescription: String` — `StateConcurrency/SCTask/Objects/TimeoutError.swift:87`
 - `static func runImmediately<T: Sendable>( _ operation: @MainActor () throws -> T, file: StaticString = #file, line: UInt = #line` — `StateConcurrency/SCTask/SCHelpers/MainActor+Extensions.swift:71`
-- `func timeout(_ duration: SCTaskDuration) -> AsyncThrowingTimeoutSequence<Self>` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:7`
-- `func debounce(for duration: SCTaskDuration) -> AsyncDebounceSequence<Self>` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:14`
+- `func timeout(_ duration: SKTaskDuration) -> AsyncThrowingTimeoutSequence<Self>` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:7`
+- `func debounce(for duration: SKTaskDuration) -> AsyncDebounceSequence<Self>` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:14`
 - `mutating func next() async throws -> Base.Element?` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:34`
 - `func makeAsyncIterator() -> Iterator` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:39`
 - `mutating func next() async throws -> Base.Element?` — `StateConcurrency/SCTask/SCTask+AsyncSequence.swift:106`
@@ -690,11 +690,11 @@ Task helpers (retry/timeout/gather/race/debounce/throttle) + async streams.
 - `static func gatherValues<T: Sendable>( _ operations: [@Sendable () async throws -> T], maxConcurrentTasks: Int? = nil` — `StateConcurrency/SCTask/Task+Gather.swift:69`
 - `static func race<T: Sendable>( _ operations: [@Sendable () async throws -> T]` — `StateConcurrency/SCTask/Task+Race.swift:12`
 - `static func withResult<T: Sendable, E: Sendable>(priority: TaskPriority? = nil, operation: sending @escaping @isolated(any) () async throws(E) -> T) …` — `StateConcurrency/SCTask/Task+Result.swift:42`
-- `static func retrying<T: Sendable>( priority: TaskPriority? = nil, maxRetryCount: Int = 3, policy: SCRetryPolicy = .exponential(initialDelay: .seconds…` — `StateConcurrency/SCTask/Task+Retry.swift:12`
-- `static func retrying<T: Sendable>( priority: TaskPriority? = nil, maxRetryCount: Int = 3, retryInterval: SCTaskDuration? = nil, isRetryingCallback: (…` — `StateConcurrency/SCTask/Task+Retry.swift:43`
-- `static func sleep(duration value: SCTaskDuration) async throws` — `StateConcurrency/SCTask/Task+Sleep.swift:22`
+- `static func retrying<T: Sendable>( priority: TaskPriority? = nil, maxRetryCount: Int = 3, policy: SKRetryPolicy = .exponential(initialDelay: .seconds…` — `StateConcurrency/SCTask/Task+Retry.swift:12`
+- `static func retrying<T: Sendable>( priority: TaskPriority? = nil, maxRetryCount: Int = 3, retryInterval: SKTaskDuration? = nil, isRetryingCallback: (…` — `StateConcurrency/SCTask/Task+Retry.swift:43`
+- `static func sleep(duration value: SKTaskDuration) async throws` — `StateConcurrency/SCTask/Task+Sleep.swift:22`
 - `static func sleep(seconds: TimeInterval) async throws` — `StateConcurrency/SCTask/Task+Sleep.swift:26`
-- `static func throwingTimeout<T: Sendable>( _ timeout: SCTaskDuration, operation: @Sendable @escaping () async throws -> T` — `StateConcurrency/SCTask/Task+Timeout.swift:62`
+- `static func throwingTimeout<T: Sendable>( _ timeout: SKTaskDuration, operation: @Sendable @escaping () async throws -> T` — `StateConcurrency/SCTask/Task+Timeout.swift:62`
 
 ---
 

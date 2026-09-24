@@ -123,10 +123,10 @@ let counterProvider = NotifierProvider { CounterNotifier() }
 
 ## Flow 4 — Async / side effects (StateConcurrency)
 
-- Wrap task: `Task.throwingTimeout(.minutes(1)) { ... }` (ném `SCTimeoutError`), `Task.retrying(...)` (retry policy `SCRetryPolicy`), `Task.gather`/`gatherThrowing`/`gatherValues` (chạy song song), `Task.race` (ai xong trước dùng trước), `Task.sleep(seconds:duration:)`.
+- Wrap task: `Task.throwingTimeout(.minutes(1)) { ... }` (ném `SKTimeoutError`), `Task.retrying(...)` (retry policy `SKRetryPolicy`), `Task.gather`/`gatherThrowing`/`gatherValues` (chạy song song), `Task.race` (ai xong trước dùng trước), `Task.sleep(seconds:duration:)`.
 - Streams: `AsyncCurrentValueStream`, `AsyncPassthroughStream`, `AsyncValueStream`, `AnyAsyncSequence` + extension trên `AsyncSequence`.
 - UI action: `DebouncedAction(interval:operation:)`, `ThrottledAction(interval:operation:)` — call bằng `callAsFunction`.
-- Hạ tầng: `ObservableTask`, `SCConcurrencyLimiter`, `SCGlobalActor`, `SCLocalActor`, `CheckedContinuationWrapper`, `SCTaskDuration`.
+- Hạ tầng: `ObservableTask`, `SKConcurrencyLimiter`, `SKGlobalActor`, `SKLocalActor`, `CheckedContinuationWrapper`, `SKTaskDuration`.
 
 Lưu ý: timeout API public là `Task.throwingTimeout` (không có bản non-throwing public); `StateConcurrency` phụ thuộc cả `StateKit` và `ComposableArchitecture` (TCA có sẵn trong dependency nếu cần).
 

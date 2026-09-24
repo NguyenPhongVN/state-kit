@@ -29,6 +29,7 @@ import SwiftSyntaxMacros
 //   toggle()           // isEditing → true
 //   toggle()           // isEditing → false
 
+/// Implements `@HookToggle`: boolean state with flip helper.
 public struct HookToggleMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

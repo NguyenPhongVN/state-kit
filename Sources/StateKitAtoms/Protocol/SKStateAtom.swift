@@ -31,6 +31,7 @@
 /// let counterAtom = atom(0)           // SKAtomRef<Int>
 /// @SKState(counterAtom) var count
 /// ```
+// MARK: - SKStateAtom
 public protocol SKStateAtom: SKAtom {
     /// Returns the initial (default) value for this atom.
     ///
@@ -42,7 +43,9 @@ public protocol SKStateAtom: SKAtom {
     func defaultValue(context: SKAtomTransactionContext) -> Value
 }
 
+// MARK: - SKStateAtom
 extension SKStateAtom {
+    /// Compiler-facing: returns (or builds) this atom's cached box in `store`.
     public func _getOrCreateBox(in store: SKAtomStore) -> SKAtomBox<Value> {
         // All callers are on the main actor (SwiftUI views, @MainActor methods).
         // MainActor.assumeIsolated asserts this at runtime in debug builds.

@@ -58,6 +58,7 @@ public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecke
     private var observers: [(T) -> Void] = []
     private let lock = NSLock()
 
+    /// Creates storage bound to standard defaults or a named suite.
     public init(
         type: T.Type,
         userDefaultsKey: String? = nil,
@@ -114,10 +115,14 @@ public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecke
 
 /// User preferences with common app settings.
 public struct AppPreferences: UserDefaultsSerializable {
+    /// Whether dark appearance is enabled.
     public let isDarkMode: Bool
+    /// Preferred language code.
     public let language: String
+    /// When the app was last opened, if recorded.
     public let lastOpenedDate: Date?
 
+    /// Creates storage bound to standard defaults or a named suite.
     public init(isDarkMode: Bool = false, language: String = "en", lastOpenedDate: Date? = nil) {
         self.isDarkMode = isDarkMode
         self.language = language
@@ -136,10 +141,14 @@ public struct AppPreferences: UserDefaultsSerializable {
 
 /// Cache metadata for managing stored data.
 public struct CacheMetadata: UserDefaultsSerializable {
+    /// When the cache metadata was written.
     public let lastUpdated: Date
+    /// Cache schema version.
     public let version: Int
+    /// Entries currently cached.
     public let itemCount: Int
 
+    /// Creates cache metadata (defaults capture the current time).
     public init(lastUpdated: Date = Date(), version: Int = 1, itemCount: Int = 0) {
         self.lastUpdated = lastUpdated
         self.version = version
@@ -152,10 +161,14 @@ public struct CacheMetadata: UserDefaultsSerializable {
 
 /// User session information.
 public struct SessionInfo: UserDefaultsSerializable {
+    /// Signed-in user's identifier, if any.
     public let userId: String?
+    /// Session token, if signed in.
     public let sessionToken: String?
+    /// When the current session started, if any.
     public let loginTime: Date?
 
+    /// Creates a versioned atom backed by the given storage.
     public init(userId: String? = nil, sessionToken: String? = nil, loginTime: Date? = nil) {
         self.userId = userId
         self.sessionToken = sessionToken
@@ -165,6 +178,7 @@ public struct SessionInfo: UserDefaultsSerializable {
     public static let userDefaultsKey = "com.statekit.sessionInfo"
     public static let defaultValue = SessionInfo(userId: nil, sessionToken: nil, loginTime: nil)
 
+    /// True when a session token is present.
     public var isAuthenticated: Bool {
         userId != nil && sessionToken != nil
     }
@@ -209,6 +223,7 @@ public struct PersistenceMigration<T: UserDefaultsSerializable> {
     private let storage: PersistentAtomStorage<T>
     private let currentVersion: Int
 
+    /// Creates a versioned atom backed by the given storage.
     public init(storage: PersistentAtomStorage<T>, version: Int) {
         self.storage = storage
         self.currentVersion = version

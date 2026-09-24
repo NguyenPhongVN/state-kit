@@ -14,14 +14,17 @@ public struct AnyAsyncSequence<Element>: AsyncSequence {
         makeAsyncIteratorClosure = { AnyAsyncIterator(sequence.makeAsyncIterator()) }
     }
     
+/// Type-erased async iterator that boxes any concrete iterator.
     public struct AnyAsyncIterator: AsyncIteratorProtocol {
         private let nextClosure: () async throws -> Element?
         
+    /// Boxes `iterator` behind the type-erased interface.
         public init<T: AsyncIteratorProtocol>(_ iterator: T) where T.Element == Element {
             var iterator = iterator
             nextClosure = { try await iterator.next() }
         }
         
+    /// Forwards to the boxed iterator.
         public func next() async throws -> Element? {
             try await nextClosure()
         }
@@ -29,10 +32,13 @@ public struct AnyAsyncSequence<Element>: AsyncSequence {
     
     // MARK: - AsyncSequence
     
+    /// The erased element type.
     public typealias Element = Element
     
+    /// The boxed iterator type.
     public typealias AsyncIterator = AnyAsyncIterator
     
+    /// Forwards to the boxed iterator.
     public func makeAsyncIterator() -> AsyncIterator {
         AnyAsyncIterator(makeAsyncIteratorClosure())
     }

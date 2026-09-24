@@ -31,6 +31,7 @@ import SwiftSyntaxMacros
 // Unlike HookRef, HookState requires at least one stored property
 // because Binding<EmptyStruct> is not useful.
 
+/// Implements `@HookState`: basic hook-backed state property.
 public struct HookStateMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

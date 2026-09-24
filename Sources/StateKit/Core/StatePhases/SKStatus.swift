@@ -1,5 +1,8 @@
 import Foundation
 
+/// Case-only status mirrors of the phase types, for consumers that need the
+/// lifecycle state without associated values (e.g. badges, simple switches).
+// MARK: - SKStatus
 public enum SKStatus: Equatable, Hashable, Sendable {
     /// No async work has started yet.
     case idle
@@ -11,6 +14,8 @@ public enum SKStatus: Equatable, Hashable, Sendable {
     case failure
 }
 
+/// Status mirror for `AsyncSequencePhase` (no associated values).
+// MARK: - AsyncSequenceStatus
 public enum AsyncSequenceStatus {
     /// Iteration has not started yet.
     case idle
@@ -24,6 +29,8 @@ public enum AsyncSequenceStatus {
     case failure
 }
 
+/// Status mirror for `PublisherPhase` (no associated values).
+// MARK: - PublisherStatus
 public enum PublisherStatus {
     /// No subscription has started yet.
     case idle

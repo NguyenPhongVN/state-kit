@@ -37,6 +37,7 @@ import SwiftSyntaxMacros
 //   usePoller()               // polls every 5000ms
 //   usePoller(intervalMs: 1000) // re-runs, polls every 1000ms
 
+/// Implements `@HookInterval`: periodic timer hook.
 public struct HookIntervalMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

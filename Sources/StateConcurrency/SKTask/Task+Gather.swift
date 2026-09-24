@@ -16,7 +16,7 @@ extension Task where Success == Never, Failure == Never {
         _ operations: [@Sendable () async throws -> T],
         maxConcurrentTasks: Int? = nil
     ) async -> [Result<T, Error>] {
-        let limiter = maxConcurrentTasks.map { SCConcurrencyLimiter(maxConcurrentTasks: $0) }
+        let limiter = maxConcurrentTasks.map { SKConcurrencyLimiter(maxConcurrentTasks: $0) }
         
         return await withTaskGroup(of: (Int, Result<T, Error>).self) { group in
             for (index, operation) in operations.enumerated() {

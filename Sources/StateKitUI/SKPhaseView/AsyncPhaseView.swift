@@ -32,6 +32,7 @@ public struct AsyncPhaseView<Value, Success: View, Idle: View, Loading: View, Fa
     private let loading: () -> Loading
     private let failure: (Error) -> Failure
 
+        /// - Parameters: phase to render, plus the per-phase view builders.
     public init(
         _ phase: AsyncPhase<Value>,
         @ViewBuilder success: @escaping (Value) -> Success,
@@ -46,6 +47,7 @@ public struct AsyncPhaseView<Value, Success: View, Idle: View, Loading: View, Fa
         self.failure = failure
     }
 
+        /// Initializes the phase view with per-phase content and optional defaults.
     public var body: some View {
         switch phase {
         case .idle:
@@ -147,16 +149,20 @@ where Idle == EmptyView, Loading == _DefaultLoadingView {
 
 // MARK: - Default Subviews
 
+/// Built-in spinner shown for the `.loading` phase when no custom view is given.
 public struct _DefaultLoadingView: View {
+        /// Renders the loading spinner.
     public var body: some View {
         ProgressView()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
+/// Built-in error view shown for the `.failure` phase when no custom view is given.
 public struct _DefaultFailureView: View {
     let error: Error
 
+        /// Renders the failure message.
     public var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle")

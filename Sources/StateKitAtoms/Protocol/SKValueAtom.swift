@@ -34,6 +34,7 @@
 /// ```swift
 /// let doubledAtom = selector { ctx in ctx.watch(counterAtom) * 2 }
 /// ```
+// MARK: - SKValueAtom
 public protocol SKValueAtom: SKAtom {
     /// Computes and returns this atom's current value.
     ///
@@ -47,7 +48,9 @@ public protocol SKValueAtom: SKAtom {
     func value(context: SKAtomTransactionContext) -> Value
 }
 
+// MARK: - SKValueAtom
 extension SKValueAtom {
+    /// Compiler-facing: returns (or builds) this atom's cached box in `store`.
     public func _getOrCreateBox(in store: SKAtomStore) -> SKAtomBox<Value> {
         MainActor.assumeIsolated { store.valueBox(for: self) }
     }

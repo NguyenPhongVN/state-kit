@@ -63,11 +63,14 @@ public struct StateDevScope<Content: View>: View {
 
     @Environment(\.self) private var environment
 
+    /// Whether the debug overlay is visible.
     public let showOverlay: Bool
+    /// Where the overlay sits on screen.
     public let overlayAlignment: Alignment
 
     let content: @MainActor () -> Content
 
+    /// Configures overlay visibility and placement.
     public init(
         showOverlay: Bool = true,
         overlayAlignment: Alignment = .topLeading,
@@ -79,6 +82,7 @@ public struct StateDevScope<Content: View>: View {
     }
 
     @ViewBuilder
+    /// Composes the content with the optional overlay.
     public var body: some View {
         let view = StateRuntime.stateRun(context: context, environment: environment, body: content)
 

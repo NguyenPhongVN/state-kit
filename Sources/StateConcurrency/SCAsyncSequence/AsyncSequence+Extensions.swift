@@ -3,6 +3,7 @@ import ConcurrencyExtras
 import Combine
 #endif
 
+// MARK: - AsyncSequence
 extension AsyncSequence {
     /// Used to expose an instance of `some AsyncSequence` to the client, rather
     /// than this async sequence’s actual type to preserve abstraction across API
@@ -14,6 +15,7 @@ extension AsyncSequence {
 }
 
 #if canImport(Combine)
+// MARK: - AsyncSequence
 extension AsyncSequence where Self: Sendable {
     /// Converts the asynchronous sequence into a Combine publisher.
     ///

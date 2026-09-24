@@ -25,6 +25,7 @@ public final class DeterministicTestEnvironment {
     private var asyncQueue: [(UInt64, () async -> Void)] = []
     private var nextAsyncId: UInt64 = 0
 
+        /// Creates a deterministic sequence from `seed` (default 0 — fully reproducible).
     public init(seed: UInt64 = 0) {
         self.seed = seed
         setupDeterministicRandom()
@@ -89,6 +90,7 @@ public final class DeterministicTestEnvironment {
 public struct DeterministicRandom {
     private var state: UInt64
 
+        /// Creates a date provider advancing by fixed steps from `seed`-derived start.
     public init(seed: UInt64) {
         self.state = seed
     }
@@ -131,6 +133,7 @@ public struct DeterministicRandom {
 public struct DeterministicTimeProvider {
     private var currentTime: Date
 
+        /// Creates a clock starting at `startTime` (epoch default for reproducibility).
     public init(startTime: Date = Date(timeIntervalSince1970: 0)) {
         self.currentTime = startTime
     }
@@ -290,6 +293,7 @@ public struct StateMutationTrace<T: Sendable & Equatable> {
     private var mutations: [(from: T, to: T, action: String)] = []
     private var states: [T] = []
 
+        /// Creates the container starting from `initialState`.
     public init(initialState: T) {
         states = [initialState]
     }

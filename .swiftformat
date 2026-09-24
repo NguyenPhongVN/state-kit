@@ -1,0 +1,14 @@
+# SwiftFormat configuration — StateKit
+# See docs/engineering/CODING_CONVENTIONS.md. Run: swiftformat --lint .
+
+--swiftversion 6.0
+--maxwidth 120
+--indent 4
+
+# Conservative on purpose: readability and reviewability beat maximal automation.
+--disable wrap,elseOnSameLine,straightenBraces
+
+# Keep Swift-idiomatic spacing/commas; formatter never moves code across lines
+# beyond its rules, so diffs stay reviewable.
+--commas inline
+--trimwhitespace always

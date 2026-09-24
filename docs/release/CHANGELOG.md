@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [3.0.0] — Coding Conventions Release (Unreleased)
+
+### 💥 Breaking (MAJOR — renames only, zero logic changes)
+
+- **StateConcurrency renamed to the `SK*` convention** (resolves audit F9):
+
+  | Before | After |
+  |--------|-------|
+  | `SCTaskDuration` | `SKTaskDuration` |
+  | `SCTimeoutError` | `SKTimeoutError` |
+  | `SCGlobalActor` | `SKGlobalActor` |
+  | `SCLocalActor` | `SKLocalActor` |
+  | `SCRetryPolicy` | `SKRetryPolicy` |
+  | `SCConcurrencyLimiter` | `SKConcurrencyLimiter` |
+
+  See `docs/release/MIGRATION_GUIDE.md` for the one-command migration.
+
+### Added
+
+- **Coding conventions rulebook** — `docs/engineering/CODING_CONVENTIONS.md`: file layout,
+  MARK skeleton, naming and prefixes, documentation requirements, concurrency annotations,
+  force-conversion policy, testing conventions, and tool setup.
+- **Machine enforcement configs**: `.swiftlint.yml`, `.swiftformat` (contributor-side tools;
+  no dependency added to the package).
+
+### Changed
+
+- **Documentation sweep**: every public symbol in all 16 modules now carries a doc comment
+  (0 undocumented of 1,186); MARK skeletons added across multi-section files.
+- Removed dead code: `CanaryRollout.defaultHasher`; consolidated the triplicated
+  `Function.swift` helpers into single homes (`guardFunction` → StateKitCore, `sourceId` →
+  StateKitSupport, ~330 lines of dead duplicates deleted).
+
+---
+
 ## [Unreleased]
 
 ### Added

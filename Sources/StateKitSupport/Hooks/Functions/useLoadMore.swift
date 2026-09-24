@@ -4,10 +4,14 @@ import Foundation
 ///
 /// The page carries the newly fetched items plus the cursor needed to load
 /// the next page. Set `nextCursor` to `nil` when there are no more pages.
+// MARK: - LoadMorePage
 public struct LoadMorePage<Item, Cursor>: Sendable where Item: Sendable, Cursor: Sendable {
+    /// Accumulated items across all loaded pages.
     public let items: [Item]
+    /// Opaque cursor for the next page; nil when exhausted.
     public let nextCursor: Cursor?
 
+    /// Bundles items, cursor, and loading flags into one state value.
     public init(
         items: [Item],
         nextCursor: Cursor?
@@ -27,14 +31,23 @@ public struct LoadMorePage<Item, Cursor>: Sendable where Item: Sendable, Cursor:
 ///
 /// `loadMoreError` is separate from `phase` because loading the next page
 /// should not replace already rendered items with a failure phase.
+// MARK: - LoadMoreController
 public struct LoadMoreController<Item> {
+    /// Initial load lifecycle (idle/loading/success/failure).
     public let phase: AsyncPhase<[Item]>
+    /// True while a full refresh is in flight.
     public let isReloading: Bool
+    /// True while the next page is being fetched.
     public let isLoadingMore: Bool
+    /// Error from the last reload attempt, if any.
     public let reloadError: Error?
+    /// Error from the last page-fetch attempt, if any.
     public let loadMoreError: Error?
+    /// False once the source reports no more pages.
     public let hasNextPage: Bool
+    /// Starts a full refresh (clears items on success).
     public var reload: @MainActor () -> Void
+    /// Fetches the next page using the cursor.
     public var loadNext: @MainActor () -> Void
 
     /// The currently available items.

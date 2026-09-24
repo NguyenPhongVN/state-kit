@@ -42,6 +42,7 @@ import StateKit
 /// ```swift
 /// let userAtom = asyncAtom { _ in await UserService.fetch(id: "abc") }
 /// ```
+// MARK: - SKTaskAtom
 public protocol SKTaskAtom: SKAsyncPhaseAtom {
     /// Performs the async work and returns the result.
     ///
@@ -51,7 +52,9 @@ public protocol SKTaskAtom: SKAsyncPhaseAtom {
     func task(context: SKAtomTransactionContext) async -> TaskSuccess
 }
 
+// MARK: - SKTaskAtom
 extension SKTaskAtom {
+    /// Compiler-facing: returns (or builds) this atom's cached box in `store`.
     public func _getOrCreateBox(in store: SKAtomStore) -> SKAtomBox<Value> {
         MainActor.assumeIsolated { store.taskBox(for: self) }
     }

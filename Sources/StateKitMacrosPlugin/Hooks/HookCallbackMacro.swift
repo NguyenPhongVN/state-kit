@@ -27,6 +27,7 @@ import SwiftSyntaxMacros
 //   let cb = useGreet()
 //   cb("World")  // "Hello, World!"
 
+/// Implements `@HookCallback`: memoized callback with stable identity.
 public struct HookCallbackMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

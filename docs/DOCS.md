@@ -10,6 +10,7 @@ No original docs are deleted. They are grouped by purpose for cleaner navigation
 |---|---|---|
 | Core | `core/README.md` | Product usage, architecture, integration guides |
 | Core | `core/HOOKS_VS_MACROS.md` | Choosing between function hooks and `@Hook*` macros |
+| Engineering | `engineering/CODING_CONVENTIONS.md` | The coding conventions rulebook (contributor entry point) |
 | Macros | `macros/README.md` | Macro references, examples, stable API docs |
 | Release | `release/README.md` | Changelog, migration, stability, release readiness |
 | Engineering | `engineering/README.md` | Testing and verification guidance |

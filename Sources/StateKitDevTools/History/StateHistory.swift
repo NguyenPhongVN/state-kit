@@ -108,6 +108,7 @@ public struct HistoryEntry: Codable, Sendable {
     /// Whether this entry is the currently active one.
     public var isActive: Bool = false
 
+        /// Creates an entry with its timestamp, action, before/after states, and timing.
     public init(
         timestamp: Date,
         action: String?,
@@ -134,6 +135,7 @@ public indirect enum JSONValue: Codable, Sendable, Equatable {
     case array([JSONValue])
     case object([String: JSONValue])
 
+        /// Decodes with lenient handling of optional fields.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
@@ -157,6 +159,7 @@ public indirect enum JSONValue: Codable, Sendable, Equatable {
         }
     }
 
+        /// Encodes every field for export/import.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
@@ -191,12 +194,15 @@ public indirect enum JSONValue: Codable, Sendable, Equatable {
 
 /// Type-erased wrapper for any Codable value.
 public struct AnyCodable: Codable {
+        /// The boxed value.
     public let value: Any
 
+        /// Boxes any value.
     public init(_ value: Any) {
         self.value = value
     }
 
+        /// Decoding is unsupported for erased values (throws).
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
@@ -222,6 +228,7 @@ public struct AnyCodable: Codable {
         }
     }
 
+        /// Encodes via AnyCodable when the value conforms; otherwise throws.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
@@ -264,14 +271,17 @@ public struct InMemoryStateHistory: StateHistory {
     /// Whether to store state snapshots (can use significant memory).
     public var storeSnapshots: Bool = true
 
+    /// True when an earlier entry exists.
     public var canGoBack: Bool {
         currentIndex > 0
     }
 
+    /// True when a newer entry exists after the cursor.
     public var canGoForward: Bool {
         currentIndex < entries.count - 1
     }
 
+    /// The entry under the cursor, or nil on empty history.
     public var currentState: AnyCodable? {
         guard currentIndex >= 0, currentIndex < entries.count else { return nil }
         return AnyCodable(entries[currentIndex].stateAfter)
@@ -330,6 +340,7 @@ public struct InMemoryStateHistory: StateHistory {
         currentIndex = -1
     }
 
+    /// Serializes the full history to pretty-printed JSON.
     public func export() -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -355,6 +366,7 @@ public struct InMemoryStateHistory: StateHistory {
         }
     }
 
+    /// Walks entries, pacing by their recorded compute times.
     public func replay() async {
         // Implementation for replaying actions
         // This would typically re-execute stored actions

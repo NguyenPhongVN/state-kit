@@ -43,8 +43,10 @@ public struct DevToolsHandle: View {
 
     /// Button colors.
     public var backgroundColor: Color = .blue
+    /// Tint of the draggable handle.
     public var foregroundColor: Color = .white
 
+    /// Configures handle size and tint.
     public init(
         showDevTools: Binding<Bool>,
         observer: DevToolsObserver? = nil,
@@ -63,6 +65,7 @@ public struct DevToolsHandle: View {
         observer?.history.entries.count ?? 0
     }
 
+    /// Renders the draggable handle.
     public var body: some View {
         ZStack(alignment: .topTrailing) {
             // Main button
@@ -113,6 +116,7 @@ public struct DevToolsMiniPanel: View {
     @ObservedObject private var observer: ObservedDevToolsObserver
     @State private var expanded = false
 
+    /// Binds the panel to the observer's history.
     public init(observer: DevToolsObserver) {
         self.observer = ObservedDevToolsObserver(observer: observer)
     }
@@ -125,6 +129,7 @@ public struct DevToolsMiniPanel: View {
         observer.observer.metrics.slowestProviders.first
     }
 
+    /// Renders the inspector panel.
     public var body: some View {
         VStack(spacing: 8) {
             // Header
@@ -224,6 +229,7 @@ public struct DevToolsMiniPanel: View {
 public struct DevToolsQuickStats: View {
     @ObservedObject private var observer: ObservedDevToolsObserver
 
+    /// Binds the overlay to the observer's history.
     public init(observer: DevToolsObserver) {
         self.observer = ObservedDevToolsObserver(observer: observer)
     }
@@ -242,6 +248,7 @@ public struct DevToolsQuickStats: View {
             .reduce(0, +)
     }
 
+    /// Renders the overlay.
     public var body: some View {
         HStack(spacing: 20) {
             // History stat

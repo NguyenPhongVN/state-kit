@@ -70,6 +70,7 @@ public struct AsyncPassthroughStream<Element: Sendable>: AsyncSequence, Sendable
 // MARK: - Iterator
 
 extension AsyncPassthroughStream {
+    /// Creates an iterator that yields only values emitted after creation.
     public func makeAsyncIterator() -> Iterator {
         let id = UUID()
 
@@ -92,6 +93,7 @@ extension AsyncPassthroughStream {
         }
     }
 
+/// Yields only future values; nothing is replayed.
     public struct Iterator: AsyncIteratorProtocol {
         private var iterator: Base.Iterator
         private let onTermination: () -> Void

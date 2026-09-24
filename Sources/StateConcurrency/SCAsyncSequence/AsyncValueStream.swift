@@ -42,6 +42,7 @@ public struct AsyncValueStream<Element: Sendable>: AsyncSequence, Sendable {
         base = stream
     }
 
+    /// Exposes the buffered values as a current-value stream.
     public func makeAsyncIterator() -> AsyncCurrentValueStream<Element>.AsyncIterator {
         base.makeAsyncIterator()
     }

@@ -36,7 +36,7 @@ extension Task where Success == Never, Failure == Never {
                 throw lastError
             }
             
-            throw NSError(domain: "SCTask", code: 0, userInfo: [NSLocalizedDescriptionKey: "No operations to race"])
+            throw NSError(domain: "SKTask", code: 0, userInfo: [NSLocalizedDescriptionKey: "No operations to race"])
         }
     }
 }

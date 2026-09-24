@@ -1,33 +1,37 @@
 import Foundation
 
+// MARK: - AsyncSequence
 extension AsyncSequence where Element: Sendable, Self: Sendable {
     /// Returns an async sequence that throws an error if an element is not produced within the specified timeout.
     /// - Parameter duration: The maximum duration to wait for an element.
     /// - Returns: A timed async sequence.
-    public func timeout(_ duration: SCTaskDuration) -> AsyncThrowingTimeoutSequence<Self> {
+    public func timeout(_ duration: SKTaskDuration) -> AsyncThrowingTimeoutSequence<Self> {
         AsyncThrowingTimeoutSequence(self, duration: duration)
     }
     
     /// Returns an async sequence that emits elements only after the specified duration has passed without another emission.
     /// - Parameter duration: The debounce duration.
     /// - Returns: A debounced async sequence.
-    public func debounce(for duration: SCTaskDuration) -> AsyncDebounceSequence<Self> {
+    public func debounce(for duration: SKTaskDuration) -> AsyncDebounceSequence<Self> {
         AsyncDebounceSequence(self, duration: duration)
     }
 }
 
 /// An async sequence that throws a timeout error if an element is not produced within a specified duration.
+// MARK: - AsyncThrowingTimeoutSequence
 public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: AsyncSequence where Base.Element: Sendable {
+    /// Elements are the awaited task results.
     public typealias Element = Base.Element
     
     let base: Base
-    let duration: SCTaskDuration
+    let duration: SKTaskDuration
     
-    init(_ base: Base, duration: SCTaskDuration) {
+    init(_ base: Base, duration: SKTaskDuration) {
         self.base = base
         self.duration = duration
     }
     
+/// Async iterator over the task's awaited result.
     public struct Iterator: AsyncIteratorProtocol {
         var streamIterator: AsyncThrowingStream<Element, Error>.AsyncIterator
         
@@ -36,6 +40,7 @@ public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: Asyn
         }
     }
     
+    /// Creates the iterator (one result per task).
     public func makeAsyncIterator() -> Iterator {
         // Capture properties safely for the Task
         let b = base
@@ -50,7 +55,7 @@ public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: Asyn
                     currentTimer = Task {
                         do {
                             try await Task.sleep(duration: d)
-                            continuation.finish(throwing: SCTimeoutError(d.asTimeInterval))
+                            continuation.finish(throwing: SKTimeoutError(d.asTimeInterval))
                         } catch {
                             // Cancelled, do nothing
                         }
@@ -66,7 +71,7 @@ public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: Asyn
                         currentTimer = Task {
                             do {
                                 try await Task.sleep(duration: d)
-                                continuation.finish(throwing: SCTimeoutError(d.asTimeInterval))
+                                continuation.finish(throwing: SKTimeoutError(d.asTimeInterval))
                             } catch {
                                 // Cancelled, do nothing
                             }
@@ -89,17 +94,20 @@ public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: Asyn
 }
 
 /// An async sequence that debounces the elements of a base async sequence.
+// MARK: - AsyncDebounceSequence
 public struct AsyncDebounceSequence<Base: AsyncSequence & Sendable>: AsyncSequence where Base.Element: Sendable {
+    /// Elements are the awaited task results.
     public typealias Element = Base.Element
     
     let base: Base
-    let duration: SCTaskDuration
+    let duration: SKTaskDuration
     
-    init(_ base: Base, duration: SCTaskDuration) {
+    init(_ base: Base, duration: SKTaskDuration) {
         self.base = base
         self.duration = duration
     }
     
+/// Async iterator over the task's awaited result.
     public struct Iterator: AsyncIteratorProtocol {
         var streamIterator: AsyncThrowingStream<Element, Error>.AsyncIterator
         
@@ -108,6 +116,7 @@ public struct AsyncDebounceSequence<Base: AsyncSequence & Sendable>: AsyncSequen
         }
     }
     
+    /// Creates the iterator (one result per task).
     public func makeAsyncIterator() -> Iterator {
         // Capture properties safely for the Task
         let b = base

@@ -1,0 +1,57 @@
+# SwiftLint configuration — StateKit
+# See docs/engineering/CODING_CONVENTIONS.md for the human-readable rulebook.
+# Run: swiftlint lint --quiet  |  autocorrect: swiftlint --fix
+
+included:
+  - Sources
+  - Tests
+  - Examples/CaseStudies/ReferenceExamplesApp
+
+line_length:
+  warning: 120
+  error: 160
+
+identifier_name:
+  min_length: 2
+  excluded:
+    - id
+    - to
+    - by
+    - at
+
+type_name:
+  # The project prefixes: use* hooks (functions), SK* machinery, unprefixed Riverpod layer.
+  allowed_symbols: []
+
+force_unwrapping:
+  severity: warning
+
+force_try:
+  severity: warning
+
+force_cast:
+  severity: warning
+
+todo:
+  severity: warning
+
+# Existing-surface allowances: these carry written invariant justifications
+# (see CODING_CONVENTIONS.md § Force conversions). New code should not add to them.
+opt_in_rules:
+  - force_unwrapping
+  - force_try
+  - force_cast
+  - empty_count
+  - first_where
+  - contains_over_first_where
+  - contains_over_filter_count
+
+disabled_rules:
+  - trailing_comma          # formatter owns this
+  - multiple_closures_with_trailing_closure  # SwiftUI-idiomatic
+
+# Test targets may use force-unwrap freely in assertions.
+excluded:
+  - .build
+  - DerivedData
+  - Examples/CaseStudies/CaseStudies.xcodeproj

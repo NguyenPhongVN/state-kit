@@ -62,10 +62,12 @@ public struct StateDevTools: View {
         }
     }
 
+    /// Binds the view to the observer's history.
     public init(observer: DevToolsObserver) {
         self.observer = ObservedDevToolsObserver(observer: observer)
     }
 
+    /// Renders the full history inspector.
     public var body: some View {
         VStack(spacing: 0) {
             // Header

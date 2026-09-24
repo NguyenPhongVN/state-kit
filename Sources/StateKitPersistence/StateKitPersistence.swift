@@ -18,4 +18,5 @@ public enum StateKitPersistence {
 }
 
 // Re-export main integration types
+    /// Readable alias for the keychain-backed provider.
 public typealias SecureStateProvider = KeychainStateProvider

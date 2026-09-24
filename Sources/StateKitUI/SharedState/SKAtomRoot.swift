@@ -52,6 +52,7 @@ public struct SKAtomRoot<Content: View>: View {
 
     // MARK: - Body
 
+    /// Injects the store into the environment so atom hooks resolve against it.
     public var body: some View {
         content
             .environment(\.skAtomStore, store)

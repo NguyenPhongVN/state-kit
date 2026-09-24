@@ -93,7 +93,8 @@ struct Lesson02Binding: View {
                 Section("What just happened") {
                     // 3. This Text reads the SAME state the field writes to.
                     //    One state, two readers/writers, always in sync.
-                    Text("Hello, \(name.isEmpty ? "stranger" : name)! 👋")
+                    let current = name.wrappedValue
+                    Text("Hello, \(current.isEmpty ? "stranger" : current)! 👋")
                 }
 
                 StartHereNextButton(current: .binding)
@@ -117,6 +118,41 @@ private struct TodoItem: Identifiable {
     let id = UUID()
     var title: String
     var done: Bool
+}
+
+/// One todo row. Extracted into its own view so the toggle/remove data
+/// transforms stay small and type-check instantly — a real-world pattern
+/// for keeping `body` fast to compile and easy to read.
+private struct Lesson03TodoRow: View {
+    let todo: TodoItem
+    let todos: [TodoItem]
+    let setTodos: ([TodoItem]) -> Void
+
+    var body: some View {
+        HStack {
+            let icon = todo.done ? "checkmark.circle.fill" : "circle"
+            Image(systemName: icon)
+                .onTapGesture {
+                    // TOGGLE = same array, one item flipped.
+                    let updated = todos.map { item -> TodoItem in
+                        var copy = item
+                        if copy.id == todo.id { copy.done.toggle() }
+                        return copy
+                    }
+                    setTodos(updated)
+                }
+            Text(todo.title)
+                .strikethrough(todo.done)
+            Spacer()
+            Image(systemName: "trash")
+                .foregroundStyle(.red)
+                .onTapGesture {
+                    // REMOVE = keep everything except this one.
+                    let remaining = todos.filter { $0.id != todo.id }
+                    setTodos(remaining)
+                }
+        }
+    }
 }
 
 struct Lesson03TodoList: View {
@@ -149,22 +185,7 @@ struct Lesson03TodoList: View {
                     // 4. Toggling/removing uses `map`/`filter`: classic data
                     //    transforms, not UI code. The UI follows the data.
                     ForEach(todos) { todo in
-                        HStack {
-                            Image(systemName: todo.done ? "checkmark.circle.fill" : "circle")
-                                .onTapGesture {
-                                    // TOGGLE = same array, one item flipped.
-                                    setTodos(todos.map { $0.id == todo.id ? TodoItem(id: $0.id, title: $0.title, done: !$0.done) : $0 })
-                                }
-                            Text(todo.title)
-                                .strikethrough(todo.done)
-                            Spacer()
-                            Image(systemName: "trash")
-                                .foregroundStyle(.red)
-                                .onTapGesture {
-                                    // REMOVE = keep everything except this one.
-                                    setTodos(todos.filter { $0.id != todo.id })
-                                }
-                        }
+                        Lesson03TodoRow(todo: todo, todos: todos, setTodos: setTodos)
                     }
                 }
 

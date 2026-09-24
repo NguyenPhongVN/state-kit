@@ -20,12 +20,18 @@ public enum StateKitAnalytics {
 
 /// Structured analytics event.
 public struct AnalyticsEvent: Sendable {
+    /// Event name (snake_case by convention).
     public let name: String
+    /// When the event was tracked.
     public let timestamp: Date
+    /// Structured payload attached to the event.
     public let properties: [String: AnyCodable]
+    /// Acting user, if known.
     public let userId: String?
+    /// Session the event belongs to.
     public let sessionId: String
 
+    /// Creates an event timestamped now.
     public init(
         name: String,
         properties: [String: AnyCodable] = [:],
@@ -71,6 +77,7 @@ public enum AnyCodable: Sendable, Codable {
     case array([AnyCodable])
     case dictionary([String: AnyCodable])
 
+    /// Decodes with lenient defaults for optional fields.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
 
@@ -93,6 +100,7 @@ public enum AnyCodable: Sendable, Codable {
         }
     }
 
+    /// Encodes all fields for wire/storage formats.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
 
@@ -119,13 +127,20 @@ public enum AnyCodable: Sendable, Codable {
 
 /// Configuration for analytics collection.
 public struct AnalyticsConfig: Sendable {
+    /// Master switch; tracking is a no-op when off.
     public let enabled: Bool
+    /// Seconds between automatic flushes.
     public let flushInterval: TimeInterval
+    /// Events per flush trigger.
     public let batchSize: Int
+    /// Whether events persist locally between launches.
     public let persistLocal: Bool
+    /// Default user attributed to tracked events.
     public let userId: String?
+    /// Session attributed to tracked events.
     public let sessionId: String
 
+    /// Creates configuration with defaults for anything omitted.
     public init(
         enabled: Bool = true,
         flushInterval: TimeInterval = 30,
@@ -151,11 +166,13 @@ public final class AnalyticsProviderObserver: ProviderObserver {
     private let tracker: EventTracker
     private let includeValues: Bool
 
+    /// Creates the logger over a tracker (values excluded unless requested).
     public init(tracker: EventTracker, includeValues: Bool = false) {
         self.tracker = tracker
         self.includeValues = includeValues
     }
 
+    /// Tracks one event per provider update.
     public func didUpdateProvider<P: ProviderProtocol>(
         _ provider: P,
         oldValue: P.State,

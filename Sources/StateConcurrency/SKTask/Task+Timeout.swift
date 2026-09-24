@@ -1,7 +1,7 @@
 import Foundation
 
 fileprivate func withThrowingTimeout<T: Sendable>(
-    _ timeout: SCTaskDuration,
+    _ timeout: SKTaskDuration,
     operation: sending @escaping @isolated(any) () async throws -> T,
     isolation: isolated (any Actor)? = #isolation
 ) async throws -> T {
@@ -12,13 +12,13 @@ fileprivate func withThrowingTimeout<T: Sendable>(
     if timeout < .never {
         guard timeout > .now else {
             task.cancel()
-            throw SCTimeoutError(timeout.asTimeInterval)
+            throw SKTimeoutError(timeout.asTimeInterval)
         }
         
         timeoutTask = Task {
             defer { task.cancel() }
             try await Task.sleep(duration: timeout)
-            throw SCTimeoutError(timeout.asTimeInterval)
+            throw SKTimeoutError(timeout.asTimeInterval)
         }
     }
     
@@ -31,7 +31,7 @@ fileprivate func withThrowingTimeout<T: Sendable>(
     if let timeoutTask {
         timeoutTask.cancel()
         
-        if case let .failure(error) = await timeoutTask.result, error is SCTimeoutError {
+        if case let .failure(error) = await timeoutTask.result, error is SKTimeoutError {
             throw error
         }
     }
@@ -60,7 +60,7 @@ extension Task where Success == Never, Failure == Never {
     /// }
     /// ```
     public static func throwingTimeout<T: Sendable>(
-        _ timeout: SCTaskDuration,
+        _ timeout: SKTaskDuration,
         operation: @Sendable @escaping () async throws -> T
     ) async throws -> T {
         try await withThrowingTimeout(timeout, operation: operation)

@@ -158,15 +158,25 @@ public func useCountdown(
     )
 }
 
+    /// Everything needed to drive a countdown from the UI.
+// MARK: - CountdownController
 public struct CountdownController {
+    /// Seconds left, observable by SwiftUI.
     public let remaining: Binding<Double>
+    /// Whether the countdown is actively ticking.
     public let isRunning: Binding<Bool>
+    /// Starts (or restarts) the countdown.
     public let start: @MainActor () -> Void
+    /// Pauses without discarding progress.
     public let pause: @MainActor () -> Void
+    /// Resumes from the paused point.
     public let resume: @MainActor () -> Void
+    /// Cancels and resets the countdown.
     public let cancel: @MainActor () -> Void
+    /// The countdown's lifecycle phase (idle/running/finished).
     public let phase: Binding<Phase>
 
+    /// Configures the controller with its bindings and control closures.
     public init(
         remaining: Binding<Double>,
         isRunning: Binding<Bool>,
@@ -186,6 +196,7 @@ public struct CountdownController {
     }
 }
 
+// MARK: - CountdownController
 public extension CountdownController {
     enum Phase: Equatable, Sendable {
         case idle

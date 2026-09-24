@@ -2,7 +2,7 @@ import Foundation
 
 /// A custom error type that represents a timeout condition for Swift tasks.
 ///
-/// `SCTimeoutError` is thrown when a task exceeds its specified timeout duration.
+/// `SKTimeoutError` is thrown when a task exceeds its specified timeout duration.
 /// It provides detailed information about the timeout, including the duration and
 /// the location where the timeout occurred in the source code.
 ///
@@ -13,7 +13,7 @@ import Foundation
 /// do {
 ///     let result = try await someAsyncOperation.timeout(after: 5.0)
 ///     print("Operation completed: \(result)")
-/// } catch let error as SCTimeoutError {
+/// } catch let error as SKTimeoutError {
 ///     print("Operation timed out after \(error.seconds) seconds")
 ///     print("Timeout occurred at \(error.fileID):\(error.line)")
 /// }
@@ -23,7 +23,7 @@ import Foundation
 /// ```swift
 /// let result = await Task {
 ///     try await networkCall()
-/// }.timeout(after: 10.0) // Will throw SCTimeoutError if it takes longer than 10 seconds
+/// }.timeout(after: 10.0) // Will throw SKTimeoutError if it takes longer than 10 seconds
 /// ```
 ///
 /// ### Custom Timeout Handling
@@ -31,13 +31,13 @@ import Foundation
 /// func performOperationWithRetry() async throws -> String {
 ///     do {
 ///         return try await slowOperation().timeout(after: 3.0)
-///     } catch is SCTimeoutError {
+///     } catch is SKTimeoutError {
 ///         print("First attempt timed out, retrying...")
 ///         return try await slowOperation().timeout(after: 5.0)
 ///     }
 /// }
 /// ```
-public struct SCTimeoutError: Error, CustomDebugStringConvertible {
+public struct SKTimeoutError: Error, CustomDebugStringConvertible {
 
     /// The timeout duration in seconds that was exceeded.
     public let seconds: TimeInterval
@@ -60,10 +60,10 @@ public struct SCTimeoutError: Error, CustomDebugStringConvertible {
     /// ## Example
     /// ```swift
     /// // Automatically captures current file and line
-    /// let error = SCTimeoutError(5.0)
+    /// let error = SKTimeoutError(5.0)
     ///
     /// // Or specify custom location
-    /// let error = SCTimeoutError(10.0, fileID: "MyFile.swift", line: 42)
+    /// let error = SKTimeoutError(10.0, fileID: "MyFile.swift", line: 42)
     /// ```
     public init(
         _ seconds: TimeInterval,

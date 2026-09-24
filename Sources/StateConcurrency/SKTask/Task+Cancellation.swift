@@ -6,7 +6,7 @@ fileprivate func withTaskCancellationWithError<T: Sendable>(
 ) async throws -> T {
     let task = TaskReference()
     let once = OncePerformer()
-    return try await withTaskCancellationHandler(operation: { @SCGlobalActor in
+    return try await withTaskCancellationHandler(operation: { @SKGlobalActor in
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<T, Error>) in
             guard !Task.isCancelled else {
                 continuation.resume(throwing: onCancelError)
@@ -22,7 +22,7 @@ fileprivate func withTaskCancellationWithError<T: Sendable>(
                         once.perform { continuation.resume(throwing: error) }
                     }
                 } onCancel: {
-                    Task { @SCGlobalActor in
+                    Task { @SKGlobalActor in
                         once.perform { continuation.resume(throwing: onCancelError) }
                     }
                 }
@@ -31,7 +31,7 @@ fileprivate func withTaskCancellationWithError<T: Sendable>(
             task.set(_task)
         }
     }, onCancel: {
-        Task { @SCGlobalActor in
+        Task { @SKGlobalActor in
             task.cancel()
         }
     })

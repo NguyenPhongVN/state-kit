@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 
+// MARK: - Publisher
 extension Publisher {
     func sinkOnMain(
         receiveCompletion: @escaping (Subscribers.Completion<Failure>) -> Void = { _ in },
@@ -14,6 +15,7 @@ extension Publisher {
     }
 }
 
+// MARK: - Publisher
 extension Publisher where Failure == Never {
     func assignWeak<T: AnyObject>(
         to keyPath: ReferenceWritableKeyPath<T, Output>,
@@ -25,18 +27,21 @@ extension Publisher where Failure == Never {
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func unwrap<T>() -> Publishers.CompactMap<Self, T> where Output == T? {
         compactMap { $0 }
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func mapToVoid() -> Publishers.Map<Self, Void> {
         map { _ in () }
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func withLatestFrom<Other: Publisher>(
         _ other: Other
@@ -48,6 +53,7 @@ extension Publisher {
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func withUnretained<Object: AnyObject>(
         _ object: Object
@@ -60,6 +66,7 @@ extension Publisher {
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func asResult() -> AnyPublisher<Result<Output, Failure>, Never> {
         self
@@ -71,6 +78,7 @@ extension Publisher {
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func setLoading(
         _ loading: CurrentValueSubject<Bool, Never>
@@ -84,6 +92,7 @@ extension Publisher {
     }
 }
 
+// MARK: - Publisher
 extension Publisher {
     func debugLog(_ prefix: String) -> AnyPublisher<Output, Failure> {
         handleEvents(

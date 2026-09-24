@@ -137,7 +137,7 @@ swift test --filter StateConcurrencyTests
 
 ### E. `StateConcurrencyTests`
 
-**Current files**: `SCTaskTests`, `AsyncStreamTests`.
+**Current files**: `SKTaskTests`, `AsyncStreamTests`.
 
 #### 5.E.1 Cancellation Correctness
 - `when_cancelled_before_start_then_task_never_runs()` — cancel before start.

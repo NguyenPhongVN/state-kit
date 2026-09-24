@@ -40,6 +40,7 @@ extension AsyncSequencePhase: Equatable where Element: Equatable {
 // MARK: - Hashable
 
 extension AsyncSequencePhase: Hashable where Element: Hashable {
+    /// Hashes the phase's case and associated value so phases work in sets/dictionaries.
     public func hash(into hasher: inout Hasher) {
         switch self {
         case .idle:            hasher.combine(0)

@@ -5,14 +5,22 @@ import Foundation
 /// Tracks user journey through app (sessions, funnels, conversions).
 @MainActor
 public final class UserJourneyTracker: Sendable {
+    /// One user session: identity, span, and aggregate counts.
     public struct Session: Sendable {
+    /// Session identifier.
         public let id: String
+    /// The user this session belongs to.
         public let userId: String
+    /// Session start.
         public let startTime: Date
+    /// Session end; nil while ongoing.
         public let endTime: Date?
+    /// Events recorded during the session.
         public let eventCount: Int
+    /// Session-scoped attributes.
         public let properties: [String: AnyCodable]
 
+    /// Elapsed seconds, or nil while ongoing.
         public var duration: TimeInterval? {
             endTime.map { $0.timeIntervalSince(startTime) }
         }
@@ -22,6 +30,7 @@ public final class UserJourneyTracker: Sendable {
     private var currentSession: Session?
     private var journeys: [String: [AnalyticsEvent]] = [:]
 
+    /// Starts tracking (begins a fresh session).
     public init() {
         startNewSession()
     }
@@ -88,11 +97,16 @@ public final class UserJourneyTracker: Sendable {
 
 /// Analyzes conversion funnels.
 public struct FunnelAnalyzer: Sendable {
+    /// One stage of a funnel definition.
     public struct FunnelStep: Sendable {
+    /// Human-readable stage name.
         public let name: String
+    /// The event that marks completion of this stage.
         public let eventName: String
+    /// Zero-based stage position.
         public let index: Int
 
+    /// Creates a funnel stage.
         public init(name: String, eventName: String, index: Int) {
             self.name = name
             self.eventName = eventName
@@ -100,11 +114,16 @@ public struct FunnelAnalyzer: Sendable {
         }
     }
 
+    /// Computed conversion numbers for a funnel.
     public struct FunnelResult: Sendable {
+    /// The funnel's stages in order.
         public let steps: [FunnelStep]
+    /// Count of users who reached this step.
         public let completions: [String: Int]  // userId -> step completed to
+    /// Conversion ratio versus the previous step.
         public let conversionRates: [Double]   // Percentage for each step
 
+    /// Users who completed every step.
         public var totalCompletions: Int {
             completions.values.max() ?? 0
         }
@@ -112,6 +131,7 @@ public struct FunnelAnalyzer: Sendable {
 
     private let steps: [FunnelStep]
 
+    /// Computes funnel results from raw step completions.
     public init(steps: [FunnelStep]) {
         self.steps = steps
     }
@@ -154,6 +174,7 @@ public struct FunnelAnalyzer: Sendable {
 public struct DropoffAnalyzer: Sendable {
     private let funnel: [String]  // Event names in order
 
+    /// Starts funnel tracking for the named event sequence.
     public init(funnel: [String]) {
         self.funnel = funnel
     }
@@ -188,9 +209,13 @@ public struct DropoffAnalyzer: Sendable {
 
 /// Analyzes user cohorts by signup date.
 public struct CohortAnalyzer: Sendable {
+    /// A weekly retention cohort.
     public struct Cohort: Sendable {
+    /// Start of the cohort's signup week.
         public let weekStarting: Date
+    /// Users in the cohort.
         public let size: Int
+    /// Retention ratio per week since signup.
         public let retentionByWeek: [Double]
     }
 

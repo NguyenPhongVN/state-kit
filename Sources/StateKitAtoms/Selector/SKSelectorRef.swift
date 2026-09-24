@@ -39,6 +39,7 @@ public final class SKSelectorRef<Value>: SKValueAtom, @unchecked Sendable {
 
     // MARK: - SKValueAtom
 
+    /// Computes the selector's value from its watched dependencies.
     public func value(context: SKAtomTransactionContext) -> Value {
         _compute(context)
     }
@@ -49,6 +50,7 @@ public final class SKSelectorRef<Value>: SKValueAtom, @unchecked Sendable {
         lhs === rhs
     }
 
+    /// Hashes on the captured identity, not the closure reference.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
     }

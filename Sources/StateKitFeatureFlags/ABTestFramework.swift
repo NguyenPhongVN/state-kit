@@ -4,11 +4,16 @@ import Foundation
 
 /// A/B test variant definition.
 public struct ABTestVariant<T: Sendable>: Sendable {
+    /// Variant identifier used in assignment reporting.
     public let id: String
+    /// Human-readable variant name.
     public let name: String
+    /// What this variant changes.
     public let description: String
+    /// The payload delivered to assigned users.
     public let value: T
 
+    /// Creates a variant.
     public init(id: String, name: String, description: String = "", value: T) {
         self.id = id
         self.name = name
@@ -19,13 +24,20 @@ public struct ABTestVariant<T: Sendable>: Sendable {
 
 /// A/B test experiment.
 public struct ABTest<T: Sendable>: Sendable {
+    /// Test identifier (also the bucketing salt).
     public let id: String
+    /// Human-readable test name.
     public let name: String
+    /// Share of users eligible (0–100).
     public let variants: [ABTestVariant<T>]
+    /// The arms users are assigned to.
     public let trafficPercentage: Int
+    /// Derives the deterministic bucket key from a user id.
     public let userKey: @Sendable (String) -> String
+    /// Whether assignment currently happens.
     public let isActive: Bool
 
+    /// Configures a test with its variants, traffic share, and activation.
     public init(
         id: String,
         name: String,
@@ -81,13 +93,20 @@ public struct ABTest<T: Sendable>: Sendable {
 /// Runs A/B test and collects results.
 @MainActor
 public final class ABTestRunner<T: Sendable>: Sendable {
+    /// One user's assignment outcome.
     public struct Result: Sendable {
+    /// The test that produced the assignment.
         public let testId: String
+    /// The assigned user.
         public let userId: String
+    /// The assigned arm.
         public let variant: ABTestVariant<T>
+    /// When assignment happened.
         public let timestamp: Date
+    /// Optional conversion metric attributed to the assignment.
         public let conversionValue: Double?
 
+    /// Records an assignment outcome.
         public init(
             testId: String,
             userId: String,
@@ -105,6 +124,7 @@ public final class ABTestRunner<T: Sendable>: Sendable {
     private var results: [Result] = []
     private let test: ABTest<T>
 
+    /// Wraps a test for running assignments.
     public init(test: ABTest<T>) {
         self.test = test
     }
@@ -167,6 +187,7 @@ public final class ABTestManager: Sendable {
     private var tests: [String: Any] = [:]
     private var runners: [String: Any] = [:]
 
+    /// Creates an empty runner.
     public init() {}
 
     /// Registers A/B test.

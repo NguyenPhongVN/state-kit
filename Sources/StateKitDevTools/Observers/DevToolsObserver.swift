@@ -64,6 +64,7 @@ public final class DevToolsObserver: ProviderObserver {
 
     // MARK: - Initialization
 
+        /// Starts recording with snapshots enabled by default.
     public init() {
         self.history = InMemoryStateHistory()
         self.metrics = InMemoryPerformanceMetrics()
@@ -71,6 +72,7 @@ public final class DevToolsObserver: ProviderObserver {
 
     // MARK: - ProviderObserver Implementation
 
+    /// Records provider creation into the history.
     public func didAddProvider<P: ProviderProtocol>(
         _ provider: P,
         value: P.State,
@@ -81,6 +83,7 @@ public final class DevToolsObserver: ProviderObserver {
         }
     }
 
+    /// Records the transition and (optionally) snapshots.
     public func didUpdateProvider<P: ProviderProtocol>(
         _ provider: P,
         previousValue: P.State,
@@ -107,6 +110,7 @@ public final class DevToolsObserver: ProviderObserver {
         }
     }
 
+    /// Records disposal.
     public func didDisposeProvider<P: ProviderProtocol>(
         _ provider: P,
         container: ProviderContainer
@@ -285,10 +289,12 @@ public final class ConsoleLoggerObserver: ProviderObserver {
     /// Whether to log provider disposals.
     public var logDisposals: Bool = false
 
+        /// Creates a console logger with the given line prefix.
     public init(prefix: String = "[StateKit]") {
         self.logPrefix = prefix
     }
 
+    /// Prints provider creation.
     public func didAddProvider<P: ProviderProtocol>(
         _ provider: P,
         value: P.State,
@@ -298,6 +304,7 @@ public final class ConsoleLoggerObserver: ProviderObserver {
         print("\(logPrefix) [+] \(provider.name ?? "Provider") initialized")
     }
 
+    /// Prints value changes.
     public func didUpdateProvider<P: ProviderProtocol>(
         _ provider: P,
         previousValue: P.State,
@@ -308,6 +315,7 @@ public final class ConsoleLoggerObserver: ProviderObserver {
         print("\(logPrefix) [→] \(provider.name ?? "Provider") updated")
     }
 
+    /// Prints disposal.
     public func didDisposeProvider<P: ProviderProtocol>(
         _ provider: P,
         container: ProviderContainer

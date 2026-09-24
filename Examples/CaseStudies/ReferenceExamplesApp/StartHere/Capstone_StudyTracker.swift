@@ -4,6 +4,7 @@ import StateKitAtoms
 import StateKitUI
 import StateKitMacros
 import Riverpods
+import StateKitPersistence
 
 // ═══════════════════════════════════════════════════════════════════
 //  LESSON L19 · CAPSTONE — Study Tracker
@@ -55,7 +56,10 @@ private struct StudyStreak: UserDefaultsSerializable, Codable, Sendable {
     var days: Int
 }
 
-private let streakLoader = userDefaultsAtom(StudyStreak.self)
+private enum StreakLoader {
+    // L13: the "load at start" half of persistence.
+    static func load() -> StudyStreak { userDefaultsAtom(StudyStreak.self)() }
+}
 private enum StreakStore {
     static func save(_ value: StudyStreak) {
         if let data = try? JSONEncoder().encode(value) {
@@ -144,15 +148,15 @@ private struct StreakRow: View {
 
     var body: some View {
         HStack {
-            LabeledContent("Day streak", value: "\(streak)")
+            LabeledContent("Day streak", value: "\(streak.days)")
             Button("I studied today!") {
-                let next = streak + 1
+                let next = StudyStreak(days: streak.days + 1)
                 container.read(streakProvider.notifier).state = next
-                StreakStore.save(StudyStreak(days: next))
+                StreakStore.save(next)
             }
             .buttonStyle(.bordered)
         }
     }
 }
 
-private let streakProvider = StateProvider { _ in streakLoader().days }
+private let streakProvider = StateProvider { _ in StreakLoader.load() }

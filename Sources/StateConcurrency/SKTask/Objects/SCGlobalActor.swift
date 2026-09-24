@@ -18,8 +18,9 @@ import Foundation
 /// }
 /// ```
 @globalActor
-actor SCGlobalActor {
-    static let shared = SCGlobalActor()
+// MARK: - SKGlobalActor
+actor SKGlobalActor {
+    static let shared = SKGlobalActor()
 }
 
 /// A thread-safe reference to a `Task` that can be stored and cancelled.
@@ -41,16 +42,17 @@ actor SCGlobalActor {
 /// // Cancel it later from anywhere
 /// await taskRef.cancel()
 /// ```
+// MARK: - TaskReference
 final class TaskReference: Sendable {
     typealias Wrapped = Task<Void, Never>
 
-    @SCGlobalActor
+    @SKGlobalActor
     var wrapped: Wrapped?
 
     /// Sets the wrapped task.
     ///
     /// - Parameter task: The task to store, or `nil` to clear the reference.
-    @SCGlobalActor
+    @SKGlobalActor
     func set(_ task: Wrapped?) {
         wrapped = task
     }
@@ -58,7 +60,7 @@ final class TaskReference: Sendable {
     /// Cancels the wrapped task if one exists.
     ///
     /// This method is safe to call even if no task is currently stored.
-    @SCGlobalActor
+    @SKGlobalActor
     func cancel() {
         wrapped?.cancel()
     }
@@ -94,8 +96,9 @@ final class TaskReference: Sendable {
 /// - **Cleanup**: Guarantee teardown happens exactly once
 /// - **Event Handlers**: Prevent duplicate event processing
 /// - **Resource Management**: One-time resource allocation
+// MARK: - OncePerformer
 final class OncePerformer: Sendable {
-    @SCGlobalActor
+    @SKGlobalActor
     var performed = false
 
     /// Performs the given operation exactly once.
@@ -105,7 +108,7 @@ final class OncePerformer: Sendable {
     /// the operation.
     ///
     /// - Parameter operation: The operation to perform once. Must be `@Sendable`.
-    @SCGlobalActor
+    @SKGlobalActor
     func perform(_ operation: @Sendable () -> Void) {
         guard !performed else { return }
         defer { performed = true }

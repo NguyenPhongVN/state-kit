@@ -2,10 +2,10 @@ import Foundation
 
 /// An actor that limits the number of concurrently executing tasks.
 ///
-/// `SCConcurrencyLimiter` provides a way to throttle the execution of asynchronous
+/// `SKConcurrencyLimiter` provides a way to throttle the execution of asynchronous
 /// operations, ensuring that no more than `maxConcurrentTasks` are running at the same time.
 /// Additional tasks are queued and executed as slots become available.
-public actor SCConcurrencyLimiter {
+public actor SKConcurrencyLimiter {
     private let maxConcurrentTasks: Int
     private var activeTasks = 0
     private var waitingTasks: [UUID: CheckedContinuation<Bool, Never>] = [:]

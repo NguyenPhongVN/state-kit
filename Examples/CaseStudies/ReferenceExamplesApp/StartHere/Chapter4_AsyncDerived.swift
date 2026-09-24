@@ -151,7 +151,7 @@ struct Lesson11ThrowingTaskAtom: View {
 // makes drift impossible.
 // ─────────────────────────────────────────────────────────────────
 
-private struct StartHereTask: Identifiable, Equatable {
+struct StartHereTask: Identifiable, Equatable {
     let id = UUID()
     var title: String
     var done: Bool

@@ -43,6 +43,7 @@ public final class SKAtomRef<Value>: SKStateAtom, @unchecked Sendable {
 
     // MARK: - SKStateAtom
 
+    /// Builds the selector's value from its watched dependencies.
     public func defaultValue(context: SKAtomTransactionContext) -> Value {
         _defaultValue()
     }
@@ -53,6 +54,7 @@ public final class SKAtomRef<Value>: SKStateAtom, @unchecked Sendable {
         lhs === rhs
     }
 
+    /// Hashes on the captured identity, not the closure reference.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(self))
     }

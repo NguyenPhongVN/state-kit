@@ -84,6 +84,7 @@ public final class StateTest {
 
     // MARK: - Init
 
+        /// Creates an empty recorder to configure.
     public init() {}
 
     // MARK: - Render

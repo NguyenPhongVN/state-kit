@@ -41,10 +41,12 @@ final class SKAtomFamilyDefinition<ID: Hashable & Sendable, Value>: @unchecked S
 public struct SKAtomFamilyMember<ID: Hashable & Sendable, Value: Sendable>: SKStateAtom {
 
     let definition: SKAtomFamilyDefinition<ID, Value>
+    /// The parameter identifying this family member.
     public let id: ID
 
     // MARK: SKStateAtom
 
+    /// Builds the member's default from the captured parameter.
     public func defaultValue(context: SKAtomTransactionContext) -> Value {
         definition.producer(id)
     }
@@ -55,6 +57,7 @@ public struct SKAtomFamilyMember<ID: Hashable & Sendable, Value: Sendable>: SKSt
         lhs.definition === rhs.definition && lhs.id == rhs.id
     }
 
+    /// Hashes on the parameter, so members are distinct store keys.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(definition))
         hasher.combine(id)
@@ -75,10 +78,12 @@ final class SKSelectorFamilyDefinition<ID: Hashable & Sendable, Value>: @uncheck
 public struct SKSelectorFamilyMember<ID: Hashable & Sendable, Value: Sendable>: SKValueAtom {
 
     let definition: SKSelectorFamilyDefinition<ID, Value>
+    /// Computes the member's value from the captured parameter.
     public let id: ID
 
     // MARK: SKValueAtom
 
+    /// Hashes on the parameter, so members are distinct store keys.
     public func value(context: SKAtomTransactionContext) -> Value {
         definition.compute(id, context)
     }
@@ -89,6 +94,7 @@ public struct SKSelectorFamilyMember<ID: Hashable & Sendable, Value: Sendable>: 
         lhs.definition === rhs.definition && lhs.id == rhs.id
     }
 
+    /// Hashes on the parameter, so members are distinct store keys.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(ObjectIdentifier(definition))
         hasher.combine(id)

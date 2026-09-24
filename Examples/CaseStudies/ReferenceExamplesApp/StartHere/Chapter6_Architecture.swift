@@ -37,9 +37,12 @@ enum NotesFeature {
 
     /// The feature's actions — the ONLY way state changes (see L17).
     enum Actions {
+        // MainActor because the container (and all provider state) is MainActor-confined.
+        @MainActor
         static func add(_ text: String, to container: ProviderContainer) {
             container.read(notes.notifier).state.append(text)
         }
+        @MainActor
         static func removeFirst(from container: ProviderContainer) {
             guard !container.read(notes.notifier).state.isEmpty else { return }
             container.read(notes.notifier).state.removeFirst()
@@ -99,6 +102,7 @@ enum ScoreFeature {
     static let score = StateProvider { _ in 0 }
 
     enum Actions {
+        @MainActor
         static func add(points: Int, reason: String, to container: ProviderContainer, log: @escaping (String) -> Void) {
             let next = container.read(score.notifier).state + points
             container.read(score.notifier).state = next

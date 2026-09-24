@@ -53,6 +53,7 @@
 /// ```
 ///
 /// For inline atoms, use the factory functions `atom()` and `selector()`.
+// MARK: - SKAtom
 public protocol SKAtom: Hashable, Sendable {
 
     /// The type of value this atom produces.
@@ -76,6 +77,7 @@ public protocol SKAtom: Hashable, Sendable {
 }
 
 /// Determines how `SKAtomStore` manages the memory of an atom.
+// MARK: - SKAtomEvictionPolicy
 public enum SKAtomEvictionPolicy: Sendable {
     /// The atom and its value stay in the store until explicitly evicted or
     /// the store is destroyed. This is the default.
@@ -89,6 +91,8 @@ public enum SKAtomEvictionPolicy: Sendable {
     case evictWhenUnused
 }
 
+// MARK: - SKAtom
 extension SKAtom {
+    /// Default policy: keep cached even with no subscribers.
     public var evictionPolicy: SKAtomEvictionPolicy { .keepAlive }
 }

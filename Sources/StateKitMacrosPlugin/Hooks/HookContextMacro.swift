@@ -30,6 +30,7 @@ import SwiftSyntaxMacros
 //   let info = useAppInfo()
 //   // Or override the context value higher in the tree via HookContext's API.
 
+/// Implements `@HookContext`: exposes the atom transaction context to hooks.
 public struct HookContextMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

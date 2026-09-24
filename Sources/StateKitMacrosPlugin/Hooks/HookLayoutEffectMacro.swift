@@ -47,6 +47,7 @@ import SwiftSyntaxMacros
 //   - `run()` is synchronous by design, matching `useLayoutEffect`.
 //   - For async work, use `@HookEffect` or `@AsyncHook` instead.
 //   - Macro throws `missingRunMethod` when `run()` is not provided.
+/// Implements `@HookLayoutEffect`: layout-phase effect (runs before post-render effects).
 public struct HookLayoutEffectMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

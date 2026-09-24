@@ -3,6 +3,7 @@ import StateKit
 import StateKitAtoms
 import StateKitUI
 import StateKitCache
+import StateKitPersistence
 import Riverpods
 
 // ═══════════════════════════════════════════════════════════════════
@@ -31,7 +32,11 @@ private struct StudyMinutes: UserDefaultsSerializable, Codable, Sendable {
 
 // 2. The "load at start" half: reading this atom's default pulls the
 //    stored value (or the default above on first launch).
-private let studyMinutesLoader = userDefaultsAtom(StudyMinutes.self)
+private enum StudyMinutesLoader {
+    // 2. The "load at start" half: reading this pulls the stored value (or
+    //    the default above on first launch).
+    static func load() -> StudyMinutes { userDefaultsAtom(StudyMinutes.self)() }
+}
 
 private enum StudyMinutesStore {
     static func save(_ value: StudyMinutes) {
@@ -43,7 +48,7 @@ private enum StudyMinutesStore {
     }
 }
 
-private let studyMinutesProvider = StateProvider { _ in studyMinutesLoader().total }
+private let studyMinutesProvider = StateProvider { _ in StudyMinutesLoader.load() }
 
 struct Lesson13PersistedAtom: View {
     @Watch(studyMinutesProvider) private var minutes
@@ -55,18 +60,19 @@ struct Lesson13PersistedAtom: View {
                 Text("This counter is saved to UserDefaults. Kill the app and reopen it (or relaunch from Xcode) — the number is still here.")
             }
             Section("Try it") {
-                LabeledContent("Total study minutes", value: "\(minutes)")
+                LabeledContent("Total study minutes", value: "\(minutes.total)")
 
                 Button("+10 minutes") {
-                    let next = minutes + 10
+                    let next = StudyMinutes(total: minutes.total + 10)
                     container.read(studyMinutesProvider.notifier).state = next
-                    StudyMinutesStore.save(StudyMinutes(total: next))
+                    StudyMinutesStore.save(next)
                 }
                 .buttonStyle(.borderedProminent)
 
                 Button("Reset (for practicing this lesson)") {
-                    container.read(studyMinutesProvider.notifier).state = 0
-                    StudyMinutesStore.save(StudyMinutes(total: 0))
+                    let zero = StudyMinutes(total: 0)
+                    container.read(studyMinutesProvider.notifier).state = zero
+                    StudyMinutesStore.save(zero)
                 }
             }
             Section("What just happened") {

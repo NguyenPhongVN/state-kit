@@ -53,7 +53,7 @@ let fastestResult = try await Task.race([fetchFromPrimary, fetchFromMirror])
 SCTask adds powerful operators to `AsyncSequence`, similar to Combine but native to Swift Concurrency.
 
 #### Timeout
-Throws a `SCTimeoutError` if the sequence doesn't produce an element within the specified duration.
+Throws a `SKTimeoutError` if the sequence doesn't produce an element within the specified duration.
 ```swift
 for try await value in stream.timeout(.seconds(2)) {
     print(value)

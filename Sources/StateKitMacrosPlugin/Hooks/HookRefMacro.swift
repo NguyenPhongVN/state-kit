@@ -43,6 +43,7 @@ import SwiftSyntaxMacros
 // shadowing the framework function.  The explicit module prefix prevents
 // infinite recursion.
 
+/// Implements `@HookRef`: mutable ref that does not trigger re-renders.
 public struct HookRefMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

@@ -33,6 +33,7 @@ public struct FixtureBuilder<T: Sendable> {
         values[key] = value
     }
 
+        /// Assembles the configured fixture into its dictionary representation.
     public func build() -> [String: Any] {
         values
     }
@@ -97,6 +98,7 @@ public struct TestDataBuilder<T: Sendable> {
     private var modifications: [(inout T) -> Void] = []
     private let base: T
 
+        /// Wraps `base` as the fixture's starting value.
     public init(base: T) {
         self.base = base
     }
@@ -171,6 +173,7 @@ public struct StateSnapshot<T: Sendable & Codable> {
     /// Description of the snapshot.
     public let description: String
 
+        /// Configures the fixture with its variants and selection strategy.
     public init(
         data: T,
         description: String = ""
@@ -209,6 +212,7 @@ public struct StateSnapshot<T: Sendable & Codable> {
 public class FixtureRegistry {
     private var fixtures: [String: Any] = [:]
 
+        /// Creates an empty builder to configure.
     public init() {}
 
     /// Registers a fixture with a key.
@@ -250,6 +254,7 @@ public class FixtureRegistry {
 public struct ParameterizedFixture<T: Sendable> {
     private let parameters: [(String, T)]
 
+        /// Creates the matrix from explicit `(name, value)` parameter pairs.
     public init(parameters: [(String, T)]) {
         self.parameters = parameters
     }

@@ -66,6 +66,7 @@ extension AsyncPhase: Equatable where Value: Equatable {
 /// As with `Equatable`, `.failure` hashes only by case identity, not by the
 /// underlying error payload.
 extension AsyncPhase: Hashable where Value: Hashable {
+    /// Hashes the phase's case and associated value so phases work in sets/dictionaries.
     public func hash(into hasher: inout Hasher) {
         switch self {
         case .idle:            hasher.combine(0)

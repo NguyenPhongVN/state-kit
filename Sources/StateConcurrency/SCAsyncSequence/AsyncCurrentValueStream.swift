@@ -81,6 +81,7 @@ public struct AsyncCurrentValueStream<Element: Sendable>: AsyncSequence, Sendabl
 // MARK: - Iterator
 
 extension AsyncCurrentValueStream {
+    /// Creates an iterator sharing the stream's current value and updates.
     public func makeAsyncIterator() -> Iterator {
         let id = UUID()
 
@@ -104,6 +105,7 @@ extension AsyncCurrentValueStream {
         }
     }
 
+/// Yields the current value first, then every subsequent update.
     public struct Iterator: AsyncIteratorProtocol {
         private var iterator: Base.Iterator
         private let onTermination: () -> Void

@@ -24,6 +24,7 @@ import SwiftSyntaxMacros
 // Usage:
 //   let title = useTitle()   // "Dashboard", cached via useMemo
 
+/// Implements `@HookMemo`: cached computation keyed by its dependencies.
 public struct HookMemoMacro: PeerMacro {
     public static func expansion(
         of node: AttributeSyntax,

@@ -22,6 +22,7 @@ public final class IntegrationTestEnvironment {
     private var overrides: [ProviderOverride] = []
     private var setupCallbacks: [() -> Void] = []
 
+        /// Creates an empty harness to configure.
     public init() {}
 
     /// Adds an observer (e.g., for testing devtools).
@@ -142,6 +143,7 @@ public struct MockProviderBuilder<T: Sendable> {
     private var callCounter: Int = 0
     private var onCallCount: ((Int) -> Void)?
 
+        /// Creates an empty environment to configure.
     public init() {}
 
     /// Sets the value to return.
@@ -240,10 +242,13 @@ public struct StateVerification {
 /// ```
 @MainActor
 public final class FeatureTestHarness<State: Sendable> {
+        /// The scenario's name (shown in logs).
     public let name: String
+        /// The scenario's isolated provider container.
     public let container: ProviderContainer
     private let provider: Provider<State>
 
+        /// Configures a named scenario with its own container.
     public init(
         name: String,
         buildProvider: () -> Provider<State>
@@ -296,11 +301,13 @@ public final class FeatureTestHarness<State: Sendable> {
 ///     .run()
 /// ```
 public struct TestScenarioBuilder {
+        /// The override's name (for diagnostics).
     public let name: String
     private var givenBlock: ((inout IntegrationTestEnvironment) -> Void)?
     private var whenBlock: ((ProviderContainer) async -> Void)?
     private var thenBlock: ((ProviderContainer) -> Void)?
 
+        /// Creates a named test environment.
     public init(_ name: String) {
         self.name = name
     }

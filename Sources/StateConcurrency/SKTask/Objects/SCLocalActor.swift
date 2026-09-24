@@ -1,12 +1,12 @@
 import Foundation
 
-// MARK: - SCLocalActor
+// MARK: - SKLocalActor
 
 /// A local actor-based lock for thread-safe access to shared mutable state.
 ///
-/// `SCLocalActor` provides an actor-based synchronization mechanism for protecting
+/// `SKLocalActor` provides an actor-based synchronization mechanism for protecting
 /// shared mutable state in async contexts. Unlike global actors, each instance of
-/// `SCLocalActor` creates a separate isolation domain, allowing fine-grained control
+/// `SKLocalActor` creates a separate isolation domain, allowing fine-grained control
 /// over concurrent access to specific resources.
 ///
 /// ## Key Features:
@@ -21,7 +21,7 @@ import Foundation
 /// ### Basic Usage
 /// ```swift
 /// class MyClass {
-///     private let lock = SCLocalActor()
+///     private let lock = SKLocalActor()
 ///     private var sharedState: String = ""
 ///
 ///     func updateState(_ newValue: String) async {
@@ -76,9 +76,9 @@ import Foundation
 /// }
 /// ```
 ///
-/// **After (SCLocalActor - Swift 6 compatible):**
+/// **After (SKLocalActor - Swift 6 compatible):**
 /// ```swift
-/// private let lock = SCLocalActor()
+/// private let lock = SKLocalActor()
 /// private var sharedData: String = ""
 ///
 /// func updateData(_ value: String) async {
@@ -88,36 +88,36 @@ import Foundation
 /// }
 /// ```
 ///
-/// ## Comparison with SCGlobalActor:
+/// ## Comparison with SKGlobalActor:
 ///
-/// **SCLocalActor** is ideal when you need:
+/// **SKLocalActor** is ideal when you need:
 /// - Independent locks for different instances
 /// - Fine-grained control over synchronization
 /// - Parallel execution across different lock instances
 ///
 /// ```swift
 /// class UserManager {
-///     private let lock = SCLocalActor()  // Instance-specific lock
+///     private let lock = SKLocalActor()  // Instance-specific lock
 ///     private var users: [User] = []
 /// }
 ///
 /// class ProductManager {
-///     private let lock = SCLocalActor()  // Different, independent lock
+///     private let lock = SKLocalActor()  // Different, independent lock
 ///     private var products: [Product] = []
 /// }
 /// // These two locks don't block each other
 /// ```
 ///
-/// **SCGlobalActor** is ideal when you need:
+/// **SKGlobalActor** is ideal when you need:
 /// - App-wide coordination
 /// - Shared state across multiple types
 /// - All marked code to run on the same actor
 ///
 /// ```swift
-/// @SCGlobalActor
+/// @SKGlobalActor
 /// var appSettings: Settings = Settings()
 ///
-/// @SCGlobalActor
+/// @SKGlobalActor
 /// func updateSettings() {
 ///     // Runs on the global shared actor
 /// }
@@ -133,8 +133,9 @@ import Foundation
 /// - All access to shared state must go through `withLock`
 /// - The actor isolation ensures no data races
 /// - Multiple concurrent calls to `withLock` are serialized
-public actor SCLocalActor {
+public actor SKLocalActor {
     
+    /// Creates the isolated instance; state starts at its default.
     public init() { }
     
     /// Executes the provided closure with exclusive access to the actor's state

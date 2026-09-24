@@ -50,6 +50,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     // MARK: - Dependency Tracking
 
     @ObservationIgnored
+    /// Providers currently watching this one; kept alive while non-empty.
     public var dependents: Set<ProviderID> = []
 
     public private(set) var listenersCount: Int = 0
@@ -68,6 +69,8 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     
     // MARK: - Listener Management
 
+    /// Registers one reactive listener; fires add/resume callbacks on 0 → 1.
+
     public func incrementListeners() {
         listenersCount += 1
         if listenersCount == 1 {
@@ -75,6 +78,8 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             fireCallbacks(.resume)
         }
     }
+
+    /// Removes one listener; fires cancel callbacks and schedules auto-dispose on 1 → 0.
 
     public func decrementListeners() {
         guard listenersCount > 0 else { return }
@@ -304,6 +309,8 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     
     // MARK: - ProviderRef
     
+    /// Watches a dependency: records the edge so this element recomputes when it changes.
+
     public func watch<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
         let depID = ProviderID(depProvider)
         dependencies.insert(depID)
@@ -317,15 +324,21 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         return (depElement as! ProviderElement<Dep>).getState()
     }
 
+    /// Records a weak back-reference so dependents can be invalidated directly.
+
     public func _addDependentRef(_ element: AnyObject) {
         guard let providerElement = element as? (any AnyProviderElement) else { return }
         _dependentRefs.append(WeakElementRef(providerElement))
     }
     
+    /// One-shot read of a dependency without creating a reactive edge.
+
     public func read<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
         return container.read(depProvider)
     }
     
+    /// Subscribes to a dependency's changes for this element's lifetime; closed on dispose.
+
     public func listen<Dep: ProviderProtocol>(
         _ depProvider: Dep,
         fireImmediately: Bool = false,
@@ -335,12 +348,23 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         internalSubscriptions.append(subscription)
     }
 
+    /// Registers cleanup that runs when this element is disposed or recomputed.
+
     public func onDispose(_ cleanup: @escaping () -> Void) { appendCallback(.dispose, cleanup) }
+    /// Runs when the last listener leaves (element pauses).
+
     public func onCancel(_ callback: @escaping () -> Void) { appendCallback(.cancel, callback) }
+    /// Runs when the first listener arrives (or the element reactivates).
+
     public func onResume(_ callback: @escaping () -> Void) { appendCallback(.resume, callback) }
+    /// Runs on every 0 → 1 listener transition.
+
     public func onAddListener(_ callback: @escaping () -> Void) { appendCallback(.addListener, callback) }
+    /// Removes one listener; no-op below zero (double-close safe).
     public func onRemoveListener(_ callback: @escaping () -> Void) { appendCallback(.removeListener, callback) }
     
+    /// Pins this element in memory until the returned link is released.
+
     public func keepAlive() -> KeepAliveLink {
         keepAliveLinksCount += 1
         return KeepAliveLink { [weak self] in

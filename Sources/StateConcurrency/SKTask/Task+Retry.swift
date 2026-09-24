@@ -12,7 +12,7 @@ extension Task where Success == Never, Failure == Never {
     public static func retrying<T: Sendable>(
         priority: TaskPriority? = nil,
         maxRetryCount: Int = 3,
-        policy: SCRetryPolicy = .exponential(initialDelay: .seconds(5), multiplier: 1.0),
+        policy: SKRetryPolicy = .exponential(initialDelay: .seconds(5), multiplier: 1.0),
         isRetryingCallback: (@Sendable (Int) -> Void)? = nil,
         operation: @Sendable @escaping () async throws -> T
     ) -> Task<T, Error> {
@@ -43,11 +43,11 @@ extension Task where Success == Never, Failure == Never {
     public static func retrying<T: Sendable>(
         priority: TaskPriority? = nil,
         maxRetryCount: Int = 3,
-        retryInterval: SCTaskDuration? = nil,
+        retryInterval: SKTaskDuration? = nil,
         isRetryingCallback: (@Sendable (Int) -> Void)? = nil,
         operation: @Sendable @escaping () async throws -> T
     ) -> Task<T, Error> {
-        let policy: SCRetryPolicy
+        let policy: SKRetryPolicy
         if let retryInterval = retryInterval {
             policy = .constant(delay: retryInterval)
         } else {

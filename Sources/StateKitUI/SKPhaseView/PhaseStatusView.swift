@@ -35,6 +35,7 @@ public struct SKStatusView<Value, Idle: View, Loading: View, Success: View, Fail
     private let loading: () -> Loading
     private let failure: () -> Failure
 
+        /// Initializes the status view with its status value and per-state builders.
     public init(
         _ status: SKStatus,
         @ViewBuilder success: @escaping () -> Success,
@@ -49,6 +50,7 @@ public struct SKStatusView<Value, Idle: View, Loading: View, Success: View, Fail
         self.failure = failure
     }
 
+    /// Switches over the status and renders the matching builder.
     public var body: some View {
         switch status {
             case .idle:    idle()
@@ -146,9 +148,12 @@ where Idle == EmptyView, Loading == _DefaultLoadingView {
 
 // MARK: - Default Subview
 
+/// Built-in view for the `.failure` status when no custom view is given.
 public struct _DefaultStatusFailureView: View {
+    /// Renders the default failure message.
     public init() {}
 
+    /// Renders the default failure message.
     public var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle")

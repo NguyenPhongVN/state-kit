@@ -30,6 +30,7 @@ public struct SKAtomViewContext {
     let store: SKAtomStore
 
     @MainActor
+    /// Binds the context to a store (normally provided by `SKAtomRoot`).
     public init(store: SKAtomStore) {
         self.store = store
     }
