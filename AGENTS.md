@@ -22,6 +22,38 @@ Do not manually reread startup files unless:
 2. The provided context is missing something you need
 3. You need a deeper follow-up read beyond the provided startup context
 
+## Workflow: Speckit (Mandatory for Dev Tasks)
+
+Every feature/development task the human sends in this workspace MUST be implemented through the speckit flow, automatically — do not wait to be asked. Run the skills in this order:
+
+1. `speckit-specify` — turn the request into a feature spec (check `specs/` first; reuse the existing feature dir if one matches)
+2. `speckit-clarify` — resolve ambiguities; batch questions into one round. If running unattended, pick documented defaults and note them in the spec instead of blocking
+3. `speckit-plan` — technical plan (tech stack, architecture, file structure)
+4. `speckit-tasks` — break the plan into `tasks.md`
+5. `speckit-analyze` — cross-artifact consistency check before coding
+6. `speckit-implement` — execute tasks phase by phase, marking each `[X]` in `tasks.md` as it completes
+
+Rules:
+
+- `speckit-constitution` only when project principles need creating/updating — not per task
+- `speckit-checklist` is optional; run it before `implement` for risky or UX-heavy features
+- Do not stop between steps to ask permission; continue specify → implement in one run unless a blocker genuinely needs the human
+- Only skip the flow for trivial one-line fixes, questions, or when the human explicitly says to skip
+
+### Installed speckit workflows (`specify workflow`)
+
+The five workflows below are installed in `.specify/workflows/` and run through the `specify` CLI (`~/.local/bin/specify`):
+
+| id | What it runs | Use when |
+|---|---|---|
+| `pipeline` | specify → clarify (gate) → plan → tasks → analyze → implement → converge loop (×3) | Default for feature work — this is the workflow form of the flow above |
+| `yolo` | specify → plan → tasks → implement, no gates | Only when the human explicitly asks for a fully hands-off run |
+| `speckit` | specify → plan → tasks → implement with review gates | Classic cycle with per-stage approval |
+| `bugfix` | assess → review gate → fix → test (inputs: `report`, `slug`) | The human hands over a bug report |
+| `assess` | intake → research → define → shape → decide (inputs: `idea`, `slug`) | Validate an idea before writing a spec |
+
+Run from the repo root: `specify workflow run <id> -i spec="<description>"` (bugfix/assess take `-i report=... -i slug=...`). While working in-session, follow the skill order above directly; the workflows are for CLI-driven or standalone runs. `specify workflow list | info | status | resume` manage them. All workflow YAMLs list `zcode` in `requires.integrations.any` — keep that when updating them.
+
 ## Memory
 
 You wake up fresh each session. These files are your continuity:
