@@ -2,6 +2,18 @@ import Combine
 import SwiftUI
 import StateKit
 
+/// Opaque handle bound to one atom-store interceptor registration.
+///
+/// Created by `SKAtomStore.addInterceptorRemovable`; pass it to
+/// `SKAtomStore.removeInterceptor` to unregister exactly that interceptor.
+/// Removal is idempotent.
+public struct SKInterceptorToken: Hashable, Sendable {
+    fileprivate let id = UUID()
+
+    /// Internal-only creation; tokens come from `addInterceptorRemovable`.
+    fileprivate init() {}
+}
+
 /// The central atom store for `StateKitAtoms`.
 ///
 /// `SKAtomStore` owns every `SKAtomBox`, the dependency graph that connects
@@ -93,18 +105,54 @@ public final class SKAtomStore: @unchecked Sendable {
     }
 
     /// Global interceptors for observing all atom changes.
+    ///
+    /// Registrations are stored as (token, closure) pairs so a token removal can
+    /// release exactly one closure; array order preserves registration order.
     public typealias Interceptor = @MainActor (SKAtomKey, _ oldValue: Any, _ newValue: Any) -> Void
-    private var interceptors: [Interceptor] = []
+    private var interceptors: [(token: SKInterceptorToken, interceptor: Interceptor)] = []
 
     /// Adds a global interceptor that is called whenever any atom's value changes.
+    ///
+    /// - Important: The registration lives for the store's lifetime unless removed.
+    ///   Prefer `addInterceptorRemovable` and remove the token on teardown, or the
+    ///   closure (and everything it captures) leaks for the store's lifetime.
+    @available(*, deprecated, message: "Use addInterceptorRemovable and remove the token on teardown; this registration cannot be removed and leaks for the store's lifetime.")
     @MainActor
     public func addInterceptor(_ interceptor: @escaping Interceptor) {
-        interceptors.append(interceptor)
+        _ = addInterceptorRemovable(interceptor)
     }
+
+    /// Adds a global interceptor and returns a token that can remove it.
+    ///
+    /// The interceptor is called on every atom write with the changed key and the
+    /// old/new values, in registration order, while its token has not been removed.
+    ///
+    /// - Returns: An opaque token; hold it and pass it to `removeInterceptor` on
+    ///   teardown. Removing is idempotent.
+    @MainActor
+    public func addInterceptorRemovable(_ interceptor: @escaping Interceptor) -> SKInterceptorToken {
+        let token = SKInterceptorToken()
+        interceptors.append((token, interceptor))
+        return token
+    }
+
+    /// Removes an interceptor previously registered with `addInterceptorRemovable`.
+    ///
+    /// Idempotent: removing an unknown, already-removed, or stale token is a no-op.
+    /// Safe to call from within an interceptor (notifications iterate a snapshot).
+    @MainActor
+    public func removeInterceptor(_ token: SKInterceptorToken) {
+        interceptors.removeAll { $0.token == token }
+    }
+
+    /// Number of live interceptor registrations (internal, test-facing).
+    @MainActor
+    var interceptorCount: Int { interceptors.count }
 
     @MainActor
     private func notifyInterceptors(key: SKAtomKey, oldValue: Any, newValue: Any) {
-        for interceptor in interceptors {
+        let snapshot = interceptors
+        for (_, interceptor) in snapshot {
             interceptor(key, oldValue, newValue)
         }
     }

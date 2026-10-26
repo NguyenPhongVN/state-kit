@@ -95,15 +95,19 @@ extension ProviderElement {
         if dependencies.insert(ProviderID(identifier: key, name: "Atom(\(key))")).inserted {
             // Create a subscriber token to keep the atom alive while this provider exists
             let token = SKSubscriberToken(store: store, key: key)
-            onDispose {
-                _ = token // Keep token alive until provider disposal
-            }
 
-            // Listen for changes to this atom
-            store.addInterceptor { [weak self] changedKey, _, _ in
+            // Listen for changes to this atom. The registration is removable and
+            // removed on disposal — an append-only interceptor would otherwise
+            // accumulate one closure per (provider, atom) edge for the store's
+            // lifetime and slow every atom write in the app.
+            let interceptorToken = store.addInterceptorRemovable { [weak self] changedKey, _, _ in
                 if changedKey == key {
                     self?.invalidate()
                 }
+            }
+            onDispose { [store] in
+                store.removeInterceptor(interceptorToken)
+                _ = token // Keep token alive until provider disposal
             }
         }
 

@@ -107,23 +107,24 @@ public func useAsyncRefresh<Value>(
         }
     }
 
-    box.start = {
+    box.start = { [weak box] in
+        guard let box else { return }
         let previousSuccess = box.signal.value.value
 
         if previousSuccess == nil {
             box.signal.value = .loading
         }
 
-        box.task = Task(priority: priority) { @MainActor in
+        box.task = Task(priority: priority) { @MainActor [weak box] in
             do {
                 let value = try await operation()
                 guard !Task.isCancelled else { return }
-                box.signal.value = .success(value)
+                box?.signal.value = .success(value)
             } catch is CancellationError {
             } catch {
                 guard !Task.isCancelled else { return }
                 if previousSuccess == nil {
-                    box.signal.value = .failure(error)
+                    box?.signal.value = .failure(error)
                 }
             }
         }

@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 // MARK: - Internal storage
 
@@ -101,19 +102,22 @@ public func usePublisherPerform<P: Publisher>(
         }
     }
 
-    box.start = {
+    box.start = { [weak box] in
+        guard let box else { return }
         box.cancellable?.cancel()
         box.signal.value = .idle
-        box.cancellable = publisher().sink { completion in
-            switch completion {
-            case .finished:
-                box.signal.value = .finished
-            case .failure(let error):
-                box.signal.value = .failure(error)
+        box.cancellable = publisher()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak box] completion in
+                switch completion {
+                case .finished:
+                    box?.signal.value = .finished
+                case .failure(let error):
+                    box?.signal.value = .failure(error)
+                }
+            } receiveValue: { [weak box] output in
+                box?.signal.value = .value(output)
             }
-        } receiveValue: { output in
-            box.signal.value = .value(output)
-        }
     }
 
     let perform = useCallback(updateStrategy: .once, {

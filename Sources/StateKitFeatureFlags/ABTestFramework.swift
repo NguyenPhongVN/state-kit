@@ -56,7 +56,7 @@ public struct ABTest<T: Sendable>: Sendable {
 
     /// Assigns user to variant (deterministic based on user ID).
     public func assignUser(_ userId: String) -> ABTestVariant<T>? {
-        guard isActive else { return nil }
+        guard isActive, !variants.isEmpty else { return nil }
 
         let key = userKey(userId)
         let hash = hashString(key)

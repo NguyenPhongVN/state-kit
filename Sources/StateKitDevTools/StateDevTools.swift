@@ -1,6 +1,27 @@
 import SwiftUI
+import Observation
 
 // MARK: - StateDevTools
+
+/// Render-pass counter for the `StateDevScope` debug overlay.
+///
+/// A reference type on purpose: the scope's body must never read `count`
+/// (that would re-invalidate the scope on every counted render — a
+/// self-sustaining loop). Only the overlay, which displays the count, reads
+/// it; incrementing therefore invalidates just the overlay.
+@Observable
+@MainActor
+public final class StateDevRenderCounter {
+    /// Number of completed render passes.
+    public private(set) var count = 0
+
+    public init() {}
+
+    /// Records one completed render pass.
+    public func increment() {
+        count += 1
+    }
+}
 
 /// Utilities for inspecting hook slots at runtime.
 ///
@@ -59,7 +80,7 @@ public enum StateHookInspector {
 public struct StateDevScope<Content: View>: View {
 
     @State private var context = StateContext()
-    @State private var renderCount: Int = 0
+    @State private var renderCounter = StateDevRenderCounter()
 
     @Environment(\.self) private var environment
 
@@ -86,19 +107,25 @@ public struct StateDevScope<Content: View>: View {
     public var body: some View {
         let view = StateRuntime.stateRun(context: context, environment: environment, body: content)
 
+        #if DEBUG
         // Increment the counter after the current render pass completes.
         // We use enqueuePostRenderEffect to ensure we are out of the body execution,
-        // and then Task to ensure we are out of the render call stack.
-        let _ = context.enqueuePostRenderEffect {
+        // and then Task to ensure we are out of the render call stack. The counter
+        // is a reference this body never reads: incrementing it invalidates only
+        // the overlay that displays it. (A @State counter read here would
+        // re-invalidate this body on every count — a self-sustaining re-render
+        // loop, previously active even in Release builds.)
+        let _ = context.enqueuePostRenderEffect { [renderCounter] in
             Task { @MainActor in
-                renderCount += 1
+                renderCounter.increment()
             }
         }
+        #endif
 
         view.modifier(StateDevOverlayModifier(
             show: showOverlay,
             alignment: overlayAlignment,
-            renderCount: renderCount,
+            renderCounter: renderCounter,
             statesProvider: { context.states }
         ))
     }
@@ -109,14 +136,14 @@ public struct StateDevScope<Content: View>: View {
 private struct StateDevOverlayModifier: ViewModifier {
     let show: Bool
     let alignment: Alignment
-    let renderCount: Int
+    let renderCounter: StateDevRenderCounter
     let statesProvider: () -> [Any]
 
     func body(content: Content) -> some View {
         #if DEBUG
         if show {
             content.overlay(alignment: alignment) {
-                StateDevOverlay(renderCount: renderCount, states: statesProvider())
+                StateDevOverlay(renderCount: renderCounter.count, states: statesProvider())
             }
         } else {
             content

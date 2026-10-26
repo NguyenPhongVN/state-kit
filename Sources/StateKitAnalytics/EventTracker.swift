@@ -32,7 +32,14 @@ public final class EventTracker: Sendable {
             sessionId: event.sessionId
         )
 
-        events.append(trackedEvent)
+        // Retained history is bounded, opt-in debug tooling: an uncapped mirror
+        // of every tracked event grows for the tracker's (process) lifetime.
+        if let cap = config.historyCap {
+            events.append(trackedEvent)
+            if events.count > cap {
+                events.removeFirst(events.count - cap)
+            }
+        }
         batch.append(trackedEvent)
 
         if batch.count >= config.batchSize {

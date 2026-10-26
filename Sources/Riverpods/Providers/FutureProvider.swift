@@ -47,7 +47,8 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
     ///
     /// - Returns: AsyncValue representing the operation state
     public override func providerCreate() -> AsyncValue<T> {
-        let task = Task { @MainActor in
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
             do {
                 // Run the async operation
                 let value = try await provider.fetch(ref: self)
@@ -87,9 +88,12 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
             }
         }
 
-        // Clean up task when provider is disposed
-        onDispose {
+        // Clean up task when provider is disposed. Weak self: the callback is
+        // stored on the element itself, so a strong capture would form a cycle
+        // and leak the element (and its task/continuations) after abandonment.
+        onDispose { [weak self] in
             task.cancel()
+            guard let self else { return }
             self.continuations.forEach { $0.resume(throwing: CancellationError()) }
             self.continuations.removeAll()
         }

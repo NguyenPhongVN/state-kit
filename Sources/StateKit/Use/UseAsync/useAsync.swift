@@ -58,14 +58,14 @@ private func _startAsync<Value>(
     box.updateStrategy = updateStrategy
     box.signal._safeUpdate(to: .loading)
 
-    box.task = Task { @MainActor in
+    box.task = Task { @MainActor [weak box] in
         do {
             let value = try await operation()
             if Task.isCancelled { return }
-            box.signal.value = .success(value)
+            box?.signal.value = .success(value)
         } catch {
             if Task.isCancelled { return }
-            box.signal.value = .failure(error)
+            box?.signal.value = .failure(error)
         }
     }
 }

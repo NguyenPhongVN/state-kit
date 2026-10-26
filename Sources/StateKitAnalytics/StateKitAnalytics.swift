@@ -135,6 +135,10 @@ public struct AnalyticsConfig: Sendable {
     public let batchSize: Int
     /// Whether events persist locally between launches.
     public let persistLocal: Bool
+    /// Maximum events retained in memory for inspection; `nil` (default)
+    /// retains nothing beyond the active batch. Retention exists for debugging
+    /// only — flushed events are never re-sent.
+    public let historyCap: Int?
     /// Default user attributed to tracked events.
     public let userId: String?
     /// Session attributed to tracked events.
@@ -146,6 +150,7 @@ public struct AnalyticsConfig: Sendable {
         flushInterval: TimeInterval = 30,
         batchSize: Int = 50,
         persistLocal: Bool = false,
+        historyCap: Int? = nil,
         userId: String? = nil,
         sessionId: String = UUID().uuidString
     ) {
@@ -153,6 +158,7 @@ public struct AnalyticsConfig: Sendable {
         self.flushInterval = max(1, flushInterval)
         self.batchSize = max(1, batchSize)
         self.persistLocal = persistLocal
+        self.historyCap = historyCap.map { max(1, $0) }
         self.userId = userId
         self.sessionId = sessionId
     }

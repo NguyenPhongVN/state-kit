@@ -11,29 +11,41 @@ import Foundation
 struct StateKitCombineTests {
 
     @Test("Publisher.asPhase bridges a publisher into hook state")
-    func publisherAsPhase() {
+    func publisherAsPhase() async throws {
         let harness = StateTest()
         let subject = PassthroughSubject<Int, TestError>()
 
         let initial = harness.render {
             subject.asPhase()
         }
+        #expect(initial == .idle)
 
+        // Publisher deliveries are hopped to the main queue (main-thread
+        // state-write fix), so the bridge updates one main-queue turn later.
         subject.send(42)
+        try await drainMainQueue()
 
         let afterValue = harness.render {
             subject.asPhase()
         }
 
         subject.send(completion: .finished)
+        try await drainMainQueue()
 
         let afterCompletion = harness.render {
             subject.asPhase()
         }
 
-        #expect(initial == .idle)
         #expect(afterValue == .value(42))
         #expect(afterCompletion == .finished)
+    }
+
+    /// Runs one full turn of the main queue so previously enqueued
+    /// `receive(on: DispatchQueue.main)` deliveries complete.
+    private func drainMainQueue() async throws {
+        await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+            DispatchQueue.main.async { cont.resume() }
+        }
     }
 
     @Test("materializeAsPhase emits idle, values, and terminal failure")

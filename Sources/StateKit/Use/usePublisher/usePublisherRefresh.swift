@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 // MARK: - Internal storage
 
@@ -109,24 +110,27 @@ public func usePublisherRefresh<P: Publisher>(
         }
     }
 
-    box.start = {
+    box.start = { [weak box] in
+        guard let box else { return }
         let previousOutput = box.signal.value.output
 
         box.cancellable?.cancel()
-        box.cancellable = publisher().sink { completion in
-            switch completion {
-            case .finished:
-                if previousOutput == nil {
-                    box.signal.value = .finished
+        box.cancellable = publisher()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak box] completion in
+                switch completion {
+                case .finished:
+                    if previousOutput == nil {
+                        box?.signal.value = .finished
+                    }
+                case .failure(let error):
+                    if previousOutput == nil {
+                        box?.signal.value = .failure(error)
+                    }
                 }
-            case .failure(let error):
-                if previousOutput == nil {
-                    box.signal.value = .failure(error)
-                }
+            } receiveValue: { [weak box] output in
+                box?.signal.value = .value(output)
             }
-        } receiveValue: { output in
-            box.signal.value = .value(output)
-        }
     }
 
     let refresh = useCallback(updateStrategy: .once, {

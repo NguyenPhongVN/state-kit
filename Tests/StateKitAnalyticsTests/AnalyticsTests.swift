@@ -6,7 +6,10 @@ final class AnalyticsTests: XCTestCase {
     // MARK: - Event Tracker Tests
 
     func testEventTracking() {
-        let tracker = EventTracker()
+        // Retention is opt-in since the bounded-history fix; enable it here to
+        // exercise the retained-history view.
+        let config = AnalyticsConfig(historyCap: 10)
+        let tracker = EventTracker(config: config)
 
         tracker.track("test_event", properties: ["value": .int(42)])
 

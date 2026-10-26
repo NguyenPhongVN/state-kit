@@ -86,7 +86,7 @@ public final class DevToolsObserver: ProviderObserver {
     /// Records the transition and (optionally) snapshots.
     public func didUpdateProvider<P: ProviderProtocol>(
         _ provider: P,
-        previousValue: P.State,
+        oldValue: P.State,
         newValue: P.State,
         container: ProviderContainer
     ) {
@@ -94,7 +94,7 @@ public final class DevToolsObserver: ProviderObserver {
 
         // Record in history
         if history.storeSnapshots {
-            let before = AnyCodable(previousValue)
+            let before = AnyCodable(oldValue)
             let after = AnyCodable(newValue)
             let computeTime = computeTime(for: providerName)
             history.record(
@@ -307,7 +307,7 @@ public final class ConsoleLoggerObserver: ProviderObserver {
     /// Prints value changes.
     public func didUpdateProvider<P: ProviderProtocol>(
         _ provider: P,
-        previousValue: P.State,
+        oldValue: P.State,
         newValue: P.State,
         container: ProviderContainer
     ) {

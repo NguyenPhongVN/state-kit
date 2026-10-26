@@ -32,6 +32,10 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
     /// The task running the async sequence iteration
     private var task: Task<Void, Never>?
 
+    deinit {
+        task?.cancel()
+    }
+
     // MARK: - Value Creation
 
     /// Starts iterating the async sequence and returns initial loading state.
@@ -49,17 +53,25 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
         // Cancel any previous iteration
         task?.cancel()
 
-        // Start new async sequence iteration
-        task = Task { @MainActor in
-            do {
-                // Create the async sequence
-                let sequence = provider.makeSequence(ref: self)
+        // Start new async sequence iteration. The pump captures the element
+        // weakly: the task is stored on the element, so a strong capture would
+        // form a cycle that pins the element (and the whole stream) forever.
+        task = Task { @MainActor [weak self] in
+            // Materialize the sequence (and its ref dependency) up front. The
+            // strong binding must not outlive creation, or an abandoned element
+            // would stay pinned by its own pump across an infinite iteration.
+            guard let sequence: S = {
+                guard let self else { return nil }
+                return self.provider.makeSequence(ref: self)
+            }() else { return }
 
+            do {
                 // Iterate over sequence values
                 for try await value in sequence {
                     if Task.isCancelled { return }
 
                     // Update state with new value
+                    guard let self else { return }
                     let oldState = self.stateBox?.value
                     self.stateBox?.value = .data(value)
                     self.notifyDependents()
@@ -73,6 +85,7 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
                 if Task.isCancelled { return }
 
                 // Handle sequence error
+                guard let self else { return }
                 let oldState = self.stateBox?.value
                 self.stateBox?.value = .error(error, previousData: oldState?.value)
                 self.notifyDependents()
@@ -85,8 +98,8 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
         }
 
         // Cancel iteration when provider is disposed
-        onDispose {
-            self.task?.cancel()
+        onDispose { [weak self] in
+            self?.task?.cancel()
         }
 
         // Return initial state

@@ -193,7 +193,8 @@ public func useLoadMore<Item, Cursor>(
         }
     }
 
-    box.reload = {
+    box.reload = { [weak box] in
+        guard let box else { return }
         let previousItems = box.phaseSignal.value.value
 
         box.isReloadingSignal.value = true
@@ -205,30 +206,31 @@ public func useLoadMore<Item, Cursor>(
             box.phaseSignal.value = .loading
         }
 
-        box.task = Task(priority: priority) { @MainActor in
+        box.task = Task(priority: priority) { @MainActor [weak box] in
             do {
                 let page = try await loadPage(initialCursor)
                 guard !Task.isCancelled else { return }
 
-                box.phaseSignal.value = .success(page.items)
-                box.nextCursor = page.nextCursor
-                box.hasNextPageSignal.value = page.nextCursor != nil
-                box.isReloadingSignal.value = false
+                box?.phaseSignal.value = .success(page.items)
+                box?.nextCursor = page.nextCursor
+                box?.hasNextPageSignal.value = page.nextCursor != nil
+                box?.isReloadingSignal.value = false
             } catch is CancellationError {
             } catch {
                 guard !Task.isCancelled else { return }
 
-                box.isReloadingSignal.value = false
-                box.reloadErrorSignal.value = error
+                box?.isReloadingSignal.value = false
+                box?.reloadErrorSignal.value = error
 
                 if previousItems == nil {
-                    box.phaseSignal.value = .failure(error)
+                    box?.phaseSignal.value = .failure(error)
                 }
             }
         }
     }
 
-    box.loadNext = {
+    box.loadNext = { [weak box] in
+        guard let box else { return }
         guard
             !box.isReloadingSignal.value,
             !box.isLoadingMoreSignal.value,
@@ -241,21 +243,21 @@ public func useLoadMore<Item, Cursor>(
         box.isLoadingMoreSignal.value = true
         box.loadMoreErrorSignal.value = nil
 
-        box.task = Task(priority: priority) { @MainActor in
+        box.task = Task(priority: priority) { @MainActor [weak box] in
             do {
                 let page = try await loadPage(cursor)
                 guard !Task.isCancelled else { return }
 
-                box.phaseSignal.value = .success(existingItems + page.items)
-                box.nextCursor = page.nextCursor
-                box.hasNextPageSignal.value = page.nextCursor != nil
-                box.isLoadingMoreSignal.value = false
+                box?.phaseSignal.value = .success(existingItems + page.items)
+                box?.nextCursor = page.nextCursor
+                box?.hasNextPageSignal.value = page.nextCursor != nil
+                box?.isLoadingMoreSignal.value = false
             } catch is CancellationError {
             } catch {
                 guard !Task.isCancelled else { return }
 
-                box.isLoadingMoreSignal.value = false
-                box.loadMoreErrorSignal.value = error
+                box?.isLoadingMoreSignal.value = false
+                box?.loadMoreErrorSignal.value = error
             }
         }
     }

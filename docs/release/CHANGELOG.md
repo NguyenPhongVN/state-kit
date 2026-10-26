@@ -8,6 +8,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Fixed (P1 blocker fixes — specs/008-p1-blocker-fixes)
+
+- **Hook teardown no longer leaks in-flight work** — the boxes behind `useAsync`,
+  `useAsyncPerform`, `useAsyncRefresh`, `useAsyncSequence`, `usePublisher`,
+  `usePublisherPerform`, `usePublisherRefresh`, and `useLoadMore` no longer retain their own
+  task/subscription through result-writing closures. Releasing a hook slot now cancels the
+  in-flight work and deallocates the box (previously an infinite sequence kept firing into an
+  orphaned signal forever).
+- **Publisher-driven hooks write hook state on the main actor only** — `usePublisher`,
+  `usePublisherPerform`, and `usePublisherRefresh` now hop deliveries through
+  `receive(on: DispatchQueue.main)`. *Observable change:* values emitted by a synchronous
+  upstream are delivered one main-queue turn later; callers asserting synchronously must
+  await one main-queue turn (see `Publisher.asPhase` test).
+- **Atom-store interceptors are removable** — new `SKInterceptorToken`,
+  `SKAtomStore.addInterceptorRemovable(_:)` and `removeInterceptor(_:)` (idempotent removal,
+  snapshot-iteration notifications). The append-only `addInterceptor(_:)` is deprecated; the
+  provider→atom ecosystem bridge now removes its interceptor when the provider element
+  disposes, so watch/dispose cycles no longer accumulate permanent closures in
+  `SKAtomStore.shared`.
+- **`DevToolsObserver` records provider updates again** — its update callback used the wrong
+  argument label (`previousValue:`) and was silently shadowed by the protocol extension's
+  no-op default; time-travel history recording is live and pinned by a container-level test.
+- **Async provider elements release themselves on disposal** — `FutureProviderElement`,
+  `StreamProviderElement`, and `AsyncSequenceProviderElement` no longer self-retain through
+  `onDispose` registrations or work closures; listener-driven disposal deallocates the
+  element and cancels the in-flight operation/pump (the sequence pump additionally cancels
+  from `deinit`).
+- **`ABTest.assignUser` is total** — an active test with an empty variant list returns `nil`
+  instead of trapping on an out-of-range index.
+- **`StateDevScope` render counting is DEBUG-only and no longer self-invalidating** — the
+  counter moved to a reference type the scope body never reads, eliminating a self-sustaining
+  re-render loop that previously ran even in Release builds.
+- **`EventTracker` retention is bounded** — the retained `events` history is now opt-in via
+  `AnalyticsConfig(historyCap:)` with drop-oldest semantics; by default no unbounded history
+  is kept (`eventCount`/`allEvents` report retained events only). *Observable change:* hosts
+  relying on the old always-on mirror must pass a `historyCap`.
+- **Keychain writes never destroy the previous secret** — `KeychainBatch.store` now uses
+  update-then-insert (previously delete-then-add, which destroyed the old value when the
+  re-add failed) and `KeychainNotifier.updateValue` commits in-memory state only after a
+  successful store.
+
+### Verified-not-a-defect (P1 blocker fixes)
+
+- **`DeterministicTimeProvider.advance(by:)` works as documented** — the review report's
+  "no-op" finding was a false positive: on current SDKs `Date.addTimeInterval(_:)` is a
+  mutating call, so time advances correctly. A regression test now pins the behavior.
+
 ### Added (polish pass)
 
 - **`useDeferred(_:)`** — deferred value hook: keeps urgent renders responsive while an

@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 // MARK: - Internal storage
 
@@ -52,16 +53,22 @@ private func _startPublisher<P: Publisher>(
     box.updateStrategy = updateStrategy
     box.signal._safeUpdate(to: .idle)
 
-    box.cancellable = publisher.sink { completion in
-        switch completion {
-        case .finished:
-            box.signal.value = .finished
-        case .failure(let error):
-            box.signal.value = .failure(error)
+    // Deliver on the main actor regardless of the upstream scheduler: Combine
+    // emits on the upstream's thread, and hook state must only be written
+    // where SwiftUI reads it. Weak box: the subscription must not retain the
+    // box that owns it (deinit-based cancellation would otherwise never run).
+    box.cancellable = publisher
+        .receive(on: DispatchQueue.main)
+        .sink { [weak box] completion in
+            switch completion {
+            case .finished:
+                box?.signal.value = .finished
+            case .failure(let error):
+                box?.signal.value = .failure(error)
+            }
+        } receiveValue: { [weak box] output in
+            box?.signal.value = .value(output)
         }
-    } receiveValue: { output in
-        box.signal.value = .value(output)
-    }
 }
 
 // MARK: - Public API

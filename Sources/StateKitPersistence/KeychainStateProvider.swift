@@ -25,6 +25,16 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
     private let encoder: JSONEncoder = JSONEncoder()
     private let decoder: JSONDecoder = JSONDecoder()
 
+    /// Test seam (internal): reference box holding a store failure handler.
+    /// A struct copy shared with a notifier still sees handler mutations.
+    /// When `handler` is non-nil, `store` invokes it instead of the real
+    /// Keychain write; `nil` handler (or nil box) uses the real path.
+    final class _StoreOverrideBox: @unchecked Sendable {
+        var handler: (@Sendable () throws -> Void)?
+    }
+
+    var _storeOverride: _StoreOverrideBox?
+
     /// - Parameters: unique storage `key`, and the item's protection level.
     public init(key: String, accessibility: KeychainAccessibility = .afterFirstUnlock) {
         self.key = key
@@ -54,6 +64,11 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
 
     /// Stores value in Keychain.
     public func store(_ value: T) throws {
+        if let override = _storeOverride, let handler = override.handler {
+            try handler()
+            return
+        }
+
         let data = try encoder.encode(value)
 
         // Try to update existing
@@ -216,9 +231,13 @@ public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, @unchec
     }
 
     /// Updates value and persists to Keychain.
+    ///
+    /// Persists first, then commits the in-memory state: a failed store must
+    /// leave the state reflecting what the Keychain actually holds, never a
+    /// value that silently reverts on the next read.
     public func updateValue(_ value: T) throws {
-        state = value
         try provider.store(value)
+        state = value
     }
 
     /// Clears from Keychain.
@@ -289,6 +308,10 @@ public struct BiometricState: Codable, Sendable {
 public struct KeychainBatch: Sendable {
     private var items: [String: Data] = [:]
 
+    /// Test seam (internal): when non-nil, each item write reports this status
+    /// instead of touching the real Keychain. Arguments: (key, data, accessibility).
+    var _writeOverride: (@Sendable (String, Data, KeychainAccessibility) -> OSStatus)?
+
     /// Creates an empty batch; add items with `add(_:forKey:)`.
     public init() {}
 
@@ -301,16 +324,33 @@ public struct KeychainBatch: Sendable {
     /// Stores all items in batch.
     public func store(accessibility: KeychainAccessibility = .whenUnlocked) throws {
         for (key, data) in items {
-            let query: [String: Any] = [
+            // Update the existing item first and only insert when it does not
+            // exist yet: deleting up front would destroy the previous secret
+            // whenever the write then failed (device locked, entitlement
+            // missing, disk pressure), aborting the batch irreversibly.
+            let updateQuery: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
                 kSecAttrAccount as String: key,
+            ]
+            let attributes: [String: Any] = [
                 kSecValueData as String: data,
                 kSecAttrAccessible as String: accessibility.secAttr,
             ]
 
-            SecItemDelete(query as CFDictionary)  // Remove old value first
+            var status: OSStatus
+            if let override = _writeOverride {
+                status = override(key, data, accessibility)
+            } else {
+                status = SecItemUpdate(updateQuery as CFDictionary, attributes as CFDictionary)
 
-            let status = SecItemAdd(query as CFDictionary, nil)
+                if status == errSecItemNotFound {
+                    var insertQuery = updateQuery
+                    insertQuery[kSecValueData as String] = data
+                    insertQuery[kSecAttrAccessible as String] = accessibility.secAttr
+
+                    status = SecItemAdd(insertQuery as CFDictionary, nil)
+                }
+            }
             guard status == errSecSuccess else {
                 throw KeychainError.storeFailed(status)
             }

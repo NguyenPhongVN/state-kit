@@ -61,17 +61,17 @@ private func _startAsyncSequence<S: AsyncSequence>(
     box.updateStrategy = updateStrategy
     box.signal.value = .loading
 
-    box.task = Task { @MainActor in
+    box.task = Task { @MainActor [weak box] in
         do {
             for try await element in sequence {
                 guard !Task.isCancelled else { return }
-                box.signal.value = .value(element)
+                box?.signal.value = .value(element)
             }
             guard !Task.isCancelled else { return }
-            box.signal.value = .finished
+            box?.signal.value = .finished
         } catch {
             guard !Task.isCancelled else { return }
-            box.signal.value = .failure(error)
+            box?.signal.value = .failure(error)
         }
     }
 }

@@ -44,7 +44,8 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
         let cancellable = provider.stream(ref: self)
             .sink { completion in
                 // Handle stream completion
-                Task { @MainActor in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
                     switch completion {
                     case .finished:
                         // Stream finished normally, keep last value
@@ -64,7 +65,8 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
                 }
             } receiveValue: { value in
                 // Handle each streamed value
-                Task { @MainActor in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
                     let oldState = self.stateBox?.value
                     self.stateBox?.value = .data(value)
                     self.notifyDependents()
