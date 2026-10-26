@@ -27,11 +27,18 @@
 public final class StateContext {
 
     /// Flat array of hook slot objects, indexed by hook call order.
-    public var states: [Any] = []
+    ///
+    /// Read-only outside the runtime: arbitrary mutation (removal, reordering)
+    /// breaks the positional slot invariant. The runtime appends through
+    /// `appendSlot(_:)`.
+    public private(set) var states: [Any] = []
 
-    /// Reserved storage for context-style values such as `EnvironmentValues`.
-    /// Not indexed by `nextIndex()`; accessed by scanning the array directly.
-    public var context: [Any] = []
+    /// Appends a hook slot. **Framework runtime only** — hook implementations
+    /// allocate their slot exactly once, at `states.count` (the position handed
+    /// out by `nextIndex()`).
+    public func appendSlot(_ value: Any) {
+        states.append(value)
+    }
 
     /// The environment value (typically `EnvironmentValues`) injected by the
     /// enclosing `StateScope` before each render. Atom hooks and

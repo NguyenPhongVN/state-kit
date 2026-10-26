@@ -50,7 +50,7 @@ public func useRef<T>(_ initial: T) -> StateRef<T> {
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(StateRef(initial))
+        context.appendSlot(StateRef(initial))
     }
 
     // Positional slot invariant: this hook created states[index] on first

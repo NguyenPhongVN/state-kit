@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 // MARK: - Internal storage
 
@@ -13,6 +14,12 @@ import Foundation
 final class _HookReducerBox<State, Action> {
     let signal: StateSignal<State>
     var reduce: (inout State, Action) -> Void
+
+    /// Re-entrancy guard + queue for dispatches issued from inside a reducer.
+    @ObservationIgnored
+    var isDispatching = false
+    @ObservationIgnored
+    var pendingActions: [Action] = []
 
     init(initial: State, reduce: @escaping (inout State, Action) -> Void) {
         self.signal = StateSignal(initial)
@@ -92,7 +99,7 @@ public func useReducer<Action, State>(
 
     if context.states.count <= index {
         box = _HookReducerBox(initial: initial, reduce: reduce)
-        context.states.append(box)
+        context.appendSlot(box)
     } else {
         // Positional slot invariant: created by this hook on first render;
         // stable hook order guarantees the type.
@@ -102,7 +109,26 @@ public func useReducer<Action, State>(
     }
 
     let dispatch: (Action) -> Void = { action in
-        box.reduce(&box.signal.value, action)
+        // Re-entrant dispatch (a reducer dispatching again) must not re-enter
+        // the same inout access — that is an exclusivity crash. Queue the
+        // action and drain it after the current reduce returns.
+        if box.isDispatching {
+            box.pendingActions.append(action)
+            return
+        }
+        box.isDispatching = true
+        defer {
+            box.isDispatching = false
+            while !box.pendingActions.isEmpty {
+                let queued = box.pendingActions.removeFirst()
+                var queuedValue = box.signal.value
+                box.reduce(&queuedValue, queued)
+                box.signal.value = queuedValue
+            }
+        }
+        var value = box.signal.value
+        box.reduce(&value, action)
+        box.signal.value = value
     }
 
     return (box.signal.value, dispatch)

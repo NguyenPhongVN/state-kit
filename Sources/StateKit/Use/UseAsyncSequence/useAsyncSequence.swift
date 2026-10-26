@@ -59,7 +59,7 @@ private func _startAsyncSequence<S: AsyncSequence>(
 ) {
     box.task?.cancel()
     box.updateStrategy = updateStrategy
-    box.signal.value = .loading
+    box.signal._safeUpdate(to: .loading)
 
     box.task = Task { @MainActor [weak box] in
         do {
@@ -154,7 +154,7 @@ public func useAsyncSequence<S: AsyncSequence>(
 
     if context.states.count <= index {
         box = _HookAsyncSequenceBox(updateStrategy: nil)
-        context.states.append(box)
+        context.appendSlot(box)
         _startAsyncSequence(box: box, updateStrategy: updateStrategy, sequence: sequence())
     } else {
         box = context.states[index] as! _HookAsyncSequenceBox<S.Element>

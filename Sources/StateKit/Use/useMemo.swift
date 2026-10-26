@@ -88,7 +88,7 @@ public func useMemo<T>(
 
     if context.states.count <= index {
         let value = compute()
-        context.states.append(_HookMemoBox(value, updateStrategy: updateStrategy))
+        context.appendSlot(_HookMemoBox(value, updateStrategy: updateStrategy))
         return value
     } else {
         // Positional slot invariant: created by this hook on first render;

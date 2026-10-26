@@ -91,18 +91,33 @@ public func useTransition() -> (isPending: Bool, start: (@MainActor @escaping ()
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(StateSignal(false))
+        context.appendSlot(StateSignal(false))
     }
 
     // swiftlint:disable:next force_cast
     let pendingSignal = context.states[index] as! StateSignal<Bool>
+
+    // Second slot: in-flight transition count. `isPending` must stay true
+    // until the LAST overlapping start finishes — a bare boolean cleared by
+    // the first completion dropped the spinner while later work still ran.
+    let inflightIndex = context.nextIndex()
+    if context.states.count <= inflightIndex {
+        context.appendSlot(StateSignal(0))
+    }
+    // swiftlint:disable:next force_cast
+    let inflightSignal = context.states[inflightIndex] as! StateSignal<Int>
+
     let isPending = pendingSignal.value
 
     let start: (@MainActor @escaping () async -> Void) -> Void = { work in
+        inflightSignal.value += 1
         pendingSignal.value = true
         Task { @MainActor in
             await work()
-            pendingSignal.value = false
+            inflightSignal.value = max(0, inflightSignal.value - 1)
+            if inflightSignal.value == 0 {
+                pendingSignal.value = false
+            }
         }
     }
 

@@ -86,7 +86,7 @@ public func useCallback<T>(
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(_HookCallbackBox(callback, updateStrategy: updateStrategy))
+        context.appendSlot(_HookCallbackBox(callback, updateStrategy: updateStrategy))
         return callback
     } else {
         // Positional slot invariant: created by this hook on first render;

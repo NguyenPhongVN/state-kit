@@ -91,13 +91,13 @@ public func usePublisherPerform<P: Publisher>(
 
     if context.states.count <= index {
         box = _HookPublisherPerformBox(updateStrategy: updateStrategy)
-        context.states.append(box)
+        context.appendSlot(box)
     } else {
         box = context.states[index] as! _HookPublisherPerformBox<P.Output>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {
             box.cancellable?.cancel()
             box.cancellable = nil
-            box.signal.value = .idle
+            box.signal._safeUpdate(to: .idle)
             box.updateStrategy = updateStrategy
         }
     }
@@ -105,7 +105,7 @@ public func usePublisherPerform<P: Publisher>(
     box.start = { [weak box] in
         guard let box else { return }
         box.cancellable?.cancel()
-        box.signal.value = .idle
+        box.signal._safeUpdate(to: .idle)
         box.cancellable = publisher()
             .receive(on: DispatchQueue.main)
             .sink { [weak box] completion in

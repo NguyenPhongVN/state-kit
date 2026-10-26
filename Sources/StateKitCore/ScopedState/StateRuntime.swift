@@ -50,9 +50,10 @@ public enum StateRuntime {
     /// reading `current` directly in hook implementations so that a missing
     /// context can be surfaced as a `fatalError` with a clear message.
     public static var context: StateContext {
-        guardFunction(StateRuntime.current) {
-            StateContext()
+        guard let current = StateRuntime.current else {
+            fatalError("StateRuntime.context must be accessed inside a render pass")
         }
+        return current
     }
 
     /// Ends the current render pass by setting `current` to `nil`.

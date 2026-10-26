@@ -94,7 +94,12 @@ private class Effect {
     let index = context.nextIndex()
 
     if index < context.states.count {
-        guard let box = context.states[index] as? Effect else { return }
+        // Positional slot invariant: this hook created states[index] on
+        // first render; a mismatch means hook order was violated — fail
+        // loudly like every other hook instead of silently skipping the
+        // effect AND its cleanup.
+        // swiftlint:disable:next force_cast
+        let box = context.states[index] as! Effect
 
         if !areEqual(box.updateStrategy?.dependency, updateStrategy?.dependency) {
             context.enqueueLayoutEffect {
@@ -105,7 +110,7 @@ private class Effect {
         }
     } else {
         let box = Effect()
-        context.states.append(box)
+        context.appendSlot(box)
         context.enqueueLayoutEffect {
             box.cleanup = effect()
             box.updateStrategy = updateStrategy

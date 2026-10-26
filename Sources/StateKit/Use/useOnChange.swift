@@ -66,7 +66,7 @@ public func useOnChange<T: Equatable>(
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(_HookOnChangeBox(value))
+        context.appendSlot(_HookOnChangeBox(value))
     } else {
         // Positional slot invariant: created by this hook on first render;
         // stable hook order guarantees the type.
@@ -122,7 +122,7 @@ public func useOnChange<T: Equatable>(
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(_HookOnChangeBox(value))
+        context.appendSlot(_HookOnChangeBox(value))
     } else {
         // Positional slot invariant: created by this hook on first render;
         // stable hook order guarantees the type.
@@ -180,7 +180,7 @@ public func useOnChange<T: Equatable>(
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(_HookOnChangeBox(value))
+        context.appendSlot(_HookOnChangeBox(value))
         if initial {
             action(value)
         }

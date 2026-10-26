@@ -92,26 +92,30 @@ public func useAsyncPerform<Value>(
 
     if context.states.count <= index {
         box = _HookAsyncPerformBox(updateStrategy: updateStrategy)
-        context.states.append(box)
+        context.appendSlot(box)
     } else {
         box = context.states[index] as! _HookAsyncPerformBox<Value>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {
             box.task?.cancel()
-            box.signal.value = .idle
+            box.signal._safeUpdate(to: .idle)
             box.updateStrategy = updateStrategy
         }
     }
 
     box.start = { [weak box] in
         guard let box else { return }
-        box.signal.value = .loading
+        box.signal._safeUpdate(to: .loading)
         box.task = Task(priority: priority) { @MainActor [weak box] in
             do {
                 let value = try await operation()
                 guard !Task.isCancelled else { return }
                 box?.signal.value = .success(value)
-            } catch is CancellationError {
             } catch {
+                // A cancellation the hook itself caused stays silent; a
+                // CancellationError from elsewhere (wrapping timeout, inner
+                // group) must surface — otherwise the phase sticks at
+                // .loading forever with nothing in flight.
+                if error is CancellationError, Task.isCancelled { return }
                 guard !Task.isCancelled else { return }
                 box?.signal.value = .failure(error)
             }

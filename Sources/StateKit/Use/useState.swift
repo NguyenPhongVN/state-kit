@@ -34,7 +34,7 @@ private func _useState<T>(_ initial: T) -> StateSignal<T> {
     let index = context.nextIndex()
 
     if context.states.count <= index {
-        context.states.append(StateSignal(initial))
+        context.appendSlot(StateSignal(initial))
     }
 
     // Positional slot invariant: this hook created states[index] on first

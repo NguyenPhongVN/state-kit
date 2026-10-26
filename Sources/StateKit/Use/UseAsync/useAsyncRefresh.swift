@@ -97,12 +97,12 @@ public func useAsyncRefresh<Value>(
 
     if context.states.count <= index {
         box = _HookAsyncRefreshBox(updateStrategy: updateStrategy)
-        context.states.append(box)
+        context.appendSlot(box)
     } else {
         box = context.states[index] as! _HookAsyncRefreshBox<Value>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {
             box.task?.cancel()
-            box.signal.value = .idle
+            box.signal._safeUpdate(to: .idle)
             box.updateStrategy = updateStrategy
         }
     }
@@ -112,7 +112,7 @@ public func useAsyncRefresh<Value>(
         let previousSuccess = box.signal.value.value
 
         if previousSuccess == nil {
-            box.signal.value = .loading
+            box.signal._safeUpdate(to: .loading)
         }
 
         box.task = Task(priority: priority) { @MainActor [weak box] in
@@ -120,8 +120,10 @@ public func useAsyncRefresh<Value>(
                 let value = try await operation()
                 guard !Task.isCancelled else { return }
                 box?.signal.value = .success(value)
-            } catch is CancellationError {
             } catch {
+                // A cancellation the hook itself caused stays silent; a
+                // CancellationError from elsewhere must surface.
+                if error is CancellationError, Task.isCancelled { return }
                 guard !Task.isCancelled else { return }
                 if previousSuccess == nil {
                     box?.signal.value = .failure(error)

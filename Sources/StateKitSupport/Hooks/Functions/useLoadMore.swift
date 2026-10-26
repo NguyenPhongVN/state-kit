@@ -177,7 +177,7 @@ public func useLoadMore<Item, Cursor>(
             updateStrategy: updateStrategy,
             initialCursor: initialCursor
         )
-        context.states.append(box)
+        context.appendSlot(box)
     } else {
         box = context.states[index] as! _HookLoadMoreBox<Item, Cursor>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {

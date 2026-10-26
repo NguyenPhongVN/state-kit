@@ -143,7 +143,7 @@ public func usePublisher<P: Publisher>(
 
     if context.states.count <= index {
         box = _HookPublisherBox(initialPhase: .idle, updateStrategy: nil)
-        context.states.append(box)
+        context.appendSlot(box)
         _startPublisher(box: box, updateStrategy: updateStrategy, publisher: publisher())
     } else {
         box = context.states[index] as! _HookPublisherBox<P.Output>

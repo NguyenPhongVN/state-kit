@@ -99,13 +99,13 @@ public func usePublisherRefresh<P: Publisher>(
 
     if context.states.count <= index {
         box = _HookPublisherRefreshBox(updateStrategy: updateStrategy)
-        context.states.append(box)
+        context.appendSlot(box)
     } else {
         box = context.states[index] as! _HookPublisherRefreshBox<P.Output>
         if box.updateStrategy?.dependency != updateStrategy?.dependency {
             box.cancellable?.cancel()
             box.cancellable = nil
-            box.signal.value = .idle
+            box.signal._safeUpdate(to: .idle)
             box.updateStrategy = updateStrategy
         }
     }

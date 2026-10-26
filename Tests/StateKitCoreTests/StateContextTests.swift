@@ -21,7 +21,7 @@ struct StateContextTests {
         let idx = context.nextIndex()
         
         #expect(context.states.count == 0)
-        context.states.append("TestState")
+        context.appendSlot("TestState")
         #expect(context.states[idx] as? String == "TestState")
     }
 }

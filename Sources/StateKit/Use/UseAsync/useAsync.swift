@@ -140,7 +140,7 @@ public func useAsync<Value>(
 
     if context.states.count <= index {
         box = _HookAsyncBox(initialPhase: .loading, updateStrategy: updateStrategy)
-        context.states.append(box)
+        context.appendSlot(box)
         _startAsync(box: box, updateStrategy: updateStrategy, operation: operation)
     } else {
         box = context.states[index] as! _HookAsyncBox<Value>
