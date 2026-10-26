@@ -75,7 +75,7 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
                     let oldState = self.stateBox?.value
                     self.stateBox?.value = .data(value)
                     self.notifyDependents()
-                    self.container.notifyProviderUpdated(
+                    self.container?.notifyProviderUpdated(
                         provider: self.provider,
                         oldValue: oldState ?? .loading(),
                         newValue: .data(value)
@@ -89,7 +89,7 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
                 let oldState = self.stateBox?.value
                 self.stateBox?.value = .error(error, previousData: oldState?.value)
                 self.notifyDependents()
-                self.container.notifyProviderUpdated(
+                self.container?.notifyProviderUpdated(
                     provider: self.provider,
                     oldValue: oldState ?? .loading(),
                     newValue: .error(error, previousData: oldState?.value)

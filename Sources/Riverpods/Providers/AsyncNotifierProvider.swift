@@ -739,6 +739,9 @@ public final class AsyncNotifierInstanceElement<N: AsyncNotifier<T>, T: Sendable
     public override func providerCreate() -> N {
         // Invariant: ensureElement(for:) builds an element for exactly this
         // provider type.
+        guard let container else {
+            fatalError("AsyncNotifierFutureElement resolved outside a live container")
+        }
         let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
         // Ensure the notifier and its state exist
         _ = parentElement.getState()
@@ -816,6 +819,10 @@ final class AsyncNotifierFutureElement<N: AsyncNotifier<T>, T: Sendable>: Provid
         // Ensure the parent AsyncNotifierProvider element exists
         // Invariant: ensureElement(for:) builds an element for exactly this
         // provider type.
+        guard let container else {
+            // Orphaned element: no graph to resolve the parent through.
+            return Task<T, Error> { throw CancellationError() }
+        }
         let parentElement = container.ensureElement(for: provider.provider) as! AsyncNotifierProviderElement<N, T>
         _ = parentElement.getState()
 

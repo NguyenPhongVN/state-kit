@@ -23,8 +23,14 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// The provider this element manages
     public let provider: P
 
-    /// The container coordinating all providers
-    public let container: ProviderContainer
+    /// The container coordinating all providers.
+    ///
+    /// Weak by design: the container owns its elements (and vice versa a strong
+    /// back-reference would pin both forever when a container is abandoned).
+    /// When the container is gone the element is unreachable — async work checks
+    /// for nil and exits without notifying; sync graph APIs (`watch`, `read`,
+    /// `listen`) fail loudly because they cannot run without a graph.
+    public private(set) weak var container: ProviderContainer?
 
     /// Unique identifier for this element
     public let id: ProviderID
@@ -97,7 +103,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
                     do {
                         try await Task.sleep(nanoseconds: UInt64(provider.cacheTime * 1_000_000_000))
                         guard !Task.isCancelled else { return }
-                        self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
+                        self.container?.checkAutoDispose(id: self.id, element: self, provider: self.provider)
                     } catch {}
                 }
             }
@@ -169,6 +175,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// - Returns: The newly computed state value
     @discardableResult
     open func recompute() -> P.State {
+        guard let container else {
+            // Orphaned element: no graph left to coordinate — best-effort local
+            // value so async callers observe something sane instead of crashing.
+            return stateBox?.value ?? providerCreate()
+        }
         if container._recomputePathSet.contains(id) {
             // A cycle must fail loudly in every configuration: retrying
             // providerCreate() here recurses without bound in Release builds.
@@ -247,7 +258,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             if isEqual(oldEq, newEq) { return }
         }
         box.value = newState
-        container.notifyProviderUpdated(provider: provider, oldValue: oldState, newValue: newState)
+        container?.notifyProviderUpdated(provider: provider, oldValue: oldState, newValue: newState)
         if !externalListeners.isEmpty {
             for listener in externalListeners.values {
                 listener(oldState, newState)
@@ -276,7 +287,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     ///
     /// Notifies the container so it can batch updates.
     public func invalidate() {
-        container.notifyProviderChanged(id: id)
+        container?.notifyProviderChanged(id: id)
     }
 
     /// Recomputes the state and notifies dependents.
@@ -345,6 +356,9 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// Watches a dependency: records the edge so this element recomputes when it changes.
 
     public func watch<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
+        guard let container else {
+            fatalError("ProviderRef.watch called on an element whose container is gone")
+        }
         let depID = ProviderID(depProvider)
         dependencies.insert(depID)
         
@@ -389,6 +403,10 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// the recorded dependency set. Called at the start of each recompute (the
     /// build re-registers live edges) and on disposal.
     private func clearDependencyEdges() {
+        guard let container else {
+            dependencies.removeAll()
+            return
+        }
         for depID in dependencies {
             if let depElement = container.element(for: depID) {
                 depElement.dependents.remove(id)
@@ -401,6 +419,9 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// One-shot read of a dependency without creating a reactive edge.
 
     public func read<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
+        guard let container else {
+            fatalError("ProviderRef.read called on an element whose container is gone")
+        }
         return container.read(depProvider)
     }
     
@@ -411,6 +432,9 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         fireImmediately: Bool = false,
         listener: @escaping (Dep.State?, Dep.State) -> Void
     ) {
+        guard let container else {
+            fatalError("ProviderRef.listen called on an element whose container is gone")
+        }
         let subscription = container.listen(depProvider, fireImmediately: fireImmediately, listener: listener)
         internalSubscriptions.append(subscription)
     }
@@ -437,7 +461,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         return KeepAliveLink { [weak self] in
             guard let self = self else { return }
             self.keepAliveLinksCount -= 1
-            self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
+            self.container?.checkAutoDispose(id: self.id, element: self, provider: self.provider)
         }
     }
     
@@ -456,7 +480,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             guard let self = self else { return }
             self.externalListeners.removeValue(forKey: listenerID)
             self.decrementListeners()
-            self.container.checkAutoDispose(id: self.id, element: self, provider: self.provider)
+            self.container?.checkAutoDispose(id: self.id, element: self, provider: self.provider)
         }
     }
 }

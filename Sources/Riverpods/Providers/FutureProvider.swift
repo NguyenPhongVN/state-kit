@@ -68,7 +68,7 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 
                 // Notify dependent providers
                 self.notifyDependents()
-                self.container.notifyProviderUpdated(provider: self.provider, oldValue: oldState ?? .loading(), newValue: newState)
+                self.container?.notifyProviderUpdated(provider: self.provider, oldValue: oldState ?? .loading(), newValue: newState)
             } catch {
                 // Handle operation failure
                 if Task.isCancelled { return }
@@ -84,7 +84,7 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 
                 // Notify dependents of error state
                 self.notifyDependents()
-                self.container.notifyProviderUpdated(provider: self.provider, oldValue: actualOldState ?? .loading(), newValue: newState)
+                self.container?.notifyProviderUpdated(provider: self.provider, oldValue: actualOldState ?? .loading(), newValue: newState)
             }
         }
 
@@ -470,6 +470,10 @@ final class FutureFutureElement<T: Sendable>: ProviderElement<FutureFutureProvid
         // Ensure the parent FutureProvider element exists
         // Invariant: ensureElement(for:) builds an element for exactly this
         // provider type.
+        guard let container else {
+            // Orphaned element: no graph to resolve the parent through.
+            return Task<T, Error> { throw CancellationError() }
+        }
         let parentElement = container.ensureElement(for: provider.provider) as! FutureProviderElement<T>
         _ = parentElement.getState()
 

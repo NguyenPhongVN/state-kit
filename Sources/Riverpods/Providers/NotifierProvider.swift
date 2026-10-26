@@ -323,6 +323,9 @@ public final class NotifierInstanceElement<N: Notifier<T>, T: Sendable>: Provide
     public override func providerCreate() -> N {
         // Invariant: ensureElement(for:) builds an element for exactly this
         // provider type.
+        guard let container else {
+            fatalError("NotifierInstanceElement resolved outside a live container")
+        }
         let parentElement = container.ensureElement(for: provider.provider) as! NotifierProviderElement<N, T>
         // Ensure the notifier and its state exist
         _ = parentElement.getState()
