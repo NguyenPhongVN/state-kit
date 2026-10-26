@@ -121,14 +121,16 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
     /// let result = try await element.getFuture()
     /// ```
     func getFuture() async throws -> T {
+        // A failed refresh must throw, not serve the stale previous value —
+        // `AsyncValue.value` unwraps `previousData` for `.error`, so this check
+        // has to come before the value fast path.
+        if case .error(let err, _) = getState() {
+            throw err
+        }
+
         // If value is already available, return it immediately
         if let value = getState().value {
             return value
-        }
-
-        // If error occurred, throw it
-        if case .error(let err, _) = getState() {
-            throw err
         }
 
         // Otherwise wait for operation to complete

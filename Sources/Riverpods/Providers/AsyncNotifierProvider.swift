@@ -269,6 +269,17 @@ open class AsyncNotifier<State: Sendable> {
     /// and starts a new async operation.
     ///
     /// - Note: This is called internally when dependencies change. Do not call directly.
+    /// Cancels the in-flight build and resolves every pending `future` with
+    /// `CancellationError`. Called by the element on disposal so abandoned
+    /// notifiers do not keep networking alive or leave callers suspended.
+    internal func _teardown() {
+        task?.cancel()
+        task = nil
+        let continuations = _futureContinuation
+        _futureContinuation.removeAll()
+        continuations.forEach { $0.resume(throwing: CancellationError()) }
+    }
+
     internal func _recompute() {
         // Cancel previous operation
         task?.cancel()
@@ -383,7 +394,9 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
         // Set up the notifier with provider reference and update callback
         n._setup(ref: self) { [weak self] in
             if let self, let newState = self.notifier?.state {
-                self.stateBox?.value = newState
+                // Publish first (box + observers + listeners), THEN invalidate
+                // dependents so they recompute against the new value.
+                self.publishExternalState(newState)
                 self.notifyDependents()
             }
         }
@@ -396,6 +409,7 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
     /// Disposes the notifier and cleans up resources
     public override func dispose() {
         super.dispose()
+        notifier?._teardown()
         notifier = nil
     }
 }

@@ -295,4 +295,8 @@ public protocol AnyProviderElement: AnyObject {
     func dispose()
 
     func _addDependentRef(_ element: AnyObject)
+
+    /// Drops the weak back-reference for `element` when a dependency edge is
+    /// rebuilt without this dependent.
+    func _removeDependentRef(_ element: AnyObject)
 }

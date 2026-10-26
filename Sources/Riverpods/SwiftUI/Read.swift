@@ -13,9 +13,13 @@ import SwiftUI
 /// - Reducing unnecessary view rebuilds
 ///
 /// **Key Characteristics:**
-/// - **Non-reactive**: View does NOT rebuild when the provider changes
-/// - **One-time read**: Returns current value at time of access
-/// - **Efficient**: Avoids listener overhead for non-reactive access
+/// - **Observes value changes when read in `body`**: the provider state box is
+///   `@Observable`, so a view reading `@Read`'s value rebuilds when that value
+///   changes — the difference from `@Watch` is listener registration (lifetime),
+///   not reactivity. For true one-shot semantics, read inside closures/actions
+///   only, not in `body`.
+/// - **No listener overhead**: does not register a listener or pin autoDispose
+///   providers.
 /// - **Conditional**: Safe for conditional access patterns
 /// - **Type-safe**: Compiler enforces provider type safety
 ///
@@ -25,11 +29,11 @@ import SwiftUI
 /// **Comparison: Read vs Watch**
 /// | Aspect | Read | Watch |
 /// |--------|------|-------|
-/// | Reactive | ❌ No | ✅ Yes |
-/// | Rebuilds on change | ❌ No | ✅ Yes |
-/// | Listener overhead | ❌ No | ✅ Yes |
-/// | Use for | Config, actions | UI state, derived values |
-/// | Performance | Better | Slightly more overhead |
+/// | Observes value in `body` | ✅ Yes | ✅ Yes |
+/// | Rebuilds on change (read in body) | ✅ Yes | ✅ Yes |
+/// | Registers a listener (pins autoDispose) | ❌ No | ✅ Yes |
+/// | One-shot read outside `body` | ✅ Yes | n/a |
+/// | Use for | Config, actions, conditional reads | UI state, derived values |
 ///
 /// **When to Use Read:**
 /// - Configuration values (settings, feature flags)

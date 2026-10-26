@@ -75,6 +75,7 @@ public final class ProviderContainer {
 
     // MARK: - Properties
 
+    @ObservationIgnored
     private var elements: [ProviderID: any AnyProviderElement] = [:]
 
     private let overrides: [ProviderID: ProviderOverride]
@@ -193,6 +194,16 @@ public final class ProviderContainer {
     /// ```
     ///
     /// - Note: Typically called automatically, not directly
+    /// Resolves an existing element without creating one, walking the parent
+    /// chain the same way `ensureElement` resolves.
+    func existingElement(for id: ProviderID) -> (any AnyProviderElement)? {
+        if let element = elements[id] { return element }
+        if overrides[id] == nil, let parent {
+            return parent.existingElement(for: id)
+        }
+        return nil
+    }
+
     public func ensureElement<P: ProviderProtocol>(for provider: P) -> AnyProviderElement {
         let id = ProviderID(provider)
 
@@ -377,7 +388,10 @@ public final class ProviderContainer {
     /// - Parameter provider: The provider to stop listening to
     public func removeListener<P: ProviderProtocol>(for provider: P) {
         let id = ProviderID(provider)
-        guard let element = elements[id] else { return }
+        // The element may be served by a parent container (ensureElement
+        // delegates upward when this container has no override): resolve the
+        // existing element through the same parent chain, without creating one.
+        guard let element = existingElement(for: id) else { return }
         element.decrementListeners()
 
         // Check auto-disposal if no cache time
@@ -585,6 +599,11 @@ public final class ProviderContainer {
     public func batch(_ body: () -> Void) {
         let alreadyBatching = isBatching
         isBatching = true
+        defer {
+            if !alreadyBatching {
+                isBatching = false
+            }
+        }
         body()
         isBatching = alreadyBatching
 

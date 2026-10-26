@@ -279,9 +279,12 @@ public final class NotifierProviderElement<N: Notifier<T>, T: Sendable>: Provide
 
         // Set up the notifier with provider reference and update callback
         n._setup(ref: self) { [weak self] in
-            // Called when notifier.state is updated
+            // Called when notifier.state is updated — publish through the full
+            // pipeline so external listeners and observers observe the write.
             if let self, let newState = self.notifier?.state {
-                self.stateBox?.value = newState
+                // Publish first (box + observers + listeners), THEN invalidate
+                // dependents so they recompute against the new value.
+                self.publishExternalState(newState)
                 self.notifyDependents()
             }
         }

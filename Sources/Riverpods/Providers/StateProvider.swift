@@ -480,6 +480,18 @@ public final class StateController<T: Sendable>: Observable {
     /// controller.state.count += 1
     /// controller.state.name = "Updated"
     /// ```
+    /// Functional update: applies `transform` to the current value and commits
+    /// the result — the supported way to mutate a single field.
+    public func update(_ transform: (inout T) -> Void) {
+        var copy = _state
+        transform(&copy)
+        _state = copy
+        onUpdate(copy)
+    }
+
+    /// The current value snapshot. **Nested mutation is a no-op:** `get`
+    /// returns a copy, so `controller.state.field = x` mutates the copy and the
+    /// write vanishes. Assign the whole value or use `update(_:)`.
     public var state: T {
         get { _state }
         set {

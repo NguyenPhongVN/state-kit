@@ -73,6 +73,9 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
 
     public func incrementListeners() {
         listenersCount += 1
+        // A scheduled delayed disposal must not outlive renewed interest.
+        disposeDelayTask?.cancel()
+        disposeDelayTask = nil
         if listenersCount == 1 {
             fireCallbacks(.addListener)
             fireCallbacks(.resume)
@@ -167,10 +170,9 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     @discardableResult
     open func recompute() -> P.State {
         if container._recomputePathSet.contains(id) {
-            #if DEBUG
-            assertionFailure("Circular dependency detected involving: \(id)")
-            #endif
-            return stateBox?.value ?? providerCreate()
+            // A cycle must fail loudly in every configuration: retrying
+            // providerCreate() here recurses without bound in Release builds.
+            fatalError("Circular dependency detected involving: \(id)")
         }
 
         container.recomputePath.append(id)
@@ -181,6 +183,13 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
 
         let oldState = stateBox?.value
+
+        // Rebuild dependency edges from scratch: conditional watches must not
+        // keep stale edges (they pin autoDispose providers forever and cause
+        // spurious invalidation). The build below re-registers what it actually
+        // watches — the same policy the atom graph applies. Edges accumulate
+        // within this pass (diamond dependencies) and are only reset here.
+        clearDependencyEdges()
 
         // Clear callbacks (they're one-time use per computation)
         runDisposeCallbacks()
@@ -217,6 +226,33 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
 
         return stateBox!.value
+    }
+
+    /// Publishes an externally-mutated state (Notifier-style writes) through
+    /// the same pipeline as a recompute: equality-checked box update, container
+    /// observer notification, and external listeners. Without this, a
+    /// `notifier.state = x` write bypassed every listener and observer.
+    func publishExternalState(_ newState: P.State) {
+        guard let box = stateBox else {
+            stateBox = StateBox(newState)
+            return
+        }
+        let oldState = box.value
+        if let oldEq = oldState as? any Equatable,
+           let newEq = newState as? any Equatable {
+            func isEqual<T: Equatable>(_ lhs: T, _ rhs: any Equatable) -> Bool {
+                guard let rhs = rhs as? T else { return false }
+                return lhs == rhs
+            }
+            if isEqual(oldEq, newEq) { return }
+        }
+        box.value = newState
+        container.notifyProviderUpdated(provider: provider, oldValue: oldState, newValue: newState)
+        if !externalListeners.isEmpty {
+            for listener in externalListeners.values {
+                listener(oldState, newState)
+            }
+        }
     }
 
     /// Computes the provider's value. Must be overridden by subclasses.
@@ -276,14 +312,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// - Releases cached state
     /// - Cannot be used after disposal
     public func dispose() {
+        disposeDelayTask?.cancel()
+        disposeDelayTask = nil
         runDisposeCallbacks()
 
-        for depID in dependencies {
-            if let depElement = container.element(for: depID) {
-                depElement.dependents.remove(id)
-            }
-        }
-        dependencies.removeAll()
+        clearDependencyEdges()
 
         internalSubscriptions.forEach { $0.close() }
         internalSubscriptions.removeAll()
@@ -328,7 +361,41 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
 
     public func _addDependentRef(_ element: AnyObject) {
         guard let providerElement = element as? (any AnyProviderElement) else { return }
-        _dependentRefs.append(WeakElementRef(providerElement))
+        // Dedupe: a build that watches the same dependency repeatedly (or a
+        // recompute re-registering edges) must not accumulate weak refs —
+        // notifyDependents iterates this array on every change.
+        let objectID = ObjectIdentifier(providerElement)
+        let alreadyLinked = _dependentRefs.contains { ref in
+            guard let live = ref.element else { return false }
+            return ObjectIdentifier(live) == objectID
+        }
+        if !alreadyLinked {
+            _dependentRefs.append(WeakElementRef(providerElement))
+        }
+    }
+
+    /// Drops the weak back-reference for `element` (used when dependency edges
+    /// are rebuilt and the dependent no longer watches this provider).
+    public func _removeDependentRef(_ element: AnyObject) {
+        guard let providerElement = element as? (any AnyProviderElement) else { return }
+        let objectID = ObjectIdentifier(providerElement)
+        _dependentRefs.removeAll { ref in
+            guard let live = ref.element else { return false }
+            return ObjectIdentifier(live) == objectID
+        }
+    }
+
+    /// Removes this element from every dependency's reverse edges and clears
+    /// the recorded dependency set. Called at the start of each recompute (the
+    /// build re-registers live edges) and on disposal.
+    private func clearDependencyEdges() {
+        for depID in dependencies {
+            if let depElement = container.element(for: depID) {
+                depElement.dependents.remove(id)
+                depElement._removeDependentRef(self)
+            }
+        }
+        dependencies.removeAll()
     }
     
     /// One-shot read of a dependency without creating a reactive edge.

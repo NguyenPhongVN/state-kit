@@ -164,7 +164,8 @@ extension ProviderElement {
 /// ```
 ///
 /// - Note: The wrapped provider is read lazily from the container.
-/// - Important: Changes to the provider trigger atom invalidation automatically.
+/// - Important: The atom caches the provider value read at evaluation time;
+///   provider changes do not invalidate this atom (see the note above).
 /// - See Also: ProviderProtocol.asAtom()
 public struct RiverpodAtom<P: ProviderProtocol>: SKValueAtom, Hashable {
 
@@ -282,8 +283,10 @@ extension ProviderProtocol {
     /// let testAtom = userProvider.asAtom(in: testContainer)
     /// ```
     ///
-    /// - Note: The returned atom automatically stays in sync with the provider.
-    /// - Important: Changes to the provider update the atom's value.
+    /// - Note: The returned atom reads the provider's CURRENT value on every
+    ///   atom evaluation; it does NOT subscribe to provider changes. Use
+    ///   provider-to-provider composition (`ref.watch`) for reactivity across
+    ///   the two systems.
     @MainActor
     public func asAtom(in container: ProviderContainer = .shared) -> RiverpodAtom<Self> {
         RiverpodAtom(self, container: container)
