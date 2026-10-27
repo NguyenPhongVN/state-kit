@@ -39,8 +39,8 @@ final class FileAtomTests: XCTestCase {
         let directory = tempDirectory
         let storage = FileAtomStorage<Theme>(directory: directory)
 
-        storage.save(Theme(mode: "dark", accent: "purple"))
-        // Corrupt the file directly.
+        // Corrupt the file directly BEFORE the first load — loads are cached
+        // once decoded (the file is read at start, not per access).
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         try? "{ not json".write(to: directory.appendingPathComponent(Theme.fileName), atomically: true, encoding: .utf8)
 

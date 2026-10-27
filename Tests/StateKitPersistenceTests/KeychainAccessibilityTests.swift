@@ -12,7 +12,6 @@ final class KeychainAccessibilityTests: XCTestCase {
             KeychainAccessibility.afterFirstUnlockThisDeviceOnly.secAttr,
             kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         )
-        XCTAssertEqual(KeychainAccessibility.always.secAttr, kSecAttrAccessibleAlways)
         XCTAssertEqual(KeychainAccessibility.whenUnlocked.secAttr, kSecAttrAccessibleWhenUnlocked)
         XCTAssertEqual(
             KeychainAccessibility.whenUnlockedThisDeviceOnly.secAttr,
@@ -24,7 +23,6 @@ final class KeychainAccessibilityTests: XCTestCase {
         let allLevels: [KeychainAccessibility] = [
             .afterFirstUnlock,
             .afterFirstUnlockThisDeviceOnly,
-            .always,
             .whenUnlocked,
             .whenUnlockedThisDeviceOnly,
         ]
@@ -62,7 +60,6 @@ final class KeychainAccessibilityTests: XCTestCase {
             .whenUnlockedThisDeviceOnly,
             .afterFirstUnlock,
             .afterFirstUnlockThisDeviceOnly,
-            .always,
         ]
 
         for (index, level) in levels.enumerated() {

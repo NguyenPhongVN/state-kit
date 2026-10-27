@@ -21,6 +21,7 @@ import Riverpods
 /// ```
 public struct KeychainStateProvider<T: Sendable & Codable> {
     private let key: String
+    private let service: String
     private let accessibility: KeychainAccessibility
     private let encoder: JSONEncoder = JSONEncoder()
     private let decoder: JSONDecoder = JSONDecoder()
@@ -35,19 +36,34 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
 
     var _storeOverride: _StoreOverrideBox?
 
-    /// - Parameters: unique storage `key`, and the item's protection level.
-    public init(key: String, accessibility: KeychainAccessibility = .afterFirstUnlock) {
+    /// - Parameters:
+    ///   - key: unique storage key
+    ///   - service: keychain service namespace — providers with different
+    ///     services never collide even when they share an account key
+    ///   - accessibility: the item's protection level
+    public init(
+        key: String,
+        service: String = "state-kit",
+        accessibility: KeychainAccessibility = .afterFirstUnlock
+    ) {
         self.key = key
+        self.service = service
         self.accessibility = accessibility
+    }
+
+    /// The keychain query attributes shared by every operation.
+    private var baseQuery: [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+        ]
     }
 
     /// Retrieves value from Keychain.
     public func retrieve() throws -> T? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-            kSecReturnData as String: kCFBooleanTrue as Any,
-        ]
+        var query = baseQuery
+        query[kSecReturnData as String] = kCFBooleanTrue as Any
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -59,7 +75,11 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
             throw KeychainError.retrievalFailed(status)
         }
 
-        return try decoder.decode(T.self, from: data)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw KeychainError.decodingFailed
+        }
     }
 
     /// Stores value in Keychain.
@@ -72,10 +92,7 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
         let data = try encoder.encode(value)
 
         // Try to update existing
-        let updateQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-        ]
+        let updateQuery = baseQuery
 
         let attributes: [String: Any] = [
             kSecValueData as String: data,
@@ -100,10 +117,7 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
 
     /// Deletes value from Keychain.
     public func delete() throws {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: key,
-        ]
+        let query = baseQuery
 
         let status = SecItemDelete(query as CFDictionary)
 
@@ -148,8 +162,6 @@ public enum KeychainAccessibility: String, Sendable {
     /// Item is inaccessible after device restart, and while device is locked.
     case afterFirstUnlockThisDeviceOnly = "cku"
 
-    /// Item is always accessible (least secure).
-    case always = "dk"
 
     /// Item is accessible when device is unlocked (most common).
     case whenUnlocked = "ak"
@@ -162,7 +174,6 @@ public enum KeychainAccessibility: String, Sendable {
         switch self {
         case .afterFirstUnlock: kSecAttrAccessibleAfterFirstUnlock
         case .afterFirstUnlockThisDeviceOnly: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        case .always: kSecAttrAccessibleAlways
         case .whenUnlocked: kSecAttrAccessibleWhenUnlocked
         case .whenUnlockedThisDeviceOnly: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         }
@@ -225,9 +236,20 @@ public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, @unchec
         super.init()
     }
 
+    /// The error from the most recent failed load, if any. A retrieval
+    /// failure previously fell back to `initial` silently — an auth provider
+    /// reported "no token" on a locked keychain with no signal.
+    public internal(set) var lastLoadError: (any Error)?
+
     public override func build() -> T {
-        // Try to load from Keychain, fall back to initial
-        return (try? provider.retrieve()) ?? initial
+        do {
+            let value = try provider.retrieve() ?? initial
+            lastLoadError = nil
+            return value
+        } catch {
+            lastLoadError = error
+            return initial
+        }
     }
 
     /// Updates value and persists to Keychain.
@@ -307,13 +329,19 @@ public struct BiometricState: Codable, Sendable {
 /// Helper for managing multiple Keychain values.
 public struct KeychainBatch: Sendable {
     private var items: [String: Data] = [:]
+    private let service: String
 
     /// Test seam (internal): when non-nil, each item write reports this status
     /// instead of touching the real Keychain. Arguments: (key, data, accessibility).
     var _writeOverride: (@Sendable (String, Data, KeychainAccessibility) -> OSStatus)?
 
     /// Creates an empty batch; add items with `add(_:forKey:)`.
-    public init() {}
+    ///
+    /// - Parameter service: keychain service namespace written on every item so
+    ///   batch-owned keys never collide with other providers'.
+    public init(service: String = "state-kit") {
+        self.service = service
+    }
 
     /// Adds item to batch.
     public mutating func add<T: Codable>(_ value: T, forKey key: String) throws {
@@ -330,6 +358,7 @@ public struct KeychainBatch: Sendable {
             // missing, disk pressure), aborting the batch irreversibly.
             let updateQuery: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
                 kSecAttrAccount as String: key,
             ]
             let attributes: [String: Any] = [
@@ -384,6 +413,7 @@ public struct KeychainBatch: Sendable {
         for key in keysToDelete(matching: pattern) {
             let query: [String: Any] = [
                 kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
                 kSecAttrAccount as String: key,
             ]
 

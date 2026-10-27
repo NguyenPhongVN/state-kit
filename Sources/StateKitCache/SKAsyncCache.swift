@@ -90,9 +90,12 @@ public actor SKAsyncCache<Key: Hashable & Sendable, Value: Sendable> {
     private func sweepExpired() {
         guard ttl != nil else { return }
         let now = Date()
-        for key in entries.keys where entries[key].map({ entry in
-            entry.expiresAt.map { now >= $0 } ?? false
-        }) == true {
+        // Collect first, remove after — mirrors TimeToLiveCache.cleanup and
+        // does not rely on dictionary-views snapshotting under mutation.
+        let expired = entries.compactMap { key, entry in
+            entry.expiresAt.map { now >= $0 } ?? false ? key : nil
+        }
+        for key in expired {
             entries.removeValue(forKey: key)
         }
     }

@@ -56,13 +56,29 @@ public final class FileAtomStorage<T: FileAtomSerializable>: @unchecked Sendable
         fileNameOverride ?? T.fileName
     }
 
+    /// Optional corruption hook: fires with the underlying error when the
+    /// stored file cannot be read or decoded, right before the default
+    /// fallback applies. Install it to report data loss (logging, telemetry);
+    /// without it, corruption is silent by design.
+    public var onCorruption: ((any Error) -> Void)?
+
+    private var cachedValue: T?
+
     /// Reads the stored value; returns `T.defaultValue` when the file is
-    /// missing or cannot be decoded.
+    /// missing or cannot be decoded. The decoded value is cached — repeated
+    /// atom reads do not re-read the disk (`save` refreshes the cache).
     public func load() -> T {
-        guard let data = try? Data(contentsOf: fileURL) else {
-            return T.defaultValue
+        if let cachedValue { return cachedValue }
+        let loaded: T
+        do {
+            let data = try Data(contentsOf: fileURL)
+            loaded = try JSONDecoder().decode(T.self, from: data)
+        } catch {
+            onCorruption?(error)
+            loaded = T.defaultValue
         }
-        return (try? JSONDecoder().decode(T.self, from: data)) ?? T.defaultValue
+        cachedValue = loaded
+        return loaded
     }
 
     /// Encodes and writes `value`, creating the directory if needed.
@@ -71,6 +87,7 @@ public final class FileAtomStorage<T: FileAtomSerializable>: @unchecked Sendable
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             let data = try JSONEncoder().encode(value)
             try data.write(to: fileURL, options: .atomic)
+            cachedValue = value
             notify(value)
         } catch {
             // Persist failures surface to the caller through load/save misuse
@@ -82,6 +99,7 @@ public final class FileAtomStorage<T: FileAtomSerializable>: @unchecked Sendable
     /// Removes the stored file, so the next `load()` returns the default.
     public func delete() {
         try? FileManager.default.removeItem(at: fileURL)
+        cachedValue = nil
     }
 
     /// Registers a callback invoked after every successful save.

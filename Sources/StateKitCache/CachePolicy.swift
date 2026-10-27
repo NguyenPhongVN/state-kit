@@ -1,29 +1,58 @@
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
 import Riverpods
 
 // MARK: - Cache Policies
 
 /// Cache-aside pattern helper.
 @MainActor
-public struct CacheAsidePattern<Key: Hashable & Sendable, Value: Sendable> {
+public final class CacheAsidePattern<Key: Hashable & Sendable, Value: Sendable>: @unchecked Sendable {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let fetcher: (Key) async throws -> Value
+    private let lock = NSLock()
+    private var inFlight: [Key: Task<Value, Error>] = [:]
 
     /// Read-through policy: fetches on miss, stores into the LRU cache.
+    ///
+    /// Single-flight: concurrent `get`s for one cold key share one fetch — the
+    /// first caller starts the task, the rest await the same result. Without
+    /// this, N concurrent misses for a rate-limited backend hit it N times
+    /// (cache stampede). A failed fetch propagates to every waiter and clears
+    /// the in-flight entry so the next caller retries.
     public init(cache: LeastRecentlyUsedCache<Key, Value>, fetcher: @escaping (Key) async throws -> Value) {
         self.cache = cache
         self.fetcher = fetcher
     }
 
-    /// Gets value from cache or fetches if missing.
+    /// Gets value from cache or fetches if missing (single-flight per key).
     public func get(_ key: Key) async throws -> Value {
         if let cached = cache.get(key) {
             return cached
         }
 
-        let value = try await fetcher(key)
-        cache.set(key, value)
-        return value
+        let existing: Task<Value, Error>? = lock.withLock { inFlight[key] }
+        if let existing {
+            return try await existing.value
+        }
+
+        let task = Task<Value, Error> { [fetcher] in
+            let value = try await fetcher(key)
+            await MainActor.run { cache.set(key, value) }
+            return value
+        }
+        lock.withLock { inFlight[key] = task }
+        defer {
+            lock.withLock { _ = inFlight.removeValue(forKey: key) }
+        }
+
+        do {
+            let value = try await task.value
+            return value
+        } catch {
+            throw error
+        }
     }
 }
 
@@ -104,6 +133,32 @@ public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
         self.targetSize = targetSize
     }
 
+    /// Subscribes to the platform memory-warning notification (iOS/tvOS) and
+    /// runs `handleMemoryPressure()` on each warning.
+    ///
+    /// - Returns: A thread-safe unsubscribe token. Without wiring, the handler
+    ///   only runs when the host calls it explicitly.
+    @discardableResult
+    public func wireToSystemNotifications() -> @Sendable () -> Void {
+        #if canImport(UIKit)
+        let center = NotificationCenter.default
+        let token = center.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: nil
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.handleMemoryPressure()
+            }
+        }
+        return {
+            center.removeObserver(token)
+        }
+        #else
+        return {}
+        #endif
+    }
+
     /// Handles memory pressure by trimming cache to target size.
     /// Removes oldest items first (LRU eviction policy).
     public func handleMemoryPressure() {
@@ -170,7 +225,6 @@ public struct CacheWarmer<Key: Hashable & Sendable, Value: Sendable> {
 public enum CacheInvalidationStrategy {
     case immediate              // Invalidate immediately
     case debounced(TimeInterval)  // Invalidate after delay
-    case batch(Int)            // Invalidate in batches
 
     /// Applies the policy against a snapshot of current cache statistics.
     @MainActor
@@ -188,8 +242,6 @@ public enum CacheInvalidationStrategy {
                 cache.remove(key)
             }
 
-        case .batch:
-            // Would batch multiple invalidations
             cache.remove(key)
         }
     }

@@ -127,14 +127,22 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
 
     // MARK: - Background Cleanup
 
+    /// The effective background sweep interval (internal, test-facing): the
+    /// half-TTL loop floored at one second.
+    var sweepIntervalForTesting: TimeInterval { max(ttl / 2, 1.0) }
+
     /// Runs `cleanup()` every half-TTL until the cache is deallocated.
     ///
     /// The interval is captured by value and `self` weakly: releasing the
     /// cache must let it deallocate and stop the loop (no orphan wakeups).
     private func startBackgroundCleanup(interval: TimeInterval) {
+        // Floor the sweep at 1s: tiny TTLs must not turn the cleanup loop into
+        // a main-actor hot loop (~2000 wakeups/s at the old ttl/2 for ttl=1ms).
+        // Eager expiry checks in `get` cover correctness meanwhile.
+        let sweepInterval = max(interval / 2, 1.0)
         cleanupTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000 / 2))
+                try? await Task.sleep(nanoseconds: UInt64(sweepInterval * 1_000_000_000))
 
                 guard let self, !Task.isCancelled else { break }
                 self.cleanup()
@@ -173,9 +181,24 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
     }
 
     /// Retrieves value and resets TTL.
+    ///
+    /// Expiry is checked eagerly: the background sweep only runs while the
+    /// main actor is scheduled (it pauses under app suspension), and an
+    /// expired-but-not-yet-swept entry must not be served — nor have its
+    /// sliding window refreshed by a poll.
     public func get(_ key: Key) -> Value? {
         if var entry = cache[key] {
-            entry.lastAccessedAt = Date()
+            let now = Date()
+            guard now.timeIntervalSince(entry.lastAccessedAt) <= ttl else {
+                // Eager expiry: remove and report through onEvict(.expired) so
+                // resource-freeing subscribers observe it without waiting for
+                // the (floored) background sweep.
+                cache.removeValue(forKey: key)
+                onEvict?(key, entry.value, .expired)
+                misses += 1
+                return nil
+            }
+            entry.lastAccessedAt = now
             cache[key] = entry
             hits += 1
             return entry.value
@@ -234,14 +257,22 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
 
     // MARK: - Background Cleanup
 
+    /// The effective background sweep interval (internal, test-facing): the
+    /// half-TTL loop floored at one second.
+    var sweepIntervalForTesting: TimeInterval { max(ttl / 2, 1.0) }
+
     /// Runs `cleanup()` every half-TTL until the cache is deallocated.
     ///
     /// The interval is captured by value and `self` weakly: releasing the
     /// cache must let it deallocate and stop the loop (no orphan wakeups).
     private func startBackgroundCleanup(interval: TimeInterval) {
+        // Floor the sweep at 1s: tiny TTLs must not turn the cleanup loop into
+        // a main-actor hot loop (~2000 wakeups/s at the old ttl/2 for ttl=1ms).
+        // Eager expiry checks in `get` cover correctness meanwhile.
+        let sweepInterval = max(interval / 2, 1.0)
         cleanupTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000 / 2))
+                try? await Task.sleep(nanoseconds: UInt64(sweepInterval * 1_000_000_000))
 
                 guard let self, !Task.isCancelled else { break }
                 self.cleanup()

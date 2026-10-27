@@ -82,9 +82,17 @@ public final class LeastRecentlyUsedCache<Key: Hashable & Sendable, Value: Senda
 
     /// Clears all cached values.
     public func clear() {
+        // Resource-freeing subscribers need eviction callbacks on manual clears
+        // too — `.cleared` was dead without this.
+        let evicted = cache
         cache.removeAll()
         head = nil
         tail = nil
+        if let onEvict {
+            for (key, node) in evicted {
+                onEvict(key, node.value, .cleared)
+            }
+        }
     }
 
     /// Cache statistics.
@@ -203,8 +211,14 @@ public final class LeastFrequentlyUsedCache<Key: Hashable & Sendable, Value: Sen
 
     /// Clears all.
     public func clear() {
+        let evicted = cache
         cache.removeAll()
         frequency.removeAll()
+        if let onEvict {
+            for (key, value) in evicted {
+                onEvict(key, value, .cleared)
+            }
+        }
     }
 
     /// Statistics.

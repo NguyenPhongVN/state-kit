@@ -54,8 +54,13 @@ public func userDefaultsAtom<T: UserDefaultsSerializable>(
 /// Storage system for persistent atoms with observation.
 public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecked Sendable {
     private let defaults: UserDefaults
-    private let key: String
-    private var observers: [(T) -> Void] = []
+    let key: String
+    private struct ObserverEntry {
+        let id: UUID
+        let handler: (T) -> Void
+    }
+
+    private var observers: [ObserverEntry] = []
     private let lock = NSLock()
 
     /// Creates storage bound to standard defaults or a named suite.
@@ -80,11 +85,18 @@ public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecke
     }
 
     /// Saves value and notifies observers.
-    public func save(_ value: T) {
+    ///
+    /// - Throws: `PersistenceError.encodingFailed` when the value cannot be
+    ///   encoded — nothing is written and observers are NOT notified of a
+    ///   write that did not happen.
+    public func save(_ value: T) throws {
         let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(value) {
+        do {
+            let encoded = try encoder.encode(value)
             defaults.set(encoded, forKey: key)
             notifyObservers(value)
+        } catch {
+            throw PersistenceError.encodingFailed(underlying: error)
         }
     }
 
@@ -94,19 +106,30 @@ public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecke
     }
 
     /// Adds observer for value changes.
-    public func addObserver(_ observer: @escaping (T) -> Void) {
+    ///
+    /// - Returns: A thread-safe removal token.
+    @discardableResult
+    public func addObserver(_ observer: @escaping (T) -> Void) -> @Sendable () -> Void {
+        let entry = ObserverEntry(id: UUID(), handler: observer)
         lock.lock()
         defer { lock.unlock() }
-        observers.append(observer)
+        observers.append(entry)
+        let id = entry.id
+        return { [weak self] in
+            guard let self else { return }
+            self.lock.lock()
+            self.observers.removeAll { $0.id == id }
+            self.lock.unlock()
+        }
     }
 
     private func notifyObservers(_ value: T) {
         lock.lock()
         let currentObservers = observers
         lock.unlock()
-        
+
         for observer in currentObservers {
-            observer(value)
+            observer.handler(value)
         }
     }
 }
@@ -187,15 +210,21 @@ public struct SessionInfo: UserDefaultsSerializable {
 // MARK: - Atom Extensions
 
 extension PersistentAtomStorage {
-    /// Convenience method for observing UserDefaults changes.
-    public func observeChanges() -> [T] {
-        var values: [T] = []
-
-        addObserver { value in
-            values.append(value)
+    /// Observes value changes as a stream.
+    ///
+    /// Replaces the broken `observeChanges() -> [T]`, which always returned an
+    /// empty array (the captured buffer mutated after the value copy returned).
+    /// The stream yields every successfully saved value and terminates when the
+    /// consumer cancels.
+    public func changes() -> AsyncStream<T> {
+        AsyncStream { continuation in
+            let remove = addObserver { value in
+                continuation.yield(value)
+            }
+            continuation.onTermination = { _ in
+                remove()
+            }
         }
-
-        return values
     }
 
     /// Exports all stored data as JSON.
@@ -208,7 +237,7 @@ extension PersistentAtomStorage {
     public func importFromJSON(_ data: Data) -> Bool {
         do {
             let value = try JSONDecoder().decode(T.self, from: data)
-            save(value)
+            try save(value)
             return true
         } catch {
             return false
@@ -229,17 +258,50 @@ public struct PersistenceMigration<T: UserDefaultsSerializable> {
         self.currentVersion = version
     }
 
-    /// Checks if migration is needed.
+    /// The schema version persisted alongside the payload (0 if never marked).
+    public var persistedVersion: Int {
+        UserDefaults.standard.integer(forKey: storage.key + ".schemaVersion")
+    }
+
+    /// Persists the schema version after a successful migration.
+    public func markMigrated(to version: Int) {
+        UserDefaults.standard.set(version, forKey: storage.key + ".schemaVersion")
+    }
+
+    /// Checks if migration is needed (caller-supplied version — the on-disk
+    /// version is `persistedVersion`).
     public func needsMigration(_ previousVersion: Int) -> Bool {
         previousVersion < currentVersion
     }
 
-    /// Performs migration with custom logic.
-    public func migrate(from previousVersion: Int, using updater: (inout T) -> Void) {
-        guard needsMigration(previousVersion) else { return }
+    /// Checks if the persisted schema version is behind `currentVersion`.
+    public func needsMigration() -> Bool {
+        persistedVersion < currentVersion
+    }
 
+    /// Performs migration with custom logic and records the new schema version
+    /// only after the write succeeds, so migrations do not re-run silently.
+    public func migrate(using updater: (inout T) -> Void) throws {
+        guard needsMigration() else { return }
         var current = storage.load()
         updater(&current)
-        storage.save(current)
+        try storage.save(current)
+        markMigrated(to: currentVersion)
     }
+
+    /// Legacy entry point: migrates from an explicitly supplied previous
+    /// version (the version is still recorded on success).
+    public func migrate(from previousVersion: Int, using updater: (inout T) -> Void) throws {
+        guard needsMigration(previousVersion) else { return }
+        var current = storage.load()
+        updater(&current)
+        try storage.save(current)
+        markMigrated(to: currentVersion)
+    }
+}
+
+/// Errors surfaced by persistence primitives.
+public enum PersistenceError: Error, Sendable {
+    /// The value could not be encoded; nothing was written.
+    case encodingFailed(underlying: any Error)
 }

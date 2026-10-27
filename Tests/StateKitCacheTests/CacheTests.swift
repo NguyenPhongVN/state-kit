@@ -194,10 +194,10 @@ final class CacheTests: XCTestCase {
         )
         cache.set("k", 1)
 
-        let deadline = Date().addingTimeInterval(1.0)
-        while Date() < deadline, expireCount == 0 {
-            RunLoop.main.run(until: Date().addingTimeInterval(0.01))
-        }
+        // Eager expiry drives the callback (the background sweep is floored at
+        // 1s so tiny TTLs cannot hot-loop the main actor).
+        Thread.sleep(forTimeInterval: 0.08)
+        XCTAssertNil(cache.get("k"), "expired entry must not be served")
 
         XCTAssertEqual(expireCount, 1, "expiry must fire onExpire exactly once")
         XCTAssertEqual(evictCount, 0, "expiry must NOT fire onEvict (capacity/manual only)")
