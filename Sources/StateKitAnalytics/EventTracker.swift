@@ -1,4 +1,5 @@
 import Foundation
+import Observation
 
 // MARK: - Event Tracker
 
@@ -10,11 +11,44 @@ public final class EventTracker: Sendable {
     private let config: AnalyticsConfig
     private var flushTask: Task<Void, Never>?
     private var onFlush: (([AnalyticsEvent]) -> Void)?
+    private var onFlushResult: (([AnalyticsEvent]) -> Bool)?
 
     /// Creates a tracker; auto-flush starts immediately.
     public init(config: AnalyticsConfig = AnalyticsConfig()) {
         self.config = config
+        if config.persistLocal {
+            localPersistence = { events in
+                Self.persistLocally(events)
+            }
+        }
         startAutoFlush(interval: config.flushInterval)
+    }
+
+    /// Appends flushed events as JSON lines to a file in the platform caches
+    /// directory (`statekit-analytics-events.jsonl`), truncated back to empty
+    /// past 1 MB so the sink never grows without bound.
+    private static func persistLocally(_ events: [AnalyticsEvent]) {
+        let url = FileManager.default
+            .urls(for: .cachesDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("statekit-analytics-events.jsonl")
+        guard let url else { return }
+        var text = ""
+        for event in events {
+            if let data = try? JSONSerialization.data(withJSONObject: event.toDictionary()),
+               let line = String(data: data, encoding: .utf8) {
+                text += line + "\n"
+            }
+        }
+        if let existing = try? String(contentsOf: url, encoding: .utf8), existing.count > 1_000_000 {
+            try? "".write(to: url, atomically: true, encoding: .utf8)
+        }
+        if let handle = try? FileHandle(forWritingTo: url) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: Data(text.utf8))
+        } else {
+            try? text.write(to: url, atomically: true, encoding: .utf8)
+        }
     }
 
     deinit {
@@ -59,18 +93,44 @@ public final class EventTracker: Sendable {
     }
 
     /// Flushes batched events.
+    ///
+    /// With a result-reporting callback (`onFlush(_:) -> Bool`), a `false`
+    /// return re-prepends the events so the next flush retries. The
+    /// fire-and-forget callback never re-queues.
     public func flush() {
         guard !batch.isEmpty else { return }
 
         let eventsToFlush = batch
         batch.removeAll()
 
+        if let resultCallback = onFlushResult {
+            if !resultCallback(eventsToFlush) {
+                batch.insert(contentsOf: eventsToFlush, at: 0)
+            }
+            return
+        }
+
         onFlush?(eventsToFlush)
+        if let persist = localPersistence {
+            persist(eventsToFlush)
+        }
     }
 
-    /// Sets flush callback.
+    /// Local persistence sink for `AnalyticsConfig.persistLocal`: appends
+    /// flushed batches as JSON lines (called after a successful hand-off).
+    @ObservationIgnored
+    var localPersistence: (([AnalyticsEvent]) -> Void)?
+
+    /// Sets flush callback (fire-and-forget: the batch is considered
+    /// delivered once handed off).
     public func onFlush(_ callback: @escaping ([AnalyticsEvent]) -> Void) {
         self.onFlush = callback
+    }
+
+    /// Sets a flush callback that reports delivery. Returning `false` re-queues
+    /// the batch so the next flush retries instead of losing the events.
+    public func onFlush(_ callback: @escaping ([AnalyticsEvent]) -> Bool) {
+        self.onFlushResult = callback
     }
 
     /// Gets all tracked events.

@@ -118,21 +118,25 @@ public final class FeatureFlagRegistry: Sendable {
     }
 
     /// Gets flag value (respecting overrides).
+    ///
+    /// Precedence: remote override > local override > default — matching the
+    /// documented remote-override contract (`applyRemoteOverrides`).
     public func value<T: Sendable>(for flag: FeatureFlag<T>) -> T {
-        if let override = overrides[flag.id] as? T {
-            return override
-        }
         if let boolValue = boolOverrides[flag.id] as? T {
             return boolValue
+        }
+        if let override = overrides[flag.id] as? T {
+            return override
         }
         return flag.defaultValue
     }
 
     /// Applies raw Bool overrides by flag id (used by remote flag sources).
+    ///
+    /// The remote snapshot REPLACES the previous one: a flag removed from the
+    /// remote must not keep its stale remote value until relaunch.
     func applyRawBoolOverrides(_ map: [String: Bool]) {
-        for (id, enabled) in map {
-            boolOverrides[id] = enabled
-        }
+        boolOverrides = map
     }
 
     /// Sets override for flag.
@@ -145,9 +149,10 @@ public final class FeatureFlagRegistry: Sendable {
         overrides.removeValue(forKey: flagId)
     }
 
-    /// Clears all overrides.
+    /// Clears all overrides (local and remote-applied).
     public func clearAllOverrides() {
         overrides.removeAll()
+        boolOverrides.removeAll()
     }
 
     /// Gets all registered flags.

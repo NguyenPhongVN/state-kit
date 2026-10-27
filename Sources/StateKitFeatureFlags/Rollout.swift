@@ -19,15 +19,27 @@ public struct PercentageRollout: RolloutStrategy {
     public let percentage: Int
     private let userHasher: @Sendable (String) -> Int
 
-    /// - Parameters: target percentage and an optional custom hasher.
-    public init(percentage: Int, userHasher: @escaping @Sendable (String) -> Int = { djb2Hash($0) }) {
+    private let salt: String
+
+    /// - Parameters:
+    ///   - percentage: target rollout percentage
+    ///   - salt: bucketing salt — pass a per-feature id so the same user does
+    ///     not occupy the same bucket in every rollout (independent assignment)
+    ///   - userHasher: an optional custom hasher
+    public init(
+        percentage: Int,
+        salt: String = "",
+        userHasher: @escaping @Sendable (String) -> Int = { djb2Hash($0) }
+    ) {
         self.percentage = max(0, min(100, percentage))
+        self.salt = salt
         self.userHasher = userHasher
     }
 
-    /// Checks if enabled for user (based on user hash).
+    /// Checks if enabled for user (based on salted user hash).
     public func isEnabled(for userId: String) -> Bool {
-        let hash = userHasher(userId)
+        let key = salt.isEmpty ? userId : "\(salt):\(userId)"
+        let hash = userHasher(key)
         let bucket = hash % 100
         return bucket < percentage
     }

@@ -58,7 +58,9 @@ public struct ABTest<T: Sendable>: Sendable {
     public func assignUser(_ userId: String) -> ABTestVariant<T>? {
         guard isActive, !variants.isEmpty else { return nil }
 
-        let key = userKey(userId)
+        // Salt with the test id: the same user must not occupy the same bucket
+        // in every experiment (correlated assignment across tests).
+        let key = "\(id):\(userKey(userId))"
         let hash = hashString(key)
         let assigned = hash % 100
 

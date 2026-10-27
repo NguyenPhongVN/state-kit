@@ -164,6 +164,47 @@ public struct AnalyticsConfig: Sendable {
     }
 }
 
+// MARK: - Best-Effort Encoding
+
+extension AnyCodable {
+    /// Encodes any value into an `AnyCodable`; values JSON cannot represent
+    /// degrade to their debug description so "include values" never silently
+    /// drops the data it was asked for.
+    static func encodeBestEffort(_ value: some Any) -> AnyCodable {
+        if let encodable = value as? any Encodable {
+            if let codable = encodable as? any AnyCodableConvertible {
+                return codable.anyCodable
+            }
+            if let data = try? JSONEncoder().encode(EncodableBox(encodable)),
+               let any = try? JSONDecoder().decode(AnyCodable.self, from: data) {
+                return any
+            }
+        }
+        return .string(String(describing: value))
+    }
+}
+
+/// Type-erasing box so heterogeneous provider state can round-trip through
+/// JSONEncoder into `AnyCodable`.
+private struct EncodableBox: Encodable {
+    private let encodeFunc: (Encoder) throws -> Void
+    init(_ value: any Encodable) {
+        self.encodeFunc = value.encode
+    }
+    func encode(to encoder: any Encoder) throws {
+        try encodeFunc(encoder)
+    }
+}
+
+/// Escape hatch for values that already wrap `AnyCodable`.
+public protocol AnyCodableConvertible {
+    var anyCodable: AnyCodable { get }
+}
+
+extension AnyCodable: AnyCodableConvertible {
+    public var anyCodable: AnyCodable { self }
+}
+
 // MARK: - Analytics Provider Observer
 
 /// Observes provider changes and records as analytics events.
@@ -185,12 +226,18 @@ public final class AnalyticsProviderObserver: ProviderObserver {
         newValue: P.State,
         container: ProviderContainer
     ) {
+        var properties: [String: AnyCodable] = [
+            "provider": .string(String(describing: type(of: provider))),
+        ]
+        if includeValues {
+            // Serialize the requested values; non-JSON-encodable state degrades
+            // to its debug description instead of silently dropping the flag.
+            properties["old_value"] = AnyCodable.encodeBestEffort(oldValue)
+            properties["new_value"] = AnyCodable.encodeBestEffort(newValue)
+        }
         let event = AnalyticsEvent(
             name: "state_changed",
-            properties: [
-                "provider": .string(String(describing: type(of: provider))),
-                "includes_value": .bool(includeValues),
-            ]
+            properties: properties
         )
 
         tracker.track(event)

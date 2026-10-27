@@ -29,9 +29,18 @@ public final class UserJourneyTracker: Sendable {
     private var sessions: [String: Session] = [:]
     private var currentSession: Session?
     private var journeys: [String: [AnalyticsEvent]] = [:]
+    /// Events recorded while no session was active — replayed onto the next
+    /// session instead of being silently dropped.
+    private var pendingEvents: [AnalyticsEvent] = []
+    /// Maximum number of retained sessions (oldest dropped first). Unbounded
+    /// retention previously grew for the tracker's process lifetime.
+    public let maxSessions: Int
 
     /// Starts tracking (begins a fresh session).
-    public init() {
+    ///
+    /// - Parameter maxSessions: retained-session bound (oldest dropped first).
+    public init(maxSessions: Int = 20) {
+        self.maxSessions = max(1, maxSessions)
         startNewSession()
     }
 
@@ -47,6 +56,16 @@ public final class UserJourneyTracker: Sendable {
         )
         currentSession = session
         journeys[session.id] = []
+        // Replay events recorded between sessions instead of dropping them.
+        if !pendingEvents.isEmpty {
+            journeys[session.id]?.append(contentsOf: pendingEvents)
+            pendingEvents.removeAll()
+        }
+        // Bound retained history: drop the oldest sessions and their journeys.
+        while sessions.count > maxSessions, let oldest = sessions.keys.min() {
+            sessions.removeValue(forKey: oldest)
+            journeys.removeValue(forKey: oldest)
+        }
     }
 
     /// Ends current session.
@@ -65,11 +84,23 @@ public final class UserJourneyTracker: Sendable {
         currentSession = nil
     }
 
-    /// Records event in session.
+    /// Records event in session. Events recorded outside an active session are
+    /// buffered and replayed onto the next session.
     public func recordEvent(_ event: AnalyticsEvent) {
-        guard let sessionId = currentSession?.id else { return }
+        guard let sessionId = currentSession?.id else {
+            pendingEvents.append(event)
+            return
+        }
 
         journeys[sessionId]?.append(event)
+    }
+
+    /// Retained session count (internal, test-facing).
+    var sessionCountForTesting: Int { sessions.count }
+
+    /// The current session's event journey (internal, test-facing).
+    var journeyForTesting: [AnalyticsEvent] {
+        currentSession.flatMap { journeys[$0.id] } ?? []
     }
 
     /// Gets current session ID.
@@ -125,7 +156,9 @@ public struct FunnelAnalyzer: Sendable {
 
     /// Users who completed every step.
         public var totalCompletions: Int {
-            completions.values.max() ?? 0
+            // completions maps userId -> furthest step index reached IN ORDER;
+            // a full funnel completion means reaching the last step.
+            completions.values.filter { $0 >= steps.count - 1 }.count
         }
     }
 
@@ -137,16 +170,21 @@ public struct FunnelAnalyzer: Sendable {
     }
 
     /// Analyzes funnel from events.
+    ///
+    /// Progression is ORDERED: a user advances the per-user cursor only when
+    /// the next step's event arrives after the previous one — `[purchase, view]`
+    /// no longer counts as a full-funnel completion. Events are evaluated in
+    /// array order; callers recording events out of order get that order.
     public func analyze(events: [AnalyticsEvent]) -> FunnelResult {
         var completions: [String: Int] = [:]
 
         for event in events {
             guard let userId = event.userId else { continue }
-
-            for (index, step) in steps.enumerated() {
-                if event.name == step.eventName {
-                    completions[userId] = max(index, completions[userId] ?? 0)
-                }
+            let reached = completions[userId] ?? -1
+            let next = reached + 1
+            guard next < steps.count else { continue }
+            if event.name == steps[next].eventName {
+                completions[userId] = next
             }
         }
 
