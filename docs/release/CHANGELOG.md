@@ -49,6 +49,87 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
   re-add failed) and `KeychainNotifier.updateValue` commits in-memory state only after a
   successful store.
 
+### Changed (quality remediation — specs/009-quality-remediation)
+
+**Riverpods**
+- **`element.container` is now optional (weak)** — breaking change: releasing a
+  `ProviderContainer` deallocates every element it holds; elements no longer
+  pin their container through a strong back-reference. Graph APIs
+  (`watch`/`read`/`listen`) fail loudly without a live container.
+- `container.listen`/`ref.listen` and observers now observe Notifier and
+  AsyncNotifier state mutations (`notifier.state = x`).
+- `removeListener` resolves elements served by a parent container.
+- Provider dependency edges rebuild at every recompute (conditional watches
+  drop stale edges); dependent refs are deduplicated.
+- `FutureProvider.future` throws after a failed refresh instead of returning
+  stale `previousData`; recompute cycles `fatalError` in Release (no stack
+  overflow); AsyncNotifier cancels its build and resumes pending futures with
+  `CancellationError` on dispose.
+- `StateController` gained `update(_:)`; the docs now teach whole-value
+  updates (nested mutation on the `state` getter copy was always a no-op).
+- `@Read` docs corrected: it observes value changes when read in `body`; the
+  difference from `@Watch` is listener registration, not reactivity.
+
+**Hooks**
+- `useTransition` holds `isPending` until the last overlapping start finishes.
+- A `CancellationError` the hook did not cause surfaces as `.failure` instead
+  of leaving the phase stuck at `.loading`.
+- Render-time hook writes follow one deferred policy (`_safeUpdate`).
+- `useEffect`/`useLayoutEffect` slot mismatches fail loudly (previously
+  silently skipped the effect and its cleanup).
+- `StateContext.states` is read-only outside the runtime; the dead
+  `StateContext.context` storage was removed; `StateRuntime.context` outside a
+  render now fails loudly.
+- `useReducer` queues re-entrant dispatches instead of crashing on exclusivity.
+
+**Persistence / Cache**
+- `PersistentAtomStorage.save` throws `PersistenceError.encodingFailed`;
+  `observeChanges()` (always returned `[]`) replaced by `changes() ->
+  AsyncStream`; `addObserver` returns a removal token; `PersistenceMigration`
+  persists a schema version and never re-runs silently.
+- `FileAtomStorage`: optional `onCorruption` hook; loads are cached.
+- Keychain: decode failures throw `.decodingFailed`; `KeychainNotifier`
+  records `lastLoadError`; service namespace (`service:`) isolates same-account
+  items; the deprecated `.always` accessibility was REMOVED.
+- `SlidingWindowTTLCache.get` checks expiry eagerly and fires
+  `onEvict(.expired)`; background sweeps are floored at 1s;
+  `CacheAsidePattern` is now a class with single-flight per-key fetch; `clear()`
+  fires `onEvict(.cleared)`; the fake `.batch` invalidation case was REMOVED;
+  `MemoryPressureHandler.wireToSystemNotifications()` added.
+
+**Feature flags / Analytics**
+- Remote flag overrides beat local overrides (documented contract); remote
+  snapshots replace stale entries; `clearAllOverrides` clears both stores.
+- AB/rollout bucketing is salted per experiment (`salt:` on
+  `PercentageRollout`, experiment id in AB assignment).
+- Funnel analysis is order-sensitive and `totalCompletions` counts users;
+  `UserJourneyTracker` bounds retained sessions and buffers inter-session
+  events; `EventTracker` supports result-reporting flush callbacks (failure
+  re-queues the batch); `persistLocal` and `includeValues` are implemented.
+
+**DevTools / Testing**
+- `DevToolsObserver` publishes changes (views update live); performance
+  metrics are cached and forget disposed providers; `storeSnapshots = false`
+  records entries with null snapshots; `replay` clamps hostile compute times.
+- `DeterministicTestEnvironment` exposes a seeded `random` generator; test
+  overrides are actually applied by `build()`; `verifyTransition` verifies
+  observed state; the dishonest helpers (`verifyWithinTimeout`, `measureMemory`,
+  nil `CommonFixtures`, `weightedRandom`) were REMOVED; assertion helpers
+  record `Issue.record` failures instead of aborting the run.
+
+**Concurrency / Macros**
+- `Task.throwingTimeout` returns a computed success over a racing timeout;
+  `SKConcurrencyLimiter` handles cancelled-before-registration waiters;
+  `SKTaskDuration` clamps negative input; `Task.race` throws typed
+  `SKRaceError.emptyInput`; `AsyncSequence.publisher` docs state its
+  subscribe-immediately, no-backpressure semantics.
+- `@Debounce` forwards parameters; hook peer macros preserve defaults and emit
+  required-first signatures; `@Atom` rejects non-structs with a diagnostic;
+  `@Provider` overloads disambiguate by arity (`fetchProvider1`); `@HRef`
+  defers initializer evaluation via `useRefLazy`.
+- Documented language limitation: peer macros at global scope can only
+  introduce static names — one `@HookForm`/`@HookContext` per module.
+
 ### Verified-not-a-defect (P1 blocker fixes)
 
 - **`DeterministicTimeProvider.advance(by:)` works as documented** — the review report's

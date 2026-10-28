@@ -6,6 +6,13 @@ mỗi phát hiện P0/P1 đã được xác minh trực tiếp trên source trư
 
 **Trạng thái test:** `swift test` toàn package PASS (exit 0) tại commit `527e67c`.
 
+**Cập nhật 2026-10-28 (feature 009):** TOÀN BỘ finding còn lại đã được sửa qua
+speckit flow (`specs/009-quality-remediation/`, 8 commit, red→green cho từng
+behavior fix). Riêng @HookForm/@HookContext per-type names là giới hạn ngôn ngữ
+của peer macros (tên tĩnh bắt buộc ở global scope) — đã doc thay vì "fix";
+ObservableTask deinit-cancel bất khả thi dưới @MainActor — doc yêu cầu cancel()
+tường minh. Full package 328 test + Examples xanh.
+
 **Cập nhật 2026-10-27 (feature 008):** 10 P1 blocker trong "Lộ trình đề xuất" đã được sửa qua speckit flow
 (`specs/008-p1-blocker-fixes/`), red→green cho từng fix, toàn package pass. Finding 24 được rút khỏi danh
 sách (false positive — xem bảng P1). **Finding mới phát hiện khi implement** (chưa có trong danh sách ban
