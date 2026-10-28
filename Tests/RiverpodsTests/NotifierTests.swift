@@ -46,10 +46,14 @@ struct RiverpodNotifierTests {
         let firstRead = container.read(p)
         #expect(firstRead.isLoading)
         
-        // Wait for result
-        try await Task.sleep(nanoseconds: 100_000_000)
-        
-        let secondRead = container.read(p)
+        // Wait for result (poll with a deadline — a fixed sleep flakes under
+        // parallel test load).
+        var secondRead = container.read(p)
+        let deadline = Date().addingTimeInterval(5)
+        while secondRead.value == nil && Date() < deadline {
+            try await Task.sleep(nanoseconds: 10_000_000)
+            secondRead = container.read(p)
+        }
         #expect(secondRead.value == "Done")
         
         // Manual refresh should trigger refreshing state
