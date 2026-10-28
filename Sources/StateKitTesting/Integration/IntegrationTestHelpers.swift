@@ -36,7 +36,7 @@ public final class IntegrationTestEnvironment {
         _ provider: P,
         with value: P.State
     ) -> Self {
-        // Store override for later application
+        overrides.append(provider.overrideWith(value))
         return self
     }
 
@@ -46,9 +46,9 @@ public final class IntegrationTestEnvironment {
         return self
     }
 
-    /// Builds the test container.
+    /// Builds the test container with the recorded overrides applied.
     public func build() -> ProviderContainer {
-        let container = ProviderContainer(observers: observers)
+        let container = ProviderContainer(overrides: overrides, observers: observers)
 
         // Execute setup callbacks
         for callback in setupCallbacks {
@@ -181,15 +181,24 @@ public struct MockProviderBuilder<T: Sendable> {
 /// Helpers for verifying state transitions and interactions.
 public struct StateVerification {
     /// Verifies that a state transition occurs.
+    ///
+    /// - Parameters:
+    ///   - read: reads the state under test (called before and after the action)
+    ///   - from: the expected initial state
+    ///   - to: the expected final state
+    ///   - action: the transition to perform
+    @discardableResult
     public static func verifyTransition<T: Sendable & Equatable>(
+        read: @escaping @Sendable () async -> T,
         from: T,
         to: T,
-        action: @escaping () async -> Void
+        action: @escaping @Sendable () async -> Void
     ) async -> Bool {
-        // Execute action and verify state changed
-        // In real implementation, would check before/after state
+        let initial = await read()
+        guard initial == from else { return false }
         await action()
-        return to != from
+        let final = await read()
+        return final == to
     }
 
     /// Verifies that multiple providers update consistently.
@@ -205,27 +214,6 @@ public struct StateVerification {
         return predicate(value1, value2)
     }
 
-    /// Verifies that action completes within timeout.
-    public static func verifyWithinTimeout<T: Sendable>(
-        timeout: TimeInterval = 5.0,
-        action: @escaping @Sendable () async -> T
-    ) async -> T? {
-        let task = Task {
-            await action()
-        }
-
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if task.isCancelled {
-                return nil
-            }
-            // Check result if available
-            try? await Task.sleep(nanoseconds: 10_000_000)  // 10ms
-        }
-
-        task.cancel()
-        return nil
-    }
 }
 
 // MARK: - Feature Test Harness
@@ -246,7 +234,8 @@ public final class FeatureTestHarness<State: Sendable> {
     public let name: String
         /// The scenario's isolated provider container.
     public let container: ProviderContainer
-    private let provider: Provider<State>
+    /// Internal for tests: mutate via `container.read(provider.notifier)`.
+    let provider: Provider<State>
 
         /// Configures a named scenario with its own container.
     public init(
@@ -264,8 +253,13 @@ public final class FeatureTestHarness<State: Sendable> {
     }
 
     /// Observes state changes.
-    public func observe(_ callback: @escaping (State) -> Void) {
-        // In real implementation, would set up observation
+    ///
+    /// - Returns: A subscription; closing it removes the listener.
+    @discardableResult
+    public func observe(_ callback: @escaping (State) -> Void) -> ProviderSubscription {
+        container.listen(provider, fireImmediately: false) { _, new in
+            callback(new)
+        }
     }
 
     /// Generates a performance report for the feature.
@@ -369,15 +363,6 @@ public struct PerformanceTesting {
         let result = await action()
         let duration = Date().timeIntervalSince(start)
         return (result, duration)
-    }
-
-    /// Measures memory usage during action.
-    public static func measureMemory<T: Sendable>(
-        action: @escaping () async -> T
-    ) async -> (result: T, memoryUsed: Int) {
-        // In real implementation, would use memory profiling
-        let result = await action()
-        return (result, 0)
     }
 
     /// Compares performance of two implementations.

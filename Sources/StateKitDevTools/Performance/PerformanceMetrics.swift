@@ -223,24 +223,56 @@ public struct InMemoryPerformanceMetrics: PerformanceMetrics {
         }
     }
 
+    /// Cached per-provider aggregates, invalidated by `recordUpdate`/`reset`
+    /// and dropped for disposed providers. Every query used to rebuild the
+    /// full aggregate for every provider (O(providers x records) per call).
+    /// Reference box: reads may lazily rebuild without `mutating`.
+    @ObservationIgnored
+    private var aggregateCache = AggregateCacheBox()
+
+    private final class AggregateCacheBox {
+        var map: [String: PerformanceData]?
+    }
+
+    private func cachedMetric(for providerName: String) -> PerformanceData? {
+        if let map = aggregateCache.map {
+            return map[providerName]
+        }
+        var built: [String: PerformanceData] = [:]
+        for data in allMetrics {
+            built[data.providerName] = data
+        }
+        aggregateCache.map = built
+        return built[providerName]
+    }
+
+    /// Drops all recorded data for a disposed provider (previously metrics for
+    /// long-gone providers were retained for the app's lifetime).
+    public mutating func forget(providerName: String) {
+        metrics.removeValue(forKey: providerName)
+        firstAccessTimes.removeValue(forKey: providerName)
+        lastUpdateTimes.removeValue(forKey: providerName)
+        aggregateCache.map = nil
+    }
+
     /// Updates per second for the named provider.
     public func updateFrequency(for providerName: String) -> Double {
-        allMetrics.first(where: { $0.providerName == providerName })?.updateFrequency ?? 0
+        cachedMetric(for: providerName)?.updateFrequency ?? 0
     }
 
     /// Average compute time in milliseconds.
     public func computeTime(for providerName: String) -> Double {
-        allMetrics.first(where: { $0.providerName == providerName })?.averageComputeTime ?? 0
+        cachedMetric(for: providerName)?.averageComputeTime ?? 0
     }
 
     /// Total recomputations recorded.
     public func callCount(for providerName: String) -> Int {
-        allMetrics.first(where: { $0.providerName == providerName })?.totalCallCount ?? 0
+        cachedMetric(for: providerName)?.totalCallCount ?? 0
     }
 
     /// Estimated retained bytes for the provider.
     public func memoryUsage(for providerName: String) -> Int {
-        allMetrics.first(where: { $0.providerName == providerName })?.estimatedMemory ?? 0
+        cachedMetric(for: providerName)?.estimatedMemory ?? 0
     }
 
     public mutating func recordUpdate(
@@ -264,6 +296,7 @@ public struct InMemoryPerformanceMetrics: PerformanceMetrics {
 
         metrics[providerName]?.append(record)
         lastUpdateTimes[providerName] = Date()
+        aggregateCache.map = nil
 
         // Limit record size
         if let count = metrics[providerName]?.count, count > maxRecordsPerProvider {
@@ -273,6 +306,7 @@ public struct InMemoryPerformanceMetrics: PerformanceMetrics {
 
     public mutating func reset() {
         metrics = [:]
+        aggregateCache.map = nil
         firstAccessTimes = [:]
         lastUpdateTimes = [:]
     }

@@ -1,4 +1,5 @@
 import Foundation
+import Testing
 
 // MARK: - Deterministic Test Environment
 
@@ -15,9 +16,12 @@ import Foundation
 /// let env = DeterministicTestEnvironment(seed: 42)
 /// env.freezeTime(to: Date(timeIntervalSince1970: 0))
 ///
-/// // All randomness is now deterministic
-/// let random = Int.random(in: 0..<100)  // Always same value
+/// // Randomness drawn through the environment is deterministic
+/// let value = env.random.nextInt(min: 0, max: 100)  // Same sequence per seed
 /// ```
+///
+/// - Note: `Int.random(in:)` draws from the process RNG, which Swift cannot
+///   seed — determinism requires drawing through `env.random`.
 @MainActor
 public final class DeterministicTestEnvironment {
     private let seed: UInt64
@@ -28,6 +32,7 @@ public final class DeterministicTestEnvironment {
         /// Creates a deterministic sequence from `seed` (default 0 — fully reproducible).
     public init(seed: UInt64 = 0) {
         self.seed = seed
+        self.random = DeterministicRandom(seed: seed)
         setupDeterministicRandom()
     }
 
@@ -61,10 +66,30 @@ public final class DeterministicTestEnvironment {
         }
     }
 
+    /// The seeded random generator for this environment (advanced in place by
+    /// the `nextInt`/`next` conveniences below).
+    public private(set) var random: DeterministicRandom
+
+    /// Draws the next seeded integer, advancing the generator.
+    public func nextInt(min: Int, max: Int) -> Int {
+        var generator = random
+        let value = generator.nextInt(min: min, max: max)
+        random = generator
+        return value
+    }
+
+    /// Draws the next seeded double, advancing the generator.
+    public func nextDouble(min: Double = 0, max: Double = 1) -> Double {
+        var generator = random
+        let value = generator.nextDouble(min: min, max: max)
+        random = generator
+        return value
+    }
+
     /// Sets up deterministic random number generation.
     private func setupDeterministicRandom() {
-        // In Swift, seeding random requires custom implementation
-        // Store seed and use it for reproducible randomness
+        // Seeding global randomness is impossible in Swift; the seed drives
+        // the exposed `random` generator instead.
     }
 
     /// Resets environment to initial state.
@@ -198,11 +223,10 @@ public final class TestExecutionRecord {
         line: UInt = #line
     ) {
         let actualSequence = events.map { $0.description }
-        guard actualSequence == expectedSequence else {
-            fatalError(
+        if actualSequence != expectedSequence {
+            Issue.record(
                 "Event sequence mismatch:\nExpected: \(expectedSequence)\nActual: \(actualSequence)",
-                file: file,
-                line: line
+                sourceLocation: SourceLocation(fileID: "", filePath: "\(file)", line: Int(line), column: 1)
             )
         }
     }
@@ -360,11 +384,10 @@ public struct DeterministicAssertions {
             results.append(operation())
         }
 
-        guard Set(results.map { String(describing: $0) }).count == 1 else {
-            fatalError(
+        if Set(results.map { String(describing: $0) }).count != 1 {
+            Issue.record(
                 "Operation is not deterministic - produced different results",
-                file: file,
-                line: line
+                sourceLocation: SourceLocation(fileID: "", filePath: "\(file)", line: Int(line), column: 1)
             )
         }
     }
@@ -379,11 +402,10 @@ public struct DeterministicAssertions {
         let result1 = operation(seed)
         let result2 = operation(seed)
 
-        guard result1 == result2 else {
-            fatalError(
+        if result1 != result2 {
+            Issue.record(
                 "Operation is not reproducible with same seed",
-                file: file,
-                line: line
+                sourceLocation: SourceLocation(fileID: "", filePath: "\(file)", line: Int(line), column: 1)
             )
         }
     }
@@ -398,8 +420,8 @@ public struct DeterministicAssertions {
         await operation()
         let actual = Date().timeIntervalSince(start)
 
-        guard abs(actual - expectedDuration) <= tolerance else {
-            fatalError(
+        if abs(actual - expectedDuration) > tolerance {
+            Issue.record(
                 "Timing is not predictable: expected \(expectedDuration)±\(tolerance), got \(actual)"
             )
         }

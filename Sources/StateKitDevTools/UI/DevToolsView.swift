@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 #if os(macOS)
 import AppKit
 #endif
@@ -139,10 +140,17 @@ public struct StateDevTools: View {
 @MainActor
 class ObservedDevToolsObserver: ObservableObject {
     @Published var observer: DevToolsObserver
+    private var cancellable: AnyCancellable?
 
     init(observer: DevToolsObserver) {
         self.observer = observer
+        // The inner observer's struct mutations publish nothing on their own —
+        // forward its objectWillChange so DevTools views actually update.
+        cancellable = observer.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }
     }
+
 }
 
 // MARK: - History Tab

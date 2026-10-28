@@ -248,7 +248,11 @@ let package = Package(
         ),
         PackageDescription.Target.testTarget(
             name: "StateKitDevToolsTests",
-            dependencies: [PackageDescription.Target.Dependency.byName(name: "StateKitDevTools")]
+            dependencies: [
+                PackageDescription.Target.Dependency.byName(name: "StateKitDevTools"),
+                PackageDescription.Target.Dependency.byName(name: "Riverpods"),
+                PackageDescription.Target.Dependency.byName(name: "StateKitTesting"),
+            ]
         ),
     ]
 )

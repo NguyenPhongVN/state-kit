@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Riverpods
 
 // MARK: - DevTools Observer
@@ -29,7 +30,7 @@ import Riverpods
 /// - Important: Only use in DEBUG mode for production builds
 /// - Warning: Recording state snapshots uses memory proportional to state size
 @MainActor
-public final class DevToolsObserver: ProviderObserver {
+public final class DevToolsObserver: ProviderObserver, ObservableObject {
     // MARK: - Properties
 
     /// State history tracker.
@@ -62,6 +63,15 @@ public final class DevToolsObserver: ProviderObserver {
     /// Debug logging enabled.
     public var debugLoggingEnabled: Bool = false
 
+    /// Bumped on every history/metrics mutation so SwiftUI views observing the
+    /// observer directly can update (the old design published nothing, so
+    /// DevTools views rendered stale data forever).
+    @Published private(set) public var revision = 0
+
+    private func bump() {
+        revision += 1
+    }
+
     // MARK: - Initialization
 
         /// Starts recording with snapshots enabled by default.
@@ -91,17 +101,24 @@ public final class DevToolsObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         let providerName = provider.name ?? "Unknown"
+        bump()
 
-        // Record in history
+        // Record in history. storeSnapshots=false keeps the entry (action,
+        // timing) but stores null snapshots — the flag must not silently
+        // disable history recording itself.
         if history.storeSnapshots {
-            let before = AnyCodable(oldValue)
-            let after = AnyCodable(newValue)
-            let computeTime = computeTime(for: providerName)
             history.record(
                 action: nil,
-                before: before,
-                after: after,
-                computeTime: computeTime
+                before: AnyCodable(oldValue),
+                after: AnyCodable(newValue),
+                computeTime: computeTime(for: providerName)
+            )
+        } else {
+            history.record(
+                action: nil,
+                before: AnyCodable(NSNull()),
+                after: AnyCodable(NSNull()),
+                computeTime: computeTime(for: providerName)
             )
         }
 
@@ -119,6 +136,8 @@ public final class DevToolsObserver: ProviderObserver {
 
         // Clean up timing data
         computeStartTimes.removeValue(forKey: providerName)
+        metrics.forget(providerName: providerName)
+        bump()
 
         if debugLoggingEnabled {
             print("[DevTools] Disposed provider: \(providerName)")
@@ -126,6 +145,13 @@ public final class DevToolsObserver: ProviderObserver {
     }
 
     // MARK: - Performance Tracking
+
+    /// Records one provider update into metrics and history bookkeeping
+    /// (public entry point for tests and manual instrumentation).
+    public func recordUpdate(providerName: String, computeTime: Double, memoryBytes: Int) {
+        metrics.recordUpdate(providerName: providerName, computeTime: computeTime, memoryBytes: memoryBytes)
+        bump()
+    }
 
     /// Records the start of a provider computation.
     ///
@@ -151,6 +177,8 @@ public final class DevToolsObserver: ProviderObserver {
             memoryBytes: memoryBytes
         )
         computeStartTimes.removeValue(forKey: providerName)
+        metrics.forget(providerName: providerName)
+        bump()
     }
 
     /// Gets the elapsed time since computation started.

@@ -394,7 +394,10 @@ public struct InMemoryStateHistory: StateHistory {
             }
             // Pace the replay by the recorded compute time so it mirrors the
             // original run.
-            try? await Task.sleep(nanoseconds: UInt64(entry.computeTime * 1_000_000))
+            // Imported history is untrusted: negative or NaN computeTime would
+        // trap UInt64 conversion. Clamp to zero and replay immediately.
+        let delay = entry.computeTime.isFinite ? max(0, entry.computeTime) : 0
+        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000))
             do {
                 if try await handler(action) {
                     report.executed.append(action)
