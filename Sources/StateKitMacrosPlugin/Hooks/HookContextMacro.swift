@@ -46,6 +46,10 @@ public struct HookContextMacro: PeerMacro {
 
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
+        // NOTE: peer macros at global scope may only introduce statically
+        // declared names — the `_hookContext` global is shared per module.
+        // Documented limitation (see macro docs).
+
         let contextInstanceDecl: DeclSyntax = """
         @MainActor
         \(raw: accessPrefix)\(raw: staticKeyword)let _hookContext = StateKit.HookContext<\(raw: className)>(\(raw: className)())

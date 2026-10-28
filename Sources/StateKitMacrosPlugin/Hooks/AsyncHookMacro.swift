@@ -65,7 +65,14 @@ public struct AsyncHookMacro: PeerMacro {
         var instanceInit: [String] = []
 
         for prop in properties {
-            paramList.append("\(prop.name): \(prop.typeName)")
+            // Preserve declared defaults: the macro's own docs show
+            // `useLogger()` called with no arguments — dropping defaults made
+            // that example uncompilable.
+            if let defaultVal = prop.defaultValue {
+                paramList.append("\(prop.name): \(prop.typeName) = \(defaultVal)")
+            } else {
+                paramList.append("\(prop.name): \(prop.typeName)")
+            }
             depsList.append(prop.name)
             instanceInit.append("    \(prop.name): \(prop.name)")
         }

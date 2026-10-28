@@ -60,7 +60,14 @@ public struct HookEffectMacro: PeerMacro {
         var instanceInit: [String] = []
 
         for prop in properties {
-            paramList.append("\(prop.name): \(prop.typeName)")
+            // Preserve declared defaults: the macro's own docs show
+            // `useLogger()` called with no arguments — dropping defaults made
+            // that example uncompilable.
+            if let defaultVal = prop.defaultValue {
+                paramList.append("\(prop.name): \(prop.typeName) = \(defaultVal)")
+            } else {
+                paramList.append("\(prop.name): \(prop.typeName)")
+            }
             depsList.append(prop.name)
             instanceInit.append("    \(prop.name): \(prop.name)")
         }
@@ -76,7 +83,10 @@ public struct HookEffectMacro: PeerMacro {
                 {
                     let task = Task { await \(raw: className)\(raw: initCode).run() }
                     return {
-                        \(raw: className)\(raw: initCode).cleanup()
+                        // cleanup() may be async: hop through a Task so both
+                        // sync and async cleanups compile.
+                        let cleanupTarget = \(raw: className)\(raw: initCode)
+                        Task { await cleanupTarget.cleanup() }
                         task.cancel()
                     }
                 }

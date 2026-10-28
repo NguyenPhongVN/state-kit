@@ -68,23 +68,50 @@ public struct DebounceMacro: PeerMacro {
             throw MacroError.custom("@Debounce requires a milliseconds argument, e.g. @Debounce(300)")
         }
 
+        // Forward parameters: the debounced peer takes the same parameter list
+        // and stores the LAST call's arguments for the delayed invocation.
+        let params = funcDecl.signature.parameterClause.parameters
+        let forwardingList: String
+        if params.isEmpty {
+            forwardingList = ""
+        } else {
+            let names = params.compactMap { $0.secondName?.text ?? $0.firstName.text }
+            forwardingList = names.joined(separator: ", ")
+        }
+
         let taskDecl: DeclSyntax = """
         @MainActor
         \(raw: staticKeyword)private var _\(raw: functionName)DebounceTask: Task<Void, Never>?
         """
 
-        let debouncedFunc: DeclSyntax = """
-        @MainActor
-        \(raw: staticKeyword)func \(raw: functionName)Debounced() {
-            _\(raw: functionName)DebounceTask?.cancel()
-            _\(raw: functionName)DebounceTask = Task {
-                try? await Task.sleep(nanoseconds: UInt64(\(raw: delayExpr)) * 1_000_000)
-                if !Task.isCancelled {
-                    await \(raw: functionName)()
+        let debouncedFunc: DeclSyntax
+        if params.isEmpty {
+            debouncedFunc = """
+            @MainActor
+            \(raw: staticKeyword)func \(raw: functionName)Debounced() {
+                _\(raw: functionName)DebounceTask?.cancel()
+                _\(raw: functionName)DebounceTask = Task {
+                    try? await Task.sleep(nanoseconds: UInt64(\(raw: delayExpr)) * 1_000_000)
+                    if !Task.isCancelled {
+                        await \(raw: functionName)()
+                    }
                 }
             }
+            """
+        } else {
+            debouncedFunc = """
+            @MainActor
+            \(raw: staticKeyword)func \(raw: functionName)Debounced(\(raw: params.trimmedDescription)) {
+                _\(raw: functionName)DebounceTask?.cancel()
+                _\(raw: functionName)DebounceTask = Task { [\(raw: forwardingList)] in
+                    try? await Task.sleep(nanoseconds: UInt64(\(raw: delayExpr)) * 1_000_000)
+                    if !Task.isCancelled {
+                        await \(raw: functionName)(\(raw: forwardingList))
+                    }
+                }
+            }
+            """
         }
-        """
 
         return [taskDecl, debouncedFunc]
     }

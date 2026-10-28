@@ -42,9 +42,24 @@
 /// ```
 @MainActor
 public func useRef<T>(_ initial: T) -> StateRef<T> {
+    _useRefSlot(initial)
+}
 
+/// Lazy variant: the initial value expression is evaluated ONLY when the slot
+/// is first created — later renders skip it entirely.
+///
+/// Distinctly named (`useRefLazy`) rather than an overload so call sites stay
+/// unambiguous; property wrappers like `@HRef` use this to honor their
+/// documented "not re-evaluated on later renders" contract.
+@MainActor
+public func useRefLazy<T>(_ initial: @escaping () -> T) -> StateRef<T> {
+    _useRefSlot(initial())
+}
+
+@MainActor
+private func _useRefSlot<T>(_ initial: T) -> StateRef<T> {
     guard let context = StateRuntime.current else {
-        fatalError("\(#function) must be used inside StateRuntime")
+        fatalError("useRef must be used inside StateRuntime")
     }
 
     let index = context.nextIndex()

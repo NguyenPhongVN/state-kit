@@ -31,6 +31,9 @@ public struct ProviderFamilyMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
+        // Family macros declare ONE static per function name (a static let
+        // cannot overload), so the bare `xProvider` name is kept here; only
+        // the plain @Provider macro needs arity disambiguation.
         let providerName = functionName + "Provider"
 
         // Extract access level from the function's modifiers

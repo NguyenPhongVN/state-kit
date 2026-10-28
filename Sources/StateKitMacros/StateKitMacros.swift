@@ -480,11 +480,21 @@ public macro HookCallback() = #externalMacro(module: "StateKitMacrosPlugin", typ
 @attached(peer, names: prefixed(use))
 public macro HookReducer() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookReducerMacro")
 
-/// @HookContext: Generates context hook 'use<StructName>' and _hookContext (Peer).
+/// @HookContext: Generates context hook 'use<StructName>' and the module-level
+/// `_hookContext` global (Peer).
+///
+/// - Note: Swift peer macros at global scope may only introduce statically
+///   declared names, so the global is `_hookContext` for every context in the
+///   module — use one `@HookContext` per module.
 @attached(peer, names: prefixed(use), named(_hookContext))
 public macro HookContext() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookContextMacro")
 
-/// @HookForm: Generates form hook 'use<StructName>' and FHook struct (Peer).
+/// @HookForm: Generates form hook 'use<StructName>' and the module-level
+/// `FHook` bindings struct (Peer).
+///
+/// - Note: Swift peer macros at global scope may only introduce statically
+///   declared names, so the struct is `FHook` for every form in the module —
+///   use one `@HookForm` per module.
 @attached(peer, names: prefixed(use), named(FHook))
 public macro HookForm() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookFormMacro")
 

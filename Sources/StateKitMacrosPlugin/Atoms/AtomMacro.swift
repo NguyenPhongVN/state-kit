@@ -32,7 +32,11 @@ public struct AtomMacro: ExtensionMacro, MemberAttributeMacro {
         conformingTo protocols: [TypeSyntax],
         in context: some MacroExpansionContext
     ) throws -> [ExtensionDeclSyntax] {
-        guard let structDecl = declaration.as(StructDeclSyntax.self) else { return [] }
+        guard let structDecl = declaration.as(StructDeclSyntax.self) else {
+            // A silent bail made the compiler report "does not conform to
+            // SKStateAtom" at the user's type with no hint the macro opted out.
+            throw MacroError.onlyApplicableToStructs
+        }
 
         let accessPrefix = AttributeHelper.accessLevel(from: declaration)
 

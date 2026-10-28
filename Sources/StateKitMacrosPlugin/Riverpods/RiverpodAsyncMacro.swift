@@ -31,7 +31,18 @@ public struct RiverpodAsyncMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
-        let providerName = functionName + "Provider"
+        // Overload-safe generated name: `fetch()` and `fetch(id:)` both became
+        // `fetchProvider` and collided. Zero-parameter functions keep the bare
+        // `xProvider` name (docs and existing code); parameterized ones gain an
+        // arity suffix (`fetchProvider1`) so overloads disambiguate.
+        // The framework-provided `ref: ProviderRef` is not a user parameter:
+        // `currentHeader(ref:)` stays `currentHeaderProvider`.
+        let arity = funcDecl.signature.parameterClause.parameters.filter {
+            !$0.type.trimmedDescription.contains("ProviderRef")
+        }.count
+        let providerName = arity == 0
+            ? functionName + "Provider"
+            : functionName + "Provider" + String(arity)
 
         // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)

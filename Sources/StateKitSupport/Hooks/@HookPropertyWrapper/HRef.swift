@@ -55,7 +55,10 @@ public struct HRef<Node> {
     /// - Parameter initial: The initial value expression, captured as an
     ///   `@autoclosure`.
     public init(wrappedValue initial: @autoclosure @escaping () -> Node) {
-        _ref = useRef(initial())
+        // Forward the autoclosure AS a closure: useRefLazy invokes it only
+        // when the slot is first created — the documented behavior the eager
+        // `initial()` call broke.
+        _ref = useRefLazy(initial)
     }
 
     /// Creates a ref backed by `useRef`, with the initial value supplied as

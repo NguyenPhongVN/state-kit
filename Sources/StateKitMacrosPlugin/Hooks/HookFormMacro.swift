@@ -74,6 +74,15 @@ public struct HookFormMacro: PeerMacro {
         for prop in properties {
             let propName = prop.name
             let typeName = prop.typeName
+            // A non-optional field without a default generates `useBinding(nil)`
+            // — a compile error inside the expansion with no diagnostic. Fail
+            // at the macro with a message naming the field instead.
+            guard prop.defaultValue != nil || typeName.contains("?") else {
+                throw MacroError.custom(
+                    "@HookForm field '\(propName): \(typeName)' has no default value; "
+                        + "give it a default or make it optional"
+                )
+            }
             let defaultVal = prop.defaultValue ?? "nil"
 
             bindingProps.append("    public var \(propName): Binding<\(typeName)>")
@@ -84,6 +93,11 @@ public struct HookFormMacro: PeerMacro {
         }
 
         let errorChecks = properties.map { "\($0.name)Error.wrappedValue.isEmpty" }.joined(separator: " && ")
+
+        // NOTE: peer macros at global scope may only introduce statically
+        // declared names (Swift restriction), so per-type struct names are not
+        // possible here — two @HookForm in one module collide on `FHook`.
+        // Documented in the macro docs and the changelog.
 
         let hookStruct: DeclSyntax = """
         public struct FHook {

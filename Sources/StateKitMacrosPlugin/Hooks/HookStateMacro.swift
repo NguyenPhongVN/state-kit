@@ -52,7 +52,11 @@ public struct HookStateMacro: PeerMacro {
 
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: structDecl)
 
-        let params = properties.map { prop in
+        // Required parameters MUST precede defaulted ones (Swift signature
+        // rule) — declaration order produced uncompilable signatures.
+        let required = properties.filter { $0.defaultValue == nil }
+        let defaulted = properties.filter { $0.defaultValue != nil }
+        let params = (required + defaulted).map { prop in
             if let defaultVal = prop.defaultValue {
                 "\(prop.name): \(prop.typeName) = \(defaultVal)"
             } else {
