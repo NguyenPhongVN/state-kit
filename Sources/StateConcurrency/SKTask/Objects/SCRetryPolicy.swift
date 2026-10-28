@@ -27,7 +27,10 @@ public enum SKRetryPolicy: Sendable {
         case .constant(let delay):
             return delay
         case .exponential(let initialDelay, let multiplier):
-            let delaySeconds = initialDelay.asTimeInterval * pow(multiplier, Double(attempt - 1))
+            // A non-positive multiplier collapses delays to zero or flips
+            // their sign (negative delays crash downstream conversions).
+            let effective = multiplier.isFinite && multiplier > 0 ? multiplier : 1.0
+            let delaySeconds = max(0, initialDelay.asTimeInterval) * pow(effective, Double(attempt - 1))
             return SKTaskDuration(delaySeconds)
         case .custom(let closure):
             return closure(attempt)

@@ -49,10 +49,22 @@ public actor SKConcurrencyLimiter {
             return true
         }
         
-        return await withCheckedContinuation { continuation in
+        // A task cancelled BEFORE its continuation registers would otherwise
+        // deadlock: cancelWait ran first, found nothing, and the continuation
+        // registered below would never be resumed. Register, then re-check
+        // cancellation and self-remove.
+        let registered = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             waitingTasks[id] = continuation
             waitingOrder.append(id)
+            if Task.isCancelled {
+                // Resume ourselves with cancellation so the awaiting task
+                // never hangs.
+                Task { [weak self] in
+                    await self?.cancelWait(id: id)
+                }
+            }
         }
+        return registered
     }
     
     private func cancelWait(id: UUID) {

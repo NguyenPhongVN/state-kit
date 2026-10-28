@@ -21,7 +21,10 @@ public enum SKTaskDuration: Comparable, Sendable {
     /// let shortDuration = TaskDuration(0.001) // 1 millisecond
     /// ```
     public init(_ seconds: TimeInterval) {
-        self = .nanoseconds(UInt64(seconds * 1_000_000_000))
+        // Negative or non-finite input would trap the UInt64 conversion;
+        // clamp to zero instead (no delay is the only sane meaning).
+        let clamped = seconds.isFinite && seconds > 0 ? seconds : 0
+        self = .nanoseconds(UInt64(clamped * 1_000_000_000))
     }
     
     /// Converts the duration to TimeInterval (seconds)

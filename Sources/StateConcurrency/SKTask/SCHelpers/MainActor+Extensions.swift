@@ -83,6 +83,11 @@ extension MainActor {
         }
         
         // Otherwise, dispatch synchronously to the main queue.
+        // DEADLOCK HAZARD: if the main thread is (or will be) blocked waiting
+        // for THIS thread — a lock, a semaphore, a synchronous continuation —
+        // the two waits deadlock. Prefer `await MainActor.run` from async
+        // contexts; use this only where a synchronous hop is unavoidable and
+        // the main thread is known to be idle.
         return try DispatchQueue.main.sync {
             try operation()
         }

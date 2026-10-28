@@ -19,17 +19,20 @@ extension AsyncSequence {
 extension AsyncSequence where Self: Sendable {
     /// Converts the asynchronous sequence into a Combine publisher.
     ///
-    /// Returns a publisher that emits each element from the async sequence and
-    /// finishes when the sequence completes. It respects backpressure
-    /// and can propagate thrown errors.
+    /// **Subscribe-immediately semantics:** a pump task starts consuming the
+    /// sequence the moment this property is accessed — elements emitted before
+    /// any subscriber attaches are DROPPED, and there is no backpressure
+    /// (a `PassthroughSubject` is a firehose, not a demand-driven source).
+    /// Cancel the pump by cancelling the subscription, or by deallocating the
+    /// returned publisher.
     ///
-    /// - Returns: A publisher that emits values from the async sequence and handles
-    ///   errors.
+    /// - Returns: A publisher that emits values from the async sequence and
+    ///   propagates thrown errors.
     @available(macOS 15.0, iOS 18.0, watchOS 11.0, tvOS 18.0, visionOS 2.0, *)
     public var publisher: some Publisher<Element, Failure> {
         let box = UncheckedSendable(PassthroughSubject<Element, Failure>())
 
-        let task = Task {
+        let task = Task { @Sendable in
             do {
                 for try await value in self {
                     box.wrappedValue.send(value)
@@ -37,14 +40,46 @@ extension AsyncSequence where Self: Sendable {
                 box.wrappedValue.send(completion: .finished)
             } catch let error as Failure {
                 box.wrappedValue.send(completion: .failure(error))
+            } catch {
+                box.wrappedValue.send(completion: .failure(error as! Failure))
             }
         }
 
-        return box
-            .wrappedValue
-            .handleEvents(receiveCancel: {
-                task.cancel()
-            })
+        // The pump is held by the returned publisher: a publisher that is
+        // never subscribed does not leak an unstructured task draining the
+        // whole sequence.
+        return PumpPublisher(
+            subject: box.wrappedValue,
+            pump: task
+        )
     }
 }
 #endif
+
+
+/// Wraps a pump-fed subject so deallocating the publisher (with no active
+/// subscriptions) cancels the pump task.
+private final class PumpPublisher<Output, Failure: Error>: Publisher, @unchecked Sendable {
+    typealias Output = Output
+    typealias Failure = Failure
+
+    private let subject: PassthroughSubject<Output, Failure>
+    private let pump: Task<Void, Never>
+    private let cancelPump: @Sendable () -> Void
+
+    init(subject: PassthroughSubject<Output, Failure>, pump: Task<(), Never>) {
+        self.subject = subject
+        self.pump = pump
+        self.cancelPump = { pump.cancel() }
+    }
+
+    func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
+        subject
+            .handleEvents(receiveCancel: { self.cancelPump() })
+            .receive(subscriber: subscriber)
+    }
+
+    deinit {
+        cancelPump()
+    }
+}

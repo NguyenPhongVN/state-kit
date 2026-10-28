@@ -36,7 +36,14 @@ extension Task where Success == Never, Failure == Never {
                 throw lastError
             }
             
-            throw NSError(domain: "SKTask", code: 0, userInfo: [NSLocalizedDescriptionKey: "No operations to race"])
+            throw SKRaceError.emptyInput
         }
     }
+}
+
+
+/// Errors thrown by `Task.race`.
+public enum SKRaceError: Error, Sendable {
+    /// `race` was called with no operations.
+    case emptyInput
 }

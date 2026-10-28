@@ -31,6 +31,12 @@ fileprivate func withThrowingTimeout<T: Sendable>(
     if let timeoutTask {
         timeoutTask.cancel()
         
+        // A success must win over a timeout that fired in the same instant —
+        // previously the computed result was discarded and SKTimeoutError
+        // thrown nondeterministically. Only throw when no result exists.
+        if case .success = result {
+            return try result.get()
+        }
         if case let .failure(error) = await timeoutTask.result, error is SKTimeoutError {
             throw error
         }
