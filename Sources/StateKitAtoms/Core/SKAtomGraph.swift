@@ -94,36 +94,10 @@ struct SKAtomGraph {
 
     /// Returns all descendants of `key` in topological order (ancestors first).
     ///
-    /// The algorithm is a post-order DFS over the `children` map, reversed.
-    /// This guarantees that when a node appears in the result, all of its own
-    /// dependencies that are also descendants have already appeared — so
-    /// recomputing in this order is always safe.
+    /// Delegates to the multi-source variant — the single-key walk is its
+    /// one-element case (previously a second copy of the whole DFS lived here).
     func topologicallySortedDescendants(of key: SKAtomKey) -> [SKAtomKey] {
-        var visited = Set<SKAtomKey>()
-        var path = Set<SKAtomKey>()
-        var sorted: [SKAtomKey] = []
-
-        func visit(_ k: SKAtomKey) {
-            if path.contains(k) {
-                #if DEBUG
-                assertionFailure("Circular dependency detected involving atom: \(k.typeID)")
-                #endif
-                return
-            }
-            guard !visited.contains(k) else { return }
-
-            visited.insert(k)
-            path.insert(k)
-            for child in children[k] ?? [] { visit(child) }
-            path.remove(k)
-
-            sorted.append(k)
-        }
-
-        for child in children[key] ?? [] { visit(child) }
-
-        // Post-order reversed = topological order (ancestors before descendants)
-        return sorted.reversed()
+        topologicallySortedDescendants(of: [key])
     }
 
     // MARK: Debug

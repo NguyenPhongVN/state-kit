@@ -15,5 +15,7 @@ internal func djb2Hash(_ str: String) -> Int {
     for byte in str.utf8 {
         hash = (hash &* 33) &+ UInt32(byte)
     }
-    return Int(hash)
+    // Mask the top bit before converting: on 32-bit targets `Int(hash)` traps
+    // for values above Int32.max (64-bit targets are unaffected).
+    return Int(hash & 0x7FFF_FFFF)
 }

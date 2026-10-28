@@ -140,7 +140,13 @@ open class AsyncNotifier<State: Sendable> {
     /// }
     /// ```
     public var state: AsyncValue<State> {
-        get { _state! }
+        get {
+            // Lazy materialization: .loading() before the first build runs
+            // (previously force-unwrapped nil and crashed).
+            if let value = _state { return value }
+            _state = .loading()
+            return _state!
+        }
         set {
             _state = newValue
             onUpdate?()

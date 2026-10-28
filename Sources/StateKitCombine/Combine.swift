@@ -103,4 +103,7 @@ extension Publisher {
         )
         .eraseToAnyPublisher()
     }
-}
+}/// - Note: Deviates from Rx's `withLatestFrom` — this implementation also
+///   re-emits when the OTHER publisher changes (combineLatest semantics).
+///   Only use where that behavior is acceptable.
+

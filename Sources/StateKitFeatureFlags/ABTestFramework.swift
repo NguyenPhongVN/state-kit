@@ -75,14 +75,18 @@ public struct ABTest<T: Sendable>: Sendable {
         assignUser(userId)
     }
 
-    /// Checks if user is in control group.
+    /// Checks if user is in the control group (the FIRST declared variant —
+    /// the previous hardcoded `"control"` id silently returned false for any
+    /// other naming convention).
     public func isInControl(_ userId: String) -> Bool {
-        variant(for: userId)?.id == "control"
+        guard let assigned = variant(for: userId), let first = variants.first else { return false }
+        return assigned.id == first.id
     }
 
-    /// Checks if user is in treatment group.
+    /// Checks if user is in any non-control variant.
     public func isInTreatment(_ userId: String) -> Bool {
-        variant(for: userId)?.id == "treatment"
+        guard let assigned = variant(for: userId) else { return false }
+        return assigned.id != variants.first?.id
     }
 
     private func hashString(_ str: String) -> Int {
@@ -238,6 +242,13 @@ public struct StatisticalTest {
         let expected_sB = nB * p
         let expected_fB = nB * q
         
+        // A zero expected cell (p or q == 0) would divide by zero and return
+        // NaN/Inf, silently failing every downstream significance check.
+        let cells = [expected_sA, expected_fA, expected_sB, expected_fB]
+        guard cells.allSatisfy({ $0 > 0 }) else {
+            return 0  // degenerate split: no evidence of difference
+        }
+
         let chi2 = pow(sA - expected_sA, 2) / expected_sA +
                    pow(fA - expected_fA, 2) / expected_fA +
                    pow(sB - expected_sB, 2) / expected_sB +

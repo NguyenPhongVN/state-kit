@@ -96,7 +96,7 @@ public struct SwiftDataSync<T: Sendable & Codable> {
 public struct SwiftDataNotifierProvider {
     /// Creates a notifier that syncs state with SwiftData.
     @MainActor
-    public static func create<T: Sendable>(
+    public static func create<T: Sendable & Codable>(
         initialState: T,
         context: ModelContext
     ) -> AsyncNotifierProvider<SwiftDataNotifier<T>, T> {
@@ -107,7 +107,7 @@ public struct SwiftDataNotifierProvider {
 }
 
 /// Notifier that maintains SwiftData synchronization.
-public final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, @unchecked Sendable {
+public final class SwiftDataNotifier<T: Sendable & Codable>: AsyncNotifier<T>, @unchecked Sendable {
     private let initialState: T
     private let context: ModelContext
 
@@ -122,19 +122,31 @@ public final class SwiftDataNotifier<T: Sendable>: AsyncNotifier<T>, @unchecked 
         return initialState
     }
 
-    /// Updates state and persists to SwiftData.
+    /// Updates state and persists it to SwiftData.
+    ///
+    /// The state is JSON-encoded into a keyed `SwiftDataStateRecord` model and
+    /// saved; the in-memory state commits ONLY after the save succeeds
+    /// (previously the empty catch silently swallowed failures after the state
+    /// had already been committed, letting memory and storage diverge).
     @MainActor
-    public func updateAndPersist(_ update: (inout T) -> Void) async {
+    public func updateAndPersist(_ update: (inout T) -> Void) async throws {
         var current = state.value ?? initialState
         update(&current)
-        state = .data(current)
 
-        // Persist to SwiftData
-        do {
-            try context.save()
-        } catch {
-            // Handle persistence error
+        let payload = try JSONEncoder().encode(current)
+        let key = String(describing: T.self)
+
+        let descriptor = FetchDescriptor<SwiftDataStateRecord>(
+            predicate: #Predicate { $0.storageKey == key }
+        )
+        if let existing = try context.fetch(descriptor).first {
+            existing.payload = payload
+        } else {
+            context.insert(SwiftDataStateRecord(storageKey: key, payload: payload))
         }
+        try context.save()
+
+        state = .data(current)
     }
 }
 
@@ -167,7 +179,7 @@ public struct SwiftDataQueryProvider {
 // MARK: - SwiftData Model Extension
 
 extension PersistentModel where Self: Sendable {
-    /// Syncs this model's changes to StateKit state.
+    /// Saves pending model changes to the SwiftData context.
     public func syncToState(
         in context: ModelContext
     ) async throws -> Self {
@@ -206,5 +218,21 @@ public struct AutoPersist<T: Sendable & Codable> {
     /// Clears persisted data.
     public func clear() {
         UserDefaults.standard.removeObject(forKey: key)
+    }
+}
+
+
+/// Key-value record backing `SwiftDataNotifier` persistence: the state is
+/// stored JSON-encoded under a stable key derived from the state type.
+@Model
+public final class SwiftDataStateRecord {
+    /// Unique storage key (the state type's name).
+    public var storageKey: String
+    /// JSON-encoded state payload.
+    public var payload: Data
+
+    public init(storageKey: String, payload: Data) {
+        self.storageKey = storageKey
+        self.payload = payload
     }
 }

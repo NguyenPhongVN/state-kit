@@ -2,7 +2,7 @@ import SwiftUI
 /// Reads a value from the SwiftUI `EnvironmentValues` of the enclosing
 /// `StateScope`.
 ///
-/// Searches `StateRuntime.current.states` for an `EnvironmentValues` instance
+/// Reads `StateRuntime.current.injectedEnvironment` for an `EnvironmentValues` instance
 /// injected by the surrounding `StateScope` and reads the value at `keyPath`.
 /// Falls back to a default `EnvironmentValues()` if none is found.
 ///

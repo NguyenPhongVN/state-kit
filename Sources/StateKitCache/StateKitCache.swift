@@ -10,7 +10,7 @@ import Foundation
 /// - Pluggable cache policies
 /// - Cache-aside pattern helpers
 ///
-/// All caches are thread-safe and integrate with StateKit's state management.
+/// All caches are MainActor-isolated; call them from the main actor (or hop first) and integrate with StateKit's state management.
 
 public enum StateKitCache {
     public static let version = "2.6.0-beta"

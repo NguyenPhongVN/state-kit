@@ -35,6 +35,9 @@ import Observation
 @Observable
 @MainActor
 public final class ObservableTask<Success: Sendable, Failure: Error> {
+    // NOTE: no deinit cancellation — the class is @MainActor-isolated and
+    // deinit is nonisolated; touching currentTask from deinit is a data race.
+    // Callers tearing down early must call cancel() explicitly (documented).
     /// Represents the current state of the task.
     public enum State {
         case idle

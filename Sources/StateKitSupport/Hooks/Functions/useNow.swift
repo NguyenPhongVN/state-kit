@@ -2,7 +2,9 @@ import Foundation
 import StateKit
 
 private func _normalizedNowTimeInterval(_ interval: TimeInterval) -> TimeInterval {
-    interval > 0 ? interval : 0.0001
+    // Floor at 0.05s: a zero/negative interval previously spun the main actor
+    // at ~10 kHz (the 0.0001 fallback). 20 Hz is plenty for a clock display.
+    interval > 0.05 ? interval : 0.05
 }
 
 /// Returns the current date and keeps it updated on a repeating timer.
@@ -18,7 +20,7 @@ private func _normalizedNowTimeInterval(_ interval: TimeInterval) -> TimeInterva
 /// and invalidates that timer automatically when the scope disappears.
 ///
 /// - Parameter interval: Seconds between updates. Defaults to `1`. If less
-///   than or equal to zero, `0.0001` is used.
+///   less than 0.05s, 0.05s is used.
 /// - Returns: A `Date` value that updates on the given interval.
 ///
 /// ### Example

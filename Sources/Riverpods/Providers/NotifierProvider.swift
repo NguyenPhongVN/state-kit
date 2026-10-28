@@ -104,7 +104,14 @@ open class Notifier<State: Sendable> {
     /// notifier.update { $0 + 1 } // Functional update
     /// ```
     public var state: State {
-        get { _state! }
+        get {
+            // Lazy materialization: reading before `build()` ran previously
+            // force-unwrapped nil and crashed.
+            if let value = _state { return value }
+            let value = build()
+            _state = value
+            return value
+        }
         set {
             _state = newValue
             onUpdate?()
