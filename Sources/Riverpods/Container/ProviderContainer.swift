@@ -219,12 +219,17 @@ public final class ProviderContainer {
 
         if let overrideRecord = overrides[id], let customProvider = overrideRecord.providerOverride {
             let element = customProvider.createElement(container: self)
-            if let diagnostic = ProviderOverrideDiagnostics.mismatchDiagnostic(
-                providerID: id,
-                role: "element",
-                actualType: type(of: element),
-                expectedType: ProviderElement<P>.self
-            ) {
+            // Validate by cast, not exact metatype: every real element type is a
+            // ProviderElement<P> subclass (Simple/Notifier/Future/…), so an exact
+            // metatype comparison rejected every valid provider-kind override and
+            // crashed on first use of the documented "swap API for mocks" path.
+            guard element is ProviderElement<P> else {
+                let diagnostic = ProviderOverrideDiagnostics.mismatchDiagnostic(
+                    providerID: id,
+                    role: "element",
+                    actualType: type(of: element),
+                    expectedType: ProviderElement<P>.self
+                ) ?? "StateKit: the override element for \(id) is not a ProviderElement<P>"
                 fatalError(diagnostic)
             }
             elements[id] = element
@@ -439,12 +444,18 @@ public final class ProviderContainer {
         guard element.listenersCount <= 0 && provider.autoDispose && !element.isKeepAlive else { return }
         guard element.dependents.isEmpty else { return }
 
-        if !observers.isEmpty {
-            for observer in observers { observer.didDisposeProvider(provider, container: self) }
+        // The element may be owned by a parent container (ensureElement delegates
+        // upward and existingElement resolves through the chain). Lifecycle
+        // bookkeeping must run against the OWNER: removing from the receiving
+        // container's dict would leave a disposed zombie in the owner's registry
+        // (later reads would resurrect it) and notify the wrong observers.
+        let owner = element.container ?? self
+        if !owner.observers.isEmpty {
+            for observer in owner.observers { observer.didDisposeProvider(provider, container: owner) }
         }
 
         element.dispose()
-        elements.removeValue(forKey: id)
+        owner.elements.removeValue(forKey: id)
     }
 
     /// Retrieves a provider element by its ID.

@@ -408,7 +408,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             return
         }
         for depID in dependencies {
-            if let depElement = container.element(for: depID) {
+            // Resolve the dependency through the parent chain: this element may
+            // live in a child container while its dependency is owned by a parent
+            // (container.element(for:) only checks the local dict, which left the
+            // owner's back-edges and dependents pinned forever).
+            if let depElement = container.existingElement(for: depID) {
                 depElement.dependents.remove(id)
                 depElement._removeDependentRef(self)
             }
@@ -456,10 +460,30 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     
     /// Pins this element in memory until the returned link is released.
 
+    // One-shot close flag backing keep-alive links. Lock-based so the idempotency
+    // contract holds regardless of which actor the close lands on.
+    final class KeepAliveCloseFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var closed = false
+        /// Returns true exactly once; every subsequent call returns false.
+        func tryClose() -> Bool {
+            lock.lock()
+            defer { lock.unlock() }
+            if closed { return false }
+            closed = true
+            return true
+        }
+    }
+
     public func keepAlive() -> KeepAliveLink {
         keepAliveLinksCount += 1
+        // One-shot close flag: the documented contract is "Safe to call multiple
+        // times. Subsequent calls have no effect." — without it a defensive
+        // double-close decremented the count twice and could dispose the provider
+        // out from under live listeners.
+        let closeFlag = KeepAliveCloseFlag()
         return KeepAliveLink { [weak self] in
-            guard let self = self else { return }
+            guard let self, closeFlag.tryClose() else { return }
             self.keepAliveLinksCount -= 1
             self.container?.checkAutoDispose(id: self.id, element: self, provider: self.provider)
         }

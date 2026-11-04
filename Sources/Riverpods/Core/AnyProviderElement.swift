@@ -60,6 +60,13 @@ import Foundation
 @MainActor
 public protocol AnyProviderElement: AnyObject {
 
+    // MARK: - Ownership
+
+    /// The container that owns this element (weak back-reference, set at
+    /// creation). Lifecycle bookkeeping (auto-dispose, registry removal) must
+    /// run against the owner, not against whichever container received the call.
+    var container: ProviderContainer? { get }
+
     // MARK: - State Management
 
     /// The set of provider IDs that depend on this element.

@@ -34,19 +34,40 @@ struct DevToolsObserverRecordingTests {
 
     @Test("observer lifecycle callbacks fire for add and dispose")
     func lifecycleCallbacksFire() {
+        // The observer's own didAdd/didDispose witnesses can only be pinned by
+        // recording actual dispatch: DevToolsObserver's callbacks print behind
+        // logging flags, so a counting observer rides along in the same container.
+        let recorder = DispatchCounter()
         let observer = DevToolsObserver()
         observer.debugLoggingEnabled = false
-        let container = ProviderContainer(observers: [observer])
+        let container = ProviderContainer(observers: [recorder, observer])
         let provider = StateProvider { _ in 0 }
 
-        let element = container.ensureElement(for: provider)
-        _ = container.read(provider)
+        _ = container.watch(provider)
+        #expect(recorder.added == 1, "didAddProvider must dispatch exactly once with the initial value — if this fails, the witness label changed and a protocol-extension no-op is shadowing it")
 
-        // Pins didAddProvider/didDisposeProvider so a future label change cannot
-        // silently regress the observer again.
-        observer.startComputation(providerName: provider.name ?? "unknown")
-        element.dispose()
+        container.removeListener(for: provider)
+        #expect(recorder.disposed == 1, "didDisposeProvider must dispatch exactly once on auto-disposal")
+    }
+}
 
-        #expect(true)
+/// Counts lifecycle dispatches with the exact protocol-signature labels.
+private final class DispatchCounter: ProviderObserver, @unchecked Sendable {
+    private let lock = NSLock()
+    private(set) var added = 0
+    private(set) var disposed = 0
+
+    func didAddProvider<P: ProviderProtocol>(_ provider: P, value: P.State, container: ProviderContainer) {
+        lock.lock()
+        added += 1
+        lock.unlock()
+    }
+
+    func didUpdateProvider<P: ProviderProtocol>(_ provider: P, oldValue: P.State, newValue: P.State, container: ProviderContainer) {}
+
+    func didDisposeProvider<P: ProviderProtocol>(_ provider: P, container: ProviderContainer) {
+        lock.lock()
+        disposed += 1
+        lock.unlock()
     }
 }

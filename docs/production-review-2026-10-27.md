@@ -13,6 +13,17 @@ của peer macros (tên tĩnh bắt buộc ở global scope) — đã doc thay v
 ObservableTask deinit-cancel bất khả thi dưới @MainActor — doc yêu cầu cancel()
 tường minh. Full package 328 test + Examples xanh.
 
+**Cập nhật 2026-11-05 (feature 010):** Review toàn diện mới (3 luồng: core
+engine, sub-modules, tests/docs/CI) tại tip `4694ea5` phát hiện 1 P0 + 5 P1
+Riverpods + 2 P1 hạ tầng. Tất cả đã sửa qua speckit flow
+(`specs/010-p0-p1-review-fixes/`, red→green cho từng fix): P0
+`overrideWithProvider` crash 100%; KeepAliveLink.close() không idempotent;
+container.listen() mất event hoàn thành async; cross-container dispose/edge
+bookkeeping sai container; ProviderScope(overrides:) mất parent; docs.yml tìm
+archive sai chỗ. Finding "double resume" được xác minh là false positive (pin
+bằng regression test, không đổi code). Full package 396 test xanh (exit 0).
+Behavior-only — không đổi chữ ký API công khai.
+
 **Cập nhật 2026-10-27 (feature 008):** 10 P1 blocker trong "Lộ trình đề xuất" đã được sửa qua speckit flow
 (`specs/008-p1-blocker-fixes/`), red→green cho từng fix, toàn package pass. Finding 24 được rút khỏi danh
 sách (false positive — xem bảng P1). **Finding mới phát hiện khi implement** (chưa có trong danh sách ban

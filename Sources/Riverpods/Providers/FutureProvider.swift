@@ -56,10 +56,12 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
                 // Check if cancelled before updating
                 if Task.isCancelled { return }
 
-                // Update state to success
+                // Update state to success and publish through the same pipeline
+                // as a recompute (equality-checked box write, container observer
+                // notification, external listeners). Writing the box directly left
+                // container listeners without the completion event forever.
                 let newState: AsyncValue<T> = .data(value)
-                let oldState = self.stateBox?.value
-                self.stateBox?.value = newState
+                self.publishExternalState(newState)
 
                 // Resolve all waiting continuations
                 let conts = self.continuations
@@ -68,14 +70,15 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 
                 // Notify dependent providers
                 self.notifyDependents()
-                self.container?.notifyProviderUpdated(provider: self.provider, oldValue: oldState ?? .loading(), newValue: newState)
             } catch {
                 // Handle operation failure
                 if Task.isCancelled { return }
 
+                // Publish through the recompute pipeline (see success path): the
+                // direct box write left container listeners without the failure event.
                 let actualOldState = self.stateBox?.value
                 let newState: AsyncValue<T> = .error(error, previousData: actualOldState?.value)
-                self.stateBox?.value = newState
+                self.publishExternalState(newState)
 
                 // Resolve waiting continuations with error
                 let conts = self.continuations
@@ -84,7 +87,6 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 
                 // Notify dependents of error state
                 self.notifyDependents()
-                self.container?.notifyProviderUpdated(provider: self.provider, oldValue: actualOldState ?? .loading(), newValue: newState)
             }
         }
 

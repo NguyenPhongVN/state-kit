@@ -172,7 +172,10 @@ public struct ProviderScope<Content: View>: View {
         if overrides.isEmpty {
             self.container = .shared
         } else {
-            self.container = ProviderContainer(overrides: overrides)
+            // Unoverridden providers must resolve against the shared container.
+            // Without the parent link the override scope recreated shared state
+            // from scratch, so every non-overridden provider reset inside the scope.
+            self.container = ProviderContainer(parent: .shared, overrides: overrides)
         }
         self.content = content()
     }

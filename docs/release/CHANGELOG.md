@@ -8,6 +8,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Fixed (P0/P1 review fixes — specs/010-p0-p1-review-fixes)
+
+- **`overrideWithProvider` no longer crashes** — the element-kind override validated the
+  created element against the exact base metatype, but every real element is a
+  `ProviderElement` subclass, so the documented "swap real API for mock API in tests"
+  path `fatalError`ed on 100% of calls. Validation is now cast-based; genuinely wrong
+  override kinds still fail loudly. Pinned by override tests for the standard and
+  FutureProvider kinds.
+- **Keep-alive links close exactly once** — `KeepAliveLink.close()` is now idempotent as
+  its documentation always promised ("Safe to call multiple times. Subsequent calls have
+  no effect."); a defensive double-close previously decremented `keepAliveLinksCount`
+  twice and could dispose the provider out from under live listeners.
+- **Container listeners receive async completions** — `FutureProviderElement` success and
+  failure paths and `StreamProviderElement` value/error paths wrote the state box directly,
+  bypassing `externalListeners`: a listener registered via `container.listen` never saw
+  `.data`/`.error` after async work finished. Both now publish through the same pipeline as
+  a recompute (`publishExternalState`), matching the documented listener contract.
+- **Cross-container disposal targets the owning container** — `removeListener` resolves the
+  element through the parent chain, but `checkAutoDispose` removed it from the *receiving*
+  container's dict, leaving a disposed zombie in the owner's registry and notifying the
+  wrong observers; `clearDependencyEdges` likewise only searched the local dict, pinning
+  parent-owned dependencies' back-edges (auto-dispose providers pinned forever). Both now
+  resolve the owner (`element.container`) / the parent chain (`existingElement`).
+- **`ProviderScope(overrides:)` falls back to the shared container** — the scope's override
+  container never received a `parent`, so every unoverridden provider was recreated from
+  scratch inside the scope and shared state silently reset. The scope now passes
+  `parent: .shared`.
+- **Docs pipeline locates its archive** — `docs.yml` searched `.build` for the
+  `StateKit.doccarchive` while `xcodebuild docbuild` (without `-derivedDataPath`) wrote to
+  the default DerivedData; the build step now passes `-derivedDataPath .build` and the find
+  step fails loudly when no archive exists.
+- **Verified false positive (no code change)** — the "resume fires twice when listening
+  before the first compute" finding does not manifest: the attach-time fire reaches no
+  callbacks (none registered yet) and the first-compute fire is the only observable one,
+  so the exactly-once contract holds. Pinned by a regression test asserting exactly one
+  `onResume` invocation for a fresh provider.
+
+Behavior-only release: no public API signature changed (see
+`specs/010-p0-p1-review-fixes/contracts/public-api.md`).
+
 ### Fixed (P1 blocker fixes — specs/008-p1-blocker-fixes)
 
 - **Hook teardown no longer leaks in-flight work** — the boxes behind `useAsync`,

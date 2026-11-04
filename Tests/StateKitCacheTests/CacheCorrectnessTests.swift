@@ -83,9 +83,17 @@ struct CacheCorrectnessTests {
         cache.set("a", 1)
         cache.set("b", 2)
         let handler = MemoryPressureHandler(cache: cache, targetSize: 1)
+
+        // The behavior the wiring serves must actually trim to target size
+        // (oldest-first, LRU order). Previously the test only asserted `true`.
+        handler.handleMemoryPressure()
+        #expect(cache.count == 1, "memory pressure must trim the cache to targetSize")
+        #expect(cache.keys == ["b"], "the most recently used item must survive the trim")
+
+        // The returned token must be usable and repeatable (idempotent close).
         let unsubscribe = handler.wireToSystemNotifications()
         unsubscribe()
-        #expect(true, "wiring returned a usable unsubscribe token")
+        unsubscribe()
     }
 }
 

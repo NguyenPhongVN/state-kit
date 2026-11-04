@@ -28,12 +28,17 @@ jobs:
           xcodebuild docbuild \
             -scheme StateKit \
             -destination 'generic/platform=macOS' \
+            -derivedDataPath .build \
             DOCC_HTML_DIR=docs-archive
 
       - name: Find documentation archive
         id: archive
         run: |
           archive=$(find .build -path "*StateKit.doccarchive" | head -1)
+          if [ -z "$archive" ]; then
+            echo "::error::No StateKit.doccarchive found under .build — docbuild produced no archive"
+            exit 1
+          fi
           echo "path=$archive" >> "$GITHUB_OUTPUT"
 
       - name: Upload Pages artifact

@@ -52,29 +52,22 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
                         break
 
                     case .failure(let error):
-                        // Stream failed, update to error state
+                        // Stream failed: publish through the recompute pipeline so
+                        // container listeners receive the failure event too.
                         let oldState = self.stateBox?.value
-                        self.stateBox?.value = .error(error, previousData: oldState?.value)
+                        self.publishExternalState(.error(error, previousData: oldState?.value))
                         self.notifyDependents()
-                        self.container?.notifyProviderUpdated(
-                            provider: self.provider,
-                            oldValue: oldState ?? .loading(),
-                            newValue: .error(error, previousData: oldState?.value)
-                        )
                     }
                 }
             } receiveValue: { value in
-                // Handle each streamed value
+                // Handle each streamed value: publish through the recompute
+                // pipeline (equality-checked box write, container observer
+                // notification, external listeners). The direct box write left
+                // container listeners without streamed events.
                 Task { @MainActor [weak self] in
                     guard let self else { return }
-                    let oldState = self.stateBox?.value
-                    self.stateBox?.value = .data(value)
+                    self.publishExternalState(.data(value))
                     self.notifyDependents()
-                    self.container?.notifyProviderUpdated(
-                        provider: self.provider,
-                        oldValue: oldState ?? .loading(),
-                        newValue: .data(value)
-                    )
                 }
             }
 
