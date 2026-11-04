@@ -110,15 +110,29 @@ public struct SwiftDataNotifierProvider {
 public final class SwiftDataNotifier<T: Sendable & Codable>: AsyncNotifier<T>, @unchecked Sendable {
     private let initialState: T
     private let context: ModelContext
+    /// Stable storage key — the same derivation `updateAndPersist` writes under.
+    private let storageKey: String
 
     /// Creates the notifier starting from `initialState`.
     public init(initialState: T, context: ModelContext) {
         self.initialState = initialState
         self.context = context
+        self.storageKey = String(describing: T.self)
         super.init()
     }
 
     public override func build() async throws -> T {
+        // Reload the previously persisted value so a re-created notifier restores
+        // state instead of resetting to the seed default (documented sync
+        // contract). Runs on @MainActor (AsyncNotifier), so touching the
+        // ModelContext is safe.
+        let descriptor = FetchDescriptor<SwiftDataStateRecord>(
+            predicate: #Predicate { $0.storageKey == storageKey }
+        )
+        if let record = try context.fetch(descriptor).first,
+           let decoded = try? JSONDecoder().decode(T.self, from: record.payload) {
+            return decoded
+        }
         return initialState
     }
 

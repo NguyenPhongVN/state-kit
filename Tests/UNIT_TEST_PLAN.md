@@ -23,6 +23,10 @@ Current test targets:
 | 9 | `StateKitCacheTests` | Active |
 | 10 | `StateKitFeatureFlagsTests` | Active |
 | 11 | `StateKitAnalyticsTests` | Active |
+| 12 | `StateKitPersistenceTests` | Active |
+| 13 | `StateKitDevToolsTests` | Active |
+
+> Đối chiếu với `Package.swift` (sync 2026-11-05, spec 011): 13 test target, khớp manifest.
 
 **Out of scope**: Deep benchmark/profiling, end-to-end app tests.
 
@@ -303,8 +307,11 @@ swift test --filter StateConcurrencyTests
 
 ## 7) Exit Criteria
 
-- All test targets pass on local and CI (`swift test`).
-- Zero `PlaceholderTests` remaining.
+- All test targets pass on local and CI (`swift test`) — ✅ green (396 tests tại 904b1d0; 
+  tăng thêm sau spec 011).
+- Zero `PlaceholderTests` remaining — ⚠️ **CHƯA ĐẠT**: các file tên `PlaceholderTests.swift`
+  vẫn tồn tại trong `StateKitUITests`/`StateKitSupportTests` (nội dung đã là test thật, chỉ
+  tên gây hiểu nhầm — đổi tên khi chạm tới 2 target này).
 - Each module has at minimum:
   - 1 happy-path test
   - 1 edge-case test
@@ -345,7 +352,10 @@ Macro testing follows 4 tiers (52 expansion/diagnostic tests currently passing).
 
 **Goal**: Ensure generated code compiles against the full library and behaves at runtime.
 
-- Target: `StateKitMacroIntegrationTests`
+- Target: `StateKitMacroIntegrationTests` — **chưa tồn tại** (đánh dấu phantom từ plan ban
+  đầu; macro runtime behavior hiện được phủ bởi `StateKitMacrosTests` qua
+  `assertMacroExpansion` + macro-generated fixtures trong các suite khác). Tạo target riêng
+  khi cần integration builds độc lập.
 - Verification points:
   - `@StateAtom` extensions satisfy protocol requirements
   - `@Provider` generates accessible properties on `ProviderContainer`

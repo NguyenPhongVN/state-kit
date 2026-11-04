@@ -277,7 +277,12 @@ public struct AsyncSequenceProvider<T: Sendable, S: AsyncSequence>: ProviderProt
         self.cacheTime = cacheTime
         self.name = name
         self._create = create
-        self._id = UUID()
+        // Named providers are logical identities: re-creating an equally named
+        // instance (e.g. inline in a view body) resolves to the same element
+        // instead of leaking one per recreation. Type-scoped so the same name
+        // never collides across value types; unnamed instances keep
+        // per-instance identity.
+        self._id = name.map { AnyHashable("\($0)#\(String(describing: T.self))") } ?? AnyHashable(UUID())
     }
 
     // MARK: - Internal Methods

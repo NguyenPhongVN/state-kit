@@ -117,18 +117,19 @@ public func useReducer<Action, State>(
             return
         }
         box.isDispatching = true
-        defer {
-            box.isDispatching = false
-            while !box.pendingActions.isEmpty {
-                let queued = box.pendingActions.removeFirst()
-                var queuedValue = box.signal.value
-                box.reduce(&queuedValue, queued)
-                box.signal.value = queuedValue
-            }
-        }
+        defer { box.isDispatching = false }
         var value = box.signal.value
         box.reduce(&value, action)
         box.signal.value = value
+        // The flag must stay raised through the whole drain: a dispatch made
+        // from a queued action's reduce would otherwise take the direct path
+        // between two drain writes and be overwritten (lost update).
+        while !box.pendingActions.isEmpty {
+            let queued = box.pendingActions.removeFirst()
+            var queuedValue = box.signal.value
+            box.reduce(&queuedValue, queued)
+            box.signal.value = queuedValue
+        }
     }
 
     return (box.signal.value, dispatch)

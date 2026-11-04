@@ -40,8 +40,12 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
     ///
     /// - Returns: AsyncValue representing the stream's initial state
     public override func providerCreate() -> AsyncValue<T> {
-        // Subscribe to the stream
+        // Subscribe to the stream. receive(on: main) is REQUIRED, not cosmetic:
+        // the element is not Sendable, so forming the @MainActor task from a
+        // background delivery thread trips the runtime isolation check (SIGTRAP),
+        // and main-queue delivery also makes writes FIFO in send order.
         let cancellable = provider.stream(ref: self)
+            .receive(on: DispatchQueue.main)
             .sink { completion in
                 // Handle stream completion
                 Task { @MainActor [weak self] in
@@ -251,7 +255,12 @@ public struct StreamProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
         self.cacheTime = cacheTime
         self.name = name
         self._create = create
-        self._id = UUID()
+        // Named providers are logical identities: re-creating an equally named
+        // instance (e.g. inline in a view body) resolves to the same element
+        // instead of leaking one per recreation. Type-scoped so the same name
+        // never collides across value types; unnamed instances keep
+        // per-instance identity.
+        self._id = name.map { AnyHashable("\($0)#\(String(describing: T.self))") } ?? AnyHashable(UUID())
     }
 
     /// Internal initializer for family providers.

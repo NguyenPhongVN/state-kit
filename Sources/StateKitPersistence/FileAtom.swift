@@ -67,7 +67,12 @@ public final class FileAtomStorage<T: FileAtomSerializable>: @unchecked Sendable
     /// Reads the stored value; returns `T.defaultValue` when the file is
     /// missing or cannot be decoded. The decoded value is cached — repeated
     /// atom reads do not re-read the disk (`save` refreshes the cache).
+    ///
+    /// The lock guards `cachedValue` too: the class is `@unchecked Sendable`
+    /// and `load`/`save`/`delete` may race from different threads.
     public func load() -> T {
+        lock.lock()
+        defer { lock.unlock() }
         if let cachedValue { return cachedValue }
         let loaded: T
         do {
@@ -87,17 +92,26 @@ public final class FileAtomStorage<T: FileAtomSerializable>: @unchecked Sendable
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             let data = try JSONEncoder().encode(value)
             try data.write(to: fileURL, options: .atomic)
-            cachedValue = value
-            notify(value)
         } catch {
             // Persist failures surface to the caller through load/save misuse
             // checks in debug builds; runtime callers keep working in memory.
             assertionFailure("FileAtomStorage.save failed: \(error)")
+            return
         }
+        // Cache + observer snapshot under the lock; notify OUTSIDE it — NSLock
+        // is not re-entrant and `notify` re-acquires the lock (observers may
+        // also call back into load/save).
+        lock.lock()
+        cachedValue = value
+        let currentObservers = observers
+        lock.unlock()
+        currentObservers.forEach { $0(value) }
     }
 
     /// Removes the stored file, so the next `load()` returns the default.
     public func delete() {
+        lock.lock()
+        defer { lock.unlock() }
         try? FileManager.default.removeItem(at: fileURL)
         cachedValue = nil
     }

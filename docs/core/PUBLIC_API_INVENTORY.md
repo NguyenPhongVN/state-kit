@@ -2,6 +2,9 @@
 
 > Sinh tự động từ nguồn `Sources/` ngày 2026-09-22. Trừ `StateKitMacrosPlugin` (compiler plugin nội bộ, không import trực tiếp), mọi module khác đều là library product trong `Package.swift`.
 > Mục đích: bản đồ API để AI agent điều hướng nhanh — "muốn X thì vào module Y, dùng symbol Z".
+>
+> **Cập nhật 2026-11-05 (spec 011):** phần dưới phần thân là snapshot 22/09 — xem section
+> *"Added since 2026-09-22"* ở cuối file cho các API thêm từ spec 008/009/010/011.
 
 ## Cách đọc tài liệu này
 
@@ -1620,3 +1623,38 @@ State history, profiling, debug observer, DevTools UI.
 - **Extension** được liệt kê ở phần Types vì chúng thêm API public cho type có sẵn (ví dụ `Task`, `AsyncSequence`, `MainActor`).
 - Flow khuyến nghị khi viết tính năng mới: `StateKitCore` (đã re-export qua `StateKit`) → chọn state model (hooks / atom / provider) → UI ở `StateKitUI` → side effects ở `StateConcurrency` → test ở `StateKitTesting` → debug ở `StateKitDevTools`.
 - Tài liệu chi tiết hơn: `docs/core/GUIDE.md`, `docs/macros/STATEKIT_V1_REFERENCE.md`, `docs/release/API_STABILITY.md`.
+---
+
+## Added since 2026-09-22 (spec 008/009/010/011)
+
+Cập nhật 2026-11-05 — bổ sung các public API xuất hiện sau snapshot gốc.
+
+### StateKitAtoms (spec 008 — removable interceptors)
+
+- `SKInterceptorToken` — token trả về từ `addInterceptorRemovable(_:)`, dùng để gỡ interceptor.
+- `SKAtomStore.addInterceptorRemovable(_:) -> SKInterceptorToken` — thêm interceptor có thể gỡ (thay cho `addInterceptor(_:)` append-only, đã deprecated).
+- `SKAtomStore.removeInterceptor(_ token: SKInterceptorToken)` — gỡ interceptor, idempotent.
+
+### StateKitAnalytics (spec 008)
+
+- `AnalyticsConfig(historyCap:)` — cấu hình giới hạn số event history giữ lại.
+
+### Riverpods (spec 010 — behavior fixes, không thêm symbol mới)
+
+- Hợp đồng: `overrideWithProvider` hoạt động (không còn crash); `KeepAliveLink.close()` idempotent;
+  `container.listen` nhận event hoàn thành async của Future/Stream; dispose/edge bookkeeping
+  chạy trên container sở hữu; `ProviderScope(overrides:)` fallback về `ProviderContainer.shared`.
+
+### Riverpods (spec 011 — named identity contract)
+
+- Provider tạo với `name:` tường minh giờ là **logical identity**: 2 instance cùng `name` +
+  cùng value type resolve về 1 element (trước đây leak element mỗi lần tạo lại).
+- Provider KHÔNG tên giữ nguyên per-instance identity (giới hạn đã doc).
+- Family providers giữ identity theo tham số (internal init không đổi).
+- `flushChanges` bị chặn tối đa 100 vòng propagation (DEBUG báo khi chạm ngưỡng).
+
+### StateKitPersistence (spec 011)
+
+- `FileAtomStorage` thread-safe hoàn toàn (lock bảo vệ cả `cachedValue`, không chỉ observers).
+- `SwiftDataNotifier.build()` nạp lại giá trị đã persist (key `String(describing: T.self)`),
+  fallback về seed default khi không có/sai record.

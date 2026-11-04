@@ -23,6 +23,9 @@ public final class DebouncedAction<each Input: Sendable>: Sendable {
     private let interval: Duration
     private let operation: @Sendable (repeat each Input) async -> Void
     private let task = LockIsolated<Task<Void, Never>?>(nil)
+    /// Serializes the cancel→create→store sequence so two concurrent calls can
+    /// never both leave a scheduled task alive.
+    private let stateLock = NSLock()
 
     /// Creates a debounced action.
     /// - Parameters:
@@ -36,6 +39,11 @@ public final class DebouncedAction<each Input: Sendable>: Sendable {
     /// Invoke the debounced action.
     /// - Parameter args: The arguments to pass to the operation.
     public func callAsFunction(_ args: repeat each Input) {
+        // The cancel→create→store sequence must be atomic: two concurrent calls
+        // could otherwise each cancel the stale task AFTER the other stored
+        // theirs, letting both scheduled tasks run the operation.
+        stateLock.lock()
+        defer { stateLock.unlock() }
         task.withValue { $0?.cancel() }
         let newTask = Task { [weak self] in
             guard let self else { return }

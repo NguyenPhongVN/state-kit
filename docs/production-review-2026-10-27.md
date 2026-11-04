@@ -24,6 +24,17 @@ archive sai chỗ. Finding "double resume" được xác minh là false positive
 bằng regression test, không đổi code). Full package 396 test xanh (exit 0).
 Behavior-only — không đổi chữ ký API công khai.
 
+**Cập nhật 2026-11-05 (feature 011):** Batch P2 + CI/docs từ review 11-05 triển khai qua
+speckit flow (`specs/011-p2-hardening-ci/`): identity theo tên cho named providers (hết
+leak khi tạo inline), useReducer không còn mất update re-entrant, DebouncedAction race
+atomic, flushChanges chặn 100 vòng (depth-defence; đường recompute ping-pong đã bị cycle
+detector chặn loud từ trước — regression test không khả thi qua public API), FileAtomStorage
+thread-safe (fix thêm deadlock notify-in-lock khi implement), SwiftDataNotifier nạp lại
+state persist, StreamProvider deliver qua main queue (fix SIGTRAP dynamic isolation mới
+phát hiện khi implement + FIFO ordering), Notifier docs trung thực, CI hardening (lint
+blocking, pin Xcode, cache SPM, TSan experimental), xoá dead TCA dependency, sync API
+inventory + UNIT_TEST_PLAN, tag 1.0.0. Full package green, tag `1.0.0` cắt trên release commit.
+
 **Cập nhật 2026-10-27 (feature 008):** 10 P1 blocker trong "Lộ trình đề xuất" đã được sửa qua speckit flow
 (`specs/008-p1-blocker-fixes/`), red→green cho từng fix, toàn package pass. Finding 24 được rút khỏi danh
 sách (false positive — xem bảng P1). **Finding mới phát hiện khi implement** (chưa có trong danh sách ban

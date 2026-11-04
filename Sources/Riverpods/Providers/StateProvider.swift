@@ -222,7 +222,12 @@ public struct StateProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable 
         self.cacheTime = cacheTime
         self.name = name
         self._defaultValue = defaultValue
-        self._id = UUID()
+        // Named providers are logical identities: re-creating an equally named
+        // instance (e.g. inline in a view body) resolves to the same element
+        // instead of leaking one per recreation. Type-scoped so the same name
+        // never collides across value types; unnamed instances keep
+        // per-instance identity.
+        self._id = name.map { AnyHashable("\($0)#\(String(describing: T.self))") } ?? AnyHashable(UUID())
     }
 
     /// Internal initializer for family providers.

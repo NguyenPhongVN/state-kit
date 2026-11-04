@@ -661,11 +661,30 @@ public final class ProviderContainer {
     /// // 5. Updates uiStateProvider
     /// // All in a single flush cycle
     /// ```
+    /// Upper bound on propagation rounds per flush. Legitimate graphs converge
+    /// in a handful of rounds; a listener that re-invalidates in a loop would
+    /// otherwise spin the main thread forever (dynamic ping-pong the static
+    /// cycle detector cannot see).
+    private static let maxFlushRounds = 100
+
     private func flushChanges() {
         guard !pendingChanges.isEmpty else { return }
 
         isBatching = true
+        var rounds = 0
         repeat {
+            rounds += 1
+            if rounds > Self.maxFlushRounds {
+                // Report (not trap): hitting the bound degrades gracefully
+                // instead of hanging the app on a wasteful listener.
+                #if DEBUG
+                print(
+                    "StateKit: update propagation exceeded \(Self.maxFlushRounds) rounds; "
+                        + "a listener is likely re-invalidating in a loop. Pending: \(pendingChanges)"
+                )
+                #endif
+                break
+            }
             let changes = pendingChanges
             pendingChanges = []
             for id in changes {

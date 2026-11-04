@@ -8,6 +8,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Fixed (P2 hardening — specs/011-p2-hardening-ci)
+
+- **Named providers are logical identities** — creating a provider with an explicit
+  `name:` now derives its identity from name + value type: two instances with the same
+  name resolve to one element instead of leaking one per recreation (the inline-in-view-body
+  pattern). Unnamed providers keep per-instance identity; family providers keep their
+  per-argument identity. *Observable change:* two same-named instances now share state by
+  design (previously silently independent).
+- **`useReducer` no longer loses re-entrant dispatches during the queue drain** — the
+  dispatching flag now stays raised through the whole drain; a dispatch made from a queued
+  action's reduce previously took the direct path between two drain writes and was
+  overwritten.
+- **`DebouncedAction` cancellation is atomic** — cancel→create→store now runs in one
+  critical section; two concurrent calls previously could each leave a scheduled task alive
+  and both run the operation.
+- **Update propagation is bounded** — a listener that re-invalidates providers in a loop
+  can no longer spin `flushChanges` (and the main thread) forever: propagation is capped at
+  100 rounds per flush, reporting in DEBUG when the bound is hit.
+- **`FileAtomStorage` is fully thread-safe** — the value cache is now guarded by the same
+  lock as the observer list; concurrent save/load previously raced on `cachedValue`.
+- **`SwiftDataNotifier` reloads persisted state** — a re-created notifier now loads its
+  previously persisted record instead of resetting to the seed default.
+- **Stream deliveries no longer crash from background threads** — `StreamProviderElement`
+  now delivers via `receive(on: DispatchQueue.main)`: forming the `@MainActor` task for a
+  delivery arriving on a background thread tripped the Swift 6.2 runtime isolation check
+  (SIGTRAP). Main-queue delivery also makes state writes FIFO in send order.
+- **Notifier docs tell the truth about observability** — `state` is `@ObservationIgnored`;
+  the docs no longer claim direct `notifier.state` reads are observed by SwiftUI and state
+  the supported path (`@Watch` / provider observation) instead.
+
+### Changed (CI & dependencies — specs/011-p2-hardening-ci)
+
+- **CI gates instead of observes** — SwiftLint no longer `continue-on-error` (violations
+  fail the build; `--strict` deferred until warning-clean); explicit Xcode selection
+  matching the declared Swift 6.2 tools (fails loudly when absent); `.build` caching keyed
+  by `Package.resolved`; new experimental (non-blocking) Thread Sanitizer job.
+- **Dead dependency removed** — `swift-composable-architecture` was declared on
+  `StateConcurrency` but never imported anywhere; consumers no longer download it (and its
+  transitive graph) for the concurrency primitives module.
+
 ### Fixed (P0/P1 review fixes — specs/010-p0-p1-review-fixes)
 
 - **`overrideWithProvider` no longer crashes** — the element-kind override validated the

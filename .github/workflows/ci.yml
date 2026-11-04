@@ -12,8 +12,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Swift version
-        run: swift --version
+      - name: Select Xcode matching declared tools version
+        run: |
+          # swift-tools-version 6.2 needs an Xcode with Swift 6.2 (Xcode 26+).
+          # Fail loudly listing candidates instead of silently using the runner default.
+          candidates=$(ls -d /Applications/Xcode*.app | sort -V)
+          echo "Installed Xcodes:"; echo "$candidates"
+          selected=$(echo "$candidates" | grep -E "Xcode_2[6-9]" | tail -1)
+          if [ -z "$selected" ]; then
+            echo "::error::No Xcode 26+ (Swift 6.2) available on this runner"
+            exit 1
+          fi
+          echo "Selecting $selected"
+          sudo xcode-select -s "$selected"
+          swift --version
+
+      - name: Cache SPM build
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
 
       - name: Build library
         run: swift build
@@ -27,7 +47,8 @@ jobs:
   lint:
     name: SwiftLint
     runs-on: macos-14
-    continue-on-error: true # non-blocking until the codebase is fully clean (see CODING_CONVENTIONS.md §6)
+    # Blocking since specs/011: violations fail CI. (--strict escalation to
+    # warnings is deferred until the codebase is warning-clean.)
     steps:
       - uses: actions/checkout@v4
 
@@ -36,3 +57,27 @@ jobs:
 
       - name: Lint
         run: swiftlint lint --quiet
+
+  thread-sanitizer:
+    name: Thread Sanitizer (experimental)
+    runs-on: macos-14
+    # Experimental (non-blocking) — same non-blocking start lint had before it
+    # was promoted to blocking in specs/011. Promote to blocking once the suite
+    # is proven race-clean under TSan.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode matching declared tools version
+        run: |
+          candidates=$(ls -d /Applications/Xcode*.app | sort -V)
+          selected=$(echo "$candidates" | grep -E "Xcode_2[6-9]" | tail -1)
+          if [ -z "$selected" ]; then
+            echo "::error::No Xcode 26+ (Swift 6.2) available on this runner"
+            exit 1
+          fi
+          sudo xcode-select -s "$selected"
+          swift --version
+
+      - name: Run tests under Thread Sanitizer
+        run: swift test --sanitize=thread

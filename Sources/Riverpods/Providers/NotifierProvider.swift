@@ -13,11 +13,17 @@ import Observation
 /// - Dependency watching and reacting to changes
 ///
 /// **Key Features:**
-/// - **Observable**: Conforms to the Observation protocol for SwiftUI integration
 /// - **Reactive**: Can watch other providers via the `ref` property
 /// - **Mutable**: State can be changed directly or through helper methods
 /// - **Lifecycle-aware**: Receives initialization and recomputation callbacks
 /// - **Thread-safe**: Confined to the MainActor
+///
+/// **Observability note:** the class carries `@Observable` plumbing, but `state`
+/// and the update callback are `@ObservationIgnored` — reading `notifier.state`
+/// directly does NOT register an observation. Updates propagate through the
+/// provider system instead: write via `state`/`update { }`, and observe the
+/// provider from SwiftUI with `@Watch` (or `container.listen`). A view that
+/// reads `notifier.state` without going through the provider will not re-render.
 ///
 /// **Lifecycle:**
 /// 1. Created: Notifier instance instantiated
@@ -90,12 +96,13 @@ open class Notifier<State: Sendable> {
     ///
     /// **Getting:**
     /// - Returns the current state value
-    /// - Triggers observation in SwiftUI views
+    /// - Does NOT register an observation (see the class-level observability
+    ///   note) — observe the provider with `@Watch` instead
     ///
     /// **Setting:**
     /// - Updates the state value
     /// - Automatically notifies all dependent providers
-    /// - Triggers view refreshes if observing
+    /// - Triggers view refreshes for views observing through the provider
     ///
     /// **Example:**
     /// ```swift
@@ -519,7 +526,12 @@ public struct NotifierProvider<N: Notifier<T>, T: Sendable>: ProviderProtocol, @
         self.cacheTime = cacheTime
         self.name = name
         self._create = create
-        self._id = UUID()
+        // Named providers are logical identities: re-creating an equally named
+        // instance (e.g. inline in a view body) resolves to the same element
+        // instead of leaking one per recreation. Type-scoped so the same name
+        // never collides across value types; unnamed instances keep
+        // per-instance identity.
+        self._id = name.map { AnyHashable("\($0)#\(String(describing: T.self))") } ?? AnyHashable(UUID())
     }
 
     /// Internal initializer for family providers.
