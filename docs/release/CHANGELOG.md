@@ -8,6 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Fixed (final sweep — specs/012-final-sweep)
+
+- **Diagnostics go through the unified system log** — `CompositionDebugger`, the DevTools
+  observer, and `DebugProviderObserver` no longer `print` to stdout; they emit through
+  `os.Logger` (subsystems `app.statekit.riverpods` / `app.statekit.devtools`) behind the
+  same gates as before. The public `usePrint` hook is unchanged (it is the feature).
+- **Stale docs swept** — `SKStatus` no longer references the non-existent
+  `AsyncSequenceStatus`/`PublisherStatus` types; `SCGlobalActor` doc examples use its
+  current name instead of the retired `PerformerActor`; the `ThrottledAction` example no
+  longer awaits a fire-and-forget call.
+- **Repo hygiene** — the bare `Package.resolved` ignore rule is gone (tracking resolved
+  pins is the library's deliberate convention); three `xcuserdata` plists are no longer
+  tracked; zero tracked-and-ignored files remain.
+- **Lint gate proven green** — SwiftLint (now blocking in CI) runs at zero errors:
+  `empty_count` autocorrects, long lines wrapped, and the configuration now documents the
+  repo's deliberate conventions (`_`-prefixed internal slots/boxes, long tutorial
+  chapters, core-store size) instead of failing on them.
+
+### Added (final sweep — specs/012-final-sweep)
+
+- **Pins for already-correct contracts** — TTL expiry reports through `onExpire` only and
+  `GeolocationRollout` evaluates through its host-supplied resolver; both were previously
+  flagged as defects and are now regression-tested so they cannot silently regress.
+- **`StateKitTestingTests` target** — the testing-support module (previously 0 tests for
+  1344 LOC) now covers the deterministic time source, seeded randomness, async drain,
+  and the integration builder's override/setup contract.
+- **Support hook coverage** — `useCountdown` lifecycle (start/pause/cancel/reset) and
+  `useSeenSKStatus` latch semantics pinned; support module grows from 8 to 12+ tests.
+- **CI builds the iOS destination** — the package declares five platforms; CI now also
+  compiles the library for iOS alongside the macOS suite.
+
 ### Fixed (P2 hardening — specs/011-p2-hardening-ci)
 
 - **Named providers are logical identities** — creating a provider with an explicit

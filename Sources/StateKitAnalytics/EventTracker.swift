@@ -5,7 +5,7 @@ import Observation
 
 /// Tracks and batches analytics events.
 @MainActor
-public final class EventTracker: Sendable {
+public final class EventTracker {
     private var events: [AnalyticsEvent] = []
     private var batch: [AnalyticsEvent] = []
     private let config: AnalyticsConfig
@@ -179,7 +179,7 @@ public final class EventTracker: Sendable {
 
 /// Logs events for debugging.
 @MainActor
-public struct EventLogger: Sendable {
+public struct EventLogger {
     private let tracker: EventTracker
 
     /// Wraps a tracker for logging its events.

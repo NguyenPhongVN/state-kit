@@ -188,7 +188,7 @@ public struct CanaryRollout: RolloutStrategy {
 
 /// Manages feature rollouts.
 @MainActor
-public final class RolloutManager: Sendable {
+public final class RolloutManager {
     private var rollouts: [String: RolloutStrategy] = [:]
 
     /// Creates an empty manager.

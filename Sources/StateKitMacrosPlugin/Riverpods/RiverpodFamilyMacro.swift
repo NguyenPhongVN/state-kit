@@ -36,7 +36,7 @@ public struct RiverpodFamilyMacro: PeerMacro {
         let accessPrefix = AttributeHelper.accessLevel(from: classDecl)
 
         // Check if the class is nested inside another type
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Extract the key type from the build method's first parameter
         var argType = "String"

@@ -116,7 +116,7 @@ public final class SKAtomStore: @unchecked Sendable {
     /// - Important: The registration lives for the store's lifetime unless removed.
     ///   Prefer `addInterceptorRemovable` and remove the token on teardown, or the
     ///   closure (and everything it captures) leaks for the store's lifetime.
-    @available(*, deprecated, message: "Use addInterceptorRemovable and remove the token on teardown; this registration cannot be removed and leaks for the store's lifetime.")
+    @available(*, deprecated, message: "Use addInterceptorRemovable and remove the token at teardown; this registration leaks for the store lifetime.")
     @MainActor
     public func addInterceptor(_ interceptor: @escaping Interceptor) {
         _ = addInterceptorRemovable(interceptor)

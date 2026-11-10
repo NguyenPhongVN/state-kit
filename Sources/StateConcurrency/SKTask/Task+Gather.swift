@@ -17,7 +17,7 @@ extension Task where Success == Never, Failure == Never {
         maxConcurrentTasks: Int? = nil
     ) async -> [Result<T, Error>] {
         let limiter = maxConcurrentTasks.map { SKConcurrencyLimiter(maxConcurrentTasks: $0) }
-        
+
         return await withTaskGroup(of: (Int, Result<T, Error>).self) { group in
             for (index, operation) in operations.enumerated() {
                 group.addTask {
@@ -34,16 +34,16 @@ extension Task where Success == Never, Failure == Never {
                     }
                 }
             }
-            
+
             var results = [Result<T, Error>?](repeating: nil, count: operations.count)
             for await (index, result) in group {
                 results[index] = result
             }
-            
+
             return results.compactMap { $0 }
         }
     }
-    
+
     /// Executes multiple operations concurrently and returns their values.
     /// Throws an error if any operation fails.
     ///
@@ -58,7 +58,7 @@ extension Task where Success == Never, Failure == Never {
         let results = await gather(operations, maxConcurrentTasks: maxConcurrentTasks)
         return try results.map { try $0.get() }
     }
-    
+
     /// Executes multiple operations concurrently and returns only the successful values.
     /// Failed operations are silently ignored.
     ///

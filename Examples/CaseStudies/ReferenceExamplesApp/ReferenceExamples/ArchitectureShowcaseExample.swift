@@ -4,7 +4,7 @@ import StateKitUI
 import StateKitMacros
 
 struct Session: Hashable {
-    var user: String? = nil
+    var user: String?
 }
 
 @StateAtom

@@ -18,9 +18,9 @@ extension Task where Success == Never, Failure == Never {
                     try await operation()
                 }
             }
-            
+
             var lastError: (any Error)?
-            
+
             // Wait for the first successful result
             while let result = await group.nextResult() {
                 switch result {
@@ -31,16 +31,15 @@ extension Task where Success == Never, Failure == Never {
                     lastError = error
                 }
             }
-            
+
             if let lastError {
                 throw lastError
             }
-            
+
             throw SKRaceError.emptyInput
         }
     }
 }
-
 
 /// Errors thrown by `Task.race`.
 public enum SKRaceError: Error, Sendable {

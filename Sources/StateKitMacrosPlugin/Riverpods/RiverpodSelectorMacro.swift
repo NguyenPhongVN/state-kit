@@ -34,7 +34,7 @@ public struct RiverpodSelectorMacro: PeerMacro {
         // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         if isNested {
             let providerDecl: DeclSyntax = """

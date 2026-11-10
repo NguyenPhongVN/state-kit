@@ -11,10 +11,10 @@ import StateKitAtoms
 public struct SKCombineAtom<P: Publisher & Sendable>: SKThrowingTaskAtom, Hashable where P.Output: Sendable {
     /// The value type the task resolves to: the publisher's first output.
     public typealias TaskSuccess = P.Output
-    
+
     private let publisher: P
     private let _identifier: String
-    
+
     /// - Parameters:
     ///   - publisher: The Combine publisher to bridge.
     ///   - identifier: Stable identity distinguishing this atom in the store.
@@ -22,7 +22,7 @@ public struct SKCombineAtom<P: Publisher & Sendable>: SKThrowingTaskAtom, Hashab
         self.publisher = publisher
         self._identifier = identifier
     }
-    
+
     /// Awaits the publisher's first output; throws if it completes empty.
     public func task(context: SKAtomTransactionContext) async throws -> P.Output {
         // Bridge Combine to AsyncSequence and take the first value
@@ -31,12 +31,12 @@ public struct SKCombineAtom<P: Publisher & Sendable>: SKThrowingTaskAtom, Hashab
         }
         return value
     }
-    
+
     /// Hashes on the stable identifier, not the publisher reference.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(_identifier)
     }
-    
+
     public static func == (lhs: SKCombineAtom<P>, rhs: SKCombineAtom<P>) -> Bool {
         lhs._identifier == rhs._identifier
     }

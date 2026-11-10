@@ -39,7 +39,7 @@ public struct ProviderFamilyMacro: PeerMacro {
         // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Validate that the return type is concrete (not opaque/some)
         guard let returnType = funcDecl.signature.returnClause?.type else {

@@ -13,10 +13,10 @@ public struct SKCombinePublisherAtom<P: Publisher & Sendable>: SKPublisherAtom, 
     public typealias PublisherOutput = P.Output
     /// The bridged publisher type.
     public typealias AtomPublisher = P
-    
+
     private let _publisher: P
     private let _identifier: String
-    
+
     /// - Parameters:
     ///   - publisher: The Combine publisher to expose.
     ///   - identifier: Stable identity distinguishing this atom in the store.
@@ -24,17 +24,17 @@ public struct SKCombinePublisherAtom<P: Publisher & Sendable>: SKPublisherAtom, 
         self._publisher = publisher
         self._identifier = identifier
     }
-    
+
     /// Returns the bridged publisher; the store subscribes on first access.
     public func publisher(context: SKAtomTransactionContext) -> P {
         _publisher
     }
-    
+
     /// Hashes on the stable identifier, not the publisher reference.
     public func hash(into hasher: inout Hasher) {
         hasher.combine(_identifier)
     }
-    
+
     public static func == (lhs: SKCombinePublisherAtom<P>, rhs: SKCombinePublisherAtom<P>) -> Bool {
         lhs._identifier == rhs._identifier
     }

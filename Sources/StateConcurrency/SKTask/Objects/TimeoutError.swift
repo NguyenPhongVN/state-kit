@@ -41,15 +41,15 @@ public struct SKTimeoutError: Error, CustomDebugStringConvertible {
 
     /// The timeout duration in seconds that was exceeded.
     public let seconds: TimeInterval
-    
+
     /// The file identifier where the timeout error was created.
     /// This helps with debugging by identifying the source location.
     public let fileID: String
-    
+
     /// The line number where the timeout error was created.
     /// This helps with debugging by identifying the exact source location.
     public let line: UInt
-    
+
     /// Creates a new timeout error with the specified duration and source location.
     ///
     /// - Parameters:
@@ -74,7 +74,7 @@ public struct SKTimeoutError: Error, CustomDebugStringConvertible {
         self.fileID = fileID
         self.line = line
     }
-    
+
     /// A human-readable description of the timeout error.
     ///
     /// This description includes the timeout duration, file location, and line number

@@ -22,7 +22,7 @@ extension Task where Success == Never, Failure == Never {
      public static func sleep(duration value: SKTaskDuration) async throws {
         try await Task.sleep(nanoseconds: value.asNanoseconds)
     }
-    
+
      public static func sleep(seconds: TimeInterval) async throws {
         try await Task.sleep(duration: SKTaskDuration(seconds))
     }

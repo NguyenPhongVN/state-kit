@@ -43,7 +43,7 @@ public struct AsyncTaskFamilyMacro: ExtensionMacro, MemberAttributeMacro {
             \(raw: accessPrefix)typealias TaskSuccess = \(raw: typeName)
         }
         """)
-        
+
         // Generate: extension UserTask: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 

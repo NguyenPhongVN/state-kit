@@ -179,6 +179,17 @@ let package = Package(
             ]
         ),
 
+        // Unit tests for the testing-support module itself (spec 012): the
+        // deterministic environment and integration helpers must be as
+        // trustworthy as the code they test.
+        PackageDescription.Target.testTarget(
+            name: "StateKitTestingTests",
+            dependencies: [
+                PackageDescription.Target.Dependency.byName(name: "StateKitTesting"),
+                PackageDescription.Target.Dependency.byName(name: "Riverpods")
+            ]
+        ),
+
         // Unit tests for StateKitCore internals.
         PackageDescription.Target.testTarget(
             name: "StateKitCoreTests",

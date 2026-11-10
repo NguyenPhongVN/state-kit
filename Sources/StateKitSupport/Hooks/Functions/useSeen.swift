@@ -11,7 +11,7 @@ private func _seenSKStatus<Value>(
     in phase: AsyncPhase<Value>
 ) -> SKStatus? {
     /// Stores the target status after it has appeared once.
-    @HRef var storedStatus: SKStatus? = nil
+    @HRef var storedStatus: SKStatus?
 
     if storedStatus == nil, phase.status == status {
         storedStatus = status

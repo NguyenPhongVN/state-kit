@@ -56,7 +56,7 @@ public struct DebounceMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
-        
+
         let (_, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
         // Extract the delay expression (any expression, not just integer literals)

@@ -23,21 +23,21 @@ extension Task where Success == Never, Failure == Never {
                 } catch {
                     let nextAttempt = attempt + 1
                     isRetryingCallback?(nextAttempt)
-                    
+
                     guard let delay = policy.delay(forAttempt: nextAttempt) else {
                         throw error
                     }
-                    
+
                     try await Task<Never, Never>.sleep(duration: delay)
                     continue
                 }
             }
-            
+
             try Task<Never, Never>.checkCancellation()
             return try await operation()
         }
     }
-    
+
     /// Backward compatible retrying method
     @discardableResult
     public static func retrying<T: Sendable>(
@@ -53,7 +53,7 @@ extension Task where Success == Never, Failure == Never {
         } else {
             policy = .exponential(initialDelay: .seconds(5), multiplier: 1.0)
         }
-        
+
         return retrying(
             priority: priority,
             maxRetryCount: maxRetryCount,
@@ -63,4 +63,3 @@ extension Task where Success == Never, Failure == Never {
         )
     }
 }
-

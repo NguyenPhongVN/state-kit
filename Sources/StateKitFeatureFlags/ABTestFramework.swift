@@ -98,7 +98,7 @@ public struct ABTest<T: Sendable>: Sendable {
 
 /// Runs A/B test and collects results.
 @MainActor
-public final class ABTestRunner<T: Sendable>: Sendable {
+public final class ABTestRunner <T: Sendable>{
     /// One user's assignment outcome.
     public struct Result: Sendable {
     /// The test that produced the assignment.
@@ -189,7 +189,7 @@ public final class ABTestRunner<T: Sendable>: Sendable {
 
 /// Manages multiple A/B tests.
 @MainActor
-public final class ABTestManager: Sendable {
+public final class ABTestManager {
     private var tests: [String: Any] = [:]
     private var runners: [String: Any] = [:]
 
@@ -233,26 +233,26 @@ public struct StatisticalTest {
         let sB = Double(variantB.successes)
         let fA = nA - sA
         let fB = nB - sB
-        
+
         let p = (sA + sB) / (nA + nB)
         let q = 1 - p
-        
-        let expected_sA = nA * p
-        let expected_fA = nA * q
-        let expected_sB = nB * p
-        let expected_fB = nB * q
-        
+
+        let expectedSA = nA * p
+        let expectedFA = nA * q
+        let expectedSB = nB * p
+        let expectedFB = nB * q
+
         // A zero expected cell (p or q == 0) would divide by zero and return
         // NaN/Inf, silently failing every downstream significance check.
-        let cells = [expected_sA, expected_fA, expected_sB, expected_fB]
+        let cells = [expectedSA, expectedFA, expectedSB, expectedFB]
         guard cells.allSatisfy({ $0 > 0 }) else {
             return 0  // degenerate split: no evidence of difference
         }
 
-        let chi2 = pow(sA - expected_sA, 2) / expected_sA +
-                   pow(fA - expected_fA, 2) / expected_fA +
-                   pow(sB - expected_sB, 2) / expected_sB +
-                   pow(fB - expected_fB, 2) / expected_fB
+        let chi2 = pow(sA - expectedSA, 2) / expectedSA +
+                   pow(fA - expectedFA, 2) / expectedFA +
+                   pow(sB - expectedSB, 2) / expectedSB +
+                   pow(fB - expectedFB, 2) / expectedFB
 
         return chi2
     }

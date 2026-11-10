@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Riverpods
 
 /// A lightweight observer that logs provider lifecycle events to the console.
@@ -18,9 +19,10 @@ import Riverpods
 /// }
 /// ```
 ///
-/// - Note: Uses `print()` for output. Consider a dedicated logger in production.
+/// - Note: Diagnostics emit through the unified system log (subsystem `app.statekit.devtools`).
 @MainActor
 public final class DebugProviderObserver: ProviderObserver {
+    private static let logger = Logger(subsystem: "app.statekit.devtools", category: "provider-observer")
 
     /// Optional filter: only log providers matching this predicate.
     public let filter: ((any ProviderProtocol) -> Bool)?
@@ -43,8 +45,8 @@ public final class DebugProviderObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         guard shouldLog(provider) else { return }
-        print("[StateKit] [+] \(provider.name ?? String(describing: P.self))")
-        print("  value: \(value)")
+        Self.logger.info("[StateKit] [+] \(provider.name ?? String(describing: P.self))")
+        Self.logger.debug("  value: \(String(describing: value))")
     }
 
     /// Logs value changes.
@@ -55,9 +57,9 @@ public final class DebugProviderObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         guard shouldLog(provider) else { return }
-        print("[StateKit] [↻] \(provider.name ?? String(describing: P.self))")
-        print("  old: \(oldValue)")
-        print("  new: \(newValue)")
+        Self.logger.info("[StateKit] [↻] \(provider.name ?? String(describing: P.self))")
+        Self.logger.debug("  old: \(String(describing: oldValue))")
+        Self.logger.debug("  new: \(String(describing: newValue))")
     }
 
     /// Logs disposal.
@@ -66,6 +68,6 @@ public final class DebugProviderObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         guard shouldLog(provider) else { return }
-        print("[StateKit] [-] \(provider.name ?? String(describing: P.self))")
+        Self.logger.info("[StateKit] [-] \(provider.name ?? String(describing: P.self))")
     }
 }

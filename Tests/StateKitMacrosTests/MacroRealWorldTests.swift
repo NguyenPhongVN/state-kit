@@ -16,14 +16,14 @@ final class MacroRealWorldTests: XCTestCase {
 
     func testSocialAppEcosystem() {
         // 1. Verify UserModule (Atoms)
-        let _ = UserModule()
+        _ = UserModule()
         XCTAssertNotNil(UserModule.SessionAtom())
         XCTAssertNotNil(UserModule.FriendsReducer())
-        XCTAssertNotNil(UserModule.UserPrefAtom(key: "theme")) 
+        XCTAssertNotNil(UserModule.UserPrefAtom(key: "theme"))
         XCTAssertNotNil(UserModule.ProfileSummary())
 
         // 2. Verify NetworkModule (Riverpods)
-        let _ = NetworkModule()
+        _ = NetworkModule()
         XCTAssertNotNil(NetworkModule.AuthNotifierProvider)
         XCTAssertNotNil(NetworkModule.currentHeaderProvider)
         XCTAssertNotNil(NetworkModule.PostNotifierFamily)
@@ -33,11 +33,11 @@ final class MacroRealWorldTests: XCTestCase {
         let dashboard = ProfileDashboardView()
         // Accessing body verifies hook graph and StateScope link.
         _ = dashboard.body
-        
+
         XCTAssertNotNil(SimpleHeader().body)
         XCTAssertNotNil(ProfileAsyncView().body)
         XCTAssertNotNil(GlobalUIState())
-        
+
         print("✅ Social App Case Study: All 48 Macros Verified Idiomatically.")
     }
 }

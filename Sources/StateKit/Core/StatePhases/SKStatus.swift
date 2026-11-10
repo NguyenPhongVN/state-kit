@@ -14,8 +14,9 @@ public enum SKStatus: Equatable, Hashable, Sendable {
     case failure
 }
 
-/// Status mirror for `AsyncSequencePhase` (no associated values).
-// MARK: - AsyncSequenceStatus
+// MARK: - SKStatus Conveniences
 
-/// Status mirror for `PublisherPhase` (no associated values).
-// MARK: - PublisherStatus
+// `SKStatus` mirrors the lifecycle of `AsyncSequencePhase`/`PublisherPhase`
+// without associated values (the phase types themselves live in SKPhaseView):
+// idle/loading/success/failure. The former `AsyncSequenceStatus`/`PublisherStatus`
+// MARK: headers named types that do not exist and were removed (spec 012).

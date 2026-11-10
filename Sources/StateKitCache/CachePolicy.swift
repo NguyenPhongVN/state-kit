@@ -88,7 +88,7 @@ public struct CacheProviderFactory {
     ) -> FutureProvider<T> {
         let cache = LeastRecentlyUsedCache<Key, T>(capacity: capacity)
 
-        return FutureProvider { ref in
+        return FutureProvider { _ in
             if let cached = cache.get(key) {
                 return cached
             }
@@ -107,7 +107,7 @@ public struct CacheProviderFactory {
     ) -> (Key) -> FutureProvider<T> {
         let cache = LeastRecentlyUsedCache<Key, T>(capacity: capacity)
 
-        return FutureProvider.family { (ref, key: Key) in
+        return FutureProvider.family { (_, key: Key) in
             if let cached = cache.get(key) {
                 return cached
             }

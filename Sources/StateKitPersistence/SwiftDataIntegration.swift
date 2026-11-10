@@ -176,7 +176,7 @@ public struct SwiftDataQueryProvider {
         predicate: Predicate<T>? = nil,
         sort: [SortDescriptor<T>] = []
     ) -> FutureProvider<[T]> {
-        return FutureProvider { ref in
+        return FutureProvider { _ in
             var descriptor = FetchDescriptor<T>()
             if let predicate = predicate {
                 descriptor.predicate = predicate
@@ -234,7 +234,6 @@ public struct AutoPersist<T: Sendable & Codable> {
         UserDefaults.standard.removeObject(forKey: key)
     }
 }
-
 
 /// Key-value record backing `SwiftDataNotifier` persistence: the state is
 /// stored JSON-encoded under a stable key derived from the state type.

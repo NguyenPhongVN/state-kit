@@ -72,7 +72,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
 
     /// Whether this element is currently kept alive
     public var isKeepAlive: Bool { keepAliveLinksCount > 0 }
-    
+
     // MARK: - Listener Management
 
     /// Registers one reactive listener; fires add/resume callbacks on 0 → 1.
@@ -109,7 +109,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             }
         }
     }
-    
+
     // MARK: - Dependencies
 
     /// The set of providers this element depends on
@@ -277,7 +277,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     open func providerCreate() -> P.State {
         fatalError("Subclasses must override providerCreate()")
     }
-    
+
     /// Marks the provider as invalidated (state is stale).
     ///
     /// Called when:
@@ -350,9 +350,9 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         if _callbacks == nil { _callbacks = [:] }
         _callbacks![type, default: []].append(cb)
     }
-    
+
     // MARK: - ProviderRef
-    
+
     /// Watches a dependency: records the edge so this element recomputes when it changes.
 
     public func watch<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
@@ -361,11 +361,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
         let depID = ProviderID(depProvider)
         dependencies.insert(depID)
-        
+
         let depElement = container.ensureElement(for: depProvider)
         depElement.dependents.insert(id)
         depElement._addDependentRef(self)
-        
+
         // Invariant: ensureElement(for:) above created depElement for
         // exactly this Dep provider and state type.
         return (depElement as! ProviderElement<Dep>).getState()
@@ -419,7 +419,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
         dependencies.removeAll()
     }
-    
+
     /// One-shot read of a dependency without creating a reactive edge.
 
     public func read<Dep: ProviderProtocol>(_ depProvider: Dep) -> Dep.State {
@@ -428,7 +428,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
         }
         return container.read(depProvider)
     }
-    
+
     /// Subscribes to a dependency's changes for this element's lifetime; closed on dispose.
 
     public func listen<Dep: ProviderProtocol>(
@@ -457,7 +457,7 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     public func onAddListener(_ callback: @escaping () -> Void) { appendCallback(.addListener, callback) }
     /// Removes one listener; no-op below zero (double-close safe).
     public func onRemoveListener(_ callback: @escaping () -> Void) { appendCallback(.removeListener, callback) }
-    
+
     /// Pins this element in memory until the returned link is released.
 
     // One-shot close flag backing keep-alive links. Lock-based so the idempotency
@@ -488,18 +488,18 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
             self.container?.checkAutoDispose(id: self.id, element: self, provider: self.provider)
         }
     }
-    
+
     // MARK: - Internal Listener Management
-    
+
     func addListener(fireImmediately: Bool, listener: @escaping (P.State?, P.State) -> Void) -> ProviderSubscription {
         let listenerID = UUID()
         externalListeners[listenerID] = listener
         incrementListeners()
-        
+
         if fireImmediately {
             listener(nil, getState())
         }
-        
+
         return ProviderSubscription { [weak self] in
             guard let self = self else { return }
             self.externalListeners.removeValue(forKey: listenerID)

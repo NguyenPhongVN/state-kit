@@ -1,4 +1,3 @@
-
 /// The ``AsyncValueStream`` that wraps a single value and produces a new
 /// element whenever the value changes.
 ///

@@ -134,10 +134,10 @@ import Foundation
 /// - The actor isolation ensures no data races
 /// - Multiple concurrent calls to `withLock` are serialized
 public actor SKLocalActor {
-    
+
     /// Creates the isolated instance; state starts at its default.
     public init() { }
-    
+
     /// Executes the provided closure with exclusive access to the actor's state
     ///
     /// This method provides thread-safe access to shared mutable state by ensuring

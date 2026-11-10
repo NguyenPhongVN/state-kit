@@ -44,43 +44,43 @@ public final class ObservableTask<Success: Sendable, Failure: Error> {
         case running
         case success(Success)
         case failure(Failure)
-        
+
         /// The success value, if the task completed successfully.
         public var value: Success? {
             if case .success(let value) = self { return value }
             return nil
         }
-        
+
         /// The error, if the task failed.
         public var error: Failure? {
             if case .failure(let error) = self { return error }
             return nil
         }
-        
+
         /// Whether the task is currently running.
         public var isRunning: Bool {
             if case .running = self { return true }
             return false
         }
     }
-    
+
     /// The current state of the task.
     public private(set) var state: State = .idle
-    
+
     private var currentTask: Task<Void, Never>?
     private let operation: @Sendable () async throws(Failure) -> Success
-    
+
     /// Initializes a new observable task.
     /// - Parameter operation: The async operation to perform.
     public init(operation: @Sendable @escaping () async throws(Failure) -> Success) {
         self.operation = operation
     }
-    
+
     /// Runs the task. If a task is already running, it is cancelled first.
     public func run() {
         cancel()
         state = .running
-        
+
         currentTask = Task {
             do throws(Failure) {
                 let result = try await operation()
@@ -94,7 +94,7 @@ public final class ObservableTask<Success: Sendable, Failure: Error> {
             }
         }
     }
-    
+
     /// Cancels the currently running task, if any.
     public func cancel() {
         currentTask?.cancel()

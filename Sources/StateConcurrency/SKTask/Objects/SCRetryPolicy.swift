@@ -4,19 +4,19 @@ import Foundation
 public enum SKRetryPolicy: Sendable {
     /// Retry immediately without any delay
     case immediate
-    
+
     /// Retry after a constant delay
     case constant(delay: SKTaskDuration)
-    
+
     /// Retry with exponential backoff
     /// - Parameters:
     ///   - initialDelay: The delay for the first retry
     ///   - multiplier: The multiplier for each subsequent retry
     case exponential(initialDelay: SKTaskDuration = .seconds(1), multiplier: Double = 2.0)
-    
+
     /// Custom retry policy with a closure to calculate delay for each attempt
     case custom(@Sendable (Int) -> SKTaskDuration?)
-    
+
     /// Calculates the delay for a specific attempt
     /// - Parameter attempt: The current attempt number (starting from 1)
     /// - Returns: The duration to wait before the next attempt, or nil to stop retrying

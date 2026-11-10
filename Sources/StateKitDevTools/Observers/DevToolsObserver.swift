@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Combine
 import Riverpods
 
@@ -31,6 +32,8 @@ import Riverpods
 /// - Warning: Recording state snapshots uses memory proportional to state size
 @MainActor
 public final class DevToolsObserver: ProviderObserver, ObservableObject {
+    private let logger = Logger(subsystem: "app.statekit.devtools", category: "observer")
+
     // MARK: - Properties
 
     /// State history tracker.
@@ -89,7 +92,7 @@ public final class DevToolsObserver: ProviderObserver, ObservableObject {
         container: ProviderContainer
     ) {
         if debugLoggingEnabled {
-            print("[DevTools] Added provider: \(provider.name ?? "Unknown")")
+            logger.info("[DevTools] Added provider: \(provider.name ?? "Unknown")")
         }
     }
 
@@ -123,7 +126,7 @@ public final class DevToolsObserver: ProviderObserver, ObservableObject {
         }
 
         if debugLoggingEnabled {
-            print("[DevTools] Updated provider: \(providerName)")
+            logger.info("[DevTools] Updated provider: \(providerName)")
         }
     }
 
@@ -140,7 +143,7 @@ public final class DevToolsObserver: ProviderObserver, ObservableObject {
         bump()
 
         if debugLoggingEnabled {
-            print("[DevTools] Disposed provider: \(providerName)")
+            logger.info("[DevTools] Disposed provider: \(providerName)")
         }
     }
 
@@ -305,6 +308,8 @@ public final class DevToolsObserver: ProviderObserver, ObservableObject {
 /// ```
 @MainActor
 public final class ConsoleLoggerObserver: ProviderObserver {
+    private let logger = Logger(subsystem: "app.statekit.devtools", category: "console-logger")
+
     /// Prefix for all log messages.
     public let logPrefix: String
 
@@ -329,7 +334,7 @@ public final class ConsoleLoggerObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         guard logAdditions else { return }
-        print("\(logPrefix) [+] \(provider.name ?? "Provider") initialized")
+        logger.info("\(self.logPrefix) [+] \(provider.name ?? "Provider") initialized")
     }
 
     /// Prints value changes.
@@ -340,7 +345,7 @@ public final class ConsoleLoggerObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         guard logUpdates else { return }
-        print("\(logPrefix) [→] \(provider.name ?? "Provider") updated")
+        logger.info("\(self.logPrefix) [→] \(provider.name ?? "Provider") updated")
     }
 
     /// Prints disposal.
@@ -349,6 +354,6 @@ public final class ConsoleLoggerObserver: ProviderObserver {
         container: ProviderContainer
     ) {
         guard logDisposals else { return }
-        print("\(logPrefix) [-] \(provider.name ?? "Provider") disposed")
+        logger.info("\(self.logPrefix) [-] \(provider.name ?? "Provider") disposed")
     }
 }

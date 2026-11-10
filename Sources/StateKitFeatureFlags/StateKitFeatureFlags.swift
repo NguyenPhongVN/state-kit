@@ -101,7 +101,7 @@ public struct FeatureFlag<T: Sendable>: Sendable {
 
 /// Manages feature flags and overrides.
 @MainActor
-public final class FeatureFlagRegistry: Sendable {
+public final class FeatureFlagRegistry {
     private var flags: [String: Any] = [:]
     private var overrides: [String: Any] = [:]
     /// Bool overrides pulled from remote sources (see RemoteFlags.swift).

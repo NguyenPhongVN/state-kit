@@ -81,7 +81,7 @@ extension MainActor {
                 line: line
             )
         }
-        
+
         // Otherwise, dispatch synchronously to the main queue.
         // DEADLOCK HAZARD: if the main thread is (or will be) blocked waiting
         // for THIS thread — a lock, a semaphore, a synchronous continuation —

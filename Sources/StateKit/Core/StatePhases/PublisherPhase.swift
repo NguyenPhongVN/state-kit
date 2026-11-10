@@ -18,37 +18,37 @@ public enum PublisherPhase<Output> {
 // MARK: - PublisherPhase — accessors
 
 public extension PublisherPhase {
-    
+
     /// The associated output value, or `nil` if the phase is not `.value`.
     var output: Output? {
         guard case .value(let v) = self else { return nil }
         return v
     }
-    
+
     /// The associated error, or `nil` if the phase is not `.failure`.
     var error: Error? {
         guard case .failure(let e) = self else { return nil }
         return e
     }
-    
+
     /// `true` when the phase is `.idle`.
     var isIdle: Bool {
         guard case .idle = self else { return false }
         return true
     }
-    
+
     /// `true` when the phase is `.value`.
     var isValue: Bool {
         guard case .value = self else { return false }
         return true
     }
-    
+
     /// `true` when the phase is `.finished`.
     var isFinished: Bool {
         guard case .finished = self else { return false }
         return true
     }
-    
+
     /// `true` when the phase is `.failure`.
     var isFailure: Bool {
         guard case .failure = self else { return false }
@@ -59,7 +59,7 @@ public extension PublisherPhase {
 // MARK: - PublisherPhase — transformations
 
 public extension PublisherPhase {
-    
+
     /// Returns a new phase by applying `transform` to the associated output
     /// value if the phase is `.value`; passes all other cases through unchanged.
     ///
@@ -76,7 +76,7 @@ public extension PublisherPhase {
         case .failure(let e):  return .failure(e)
         }
     }
-    
+
     /// Returns a new phase by applying `transform` to the output value when
     /// the phase is `.value`, flattening the result.
     ///
@@ -93,7 +93,7 @@ public extension PublisherPhase {
         case .failure(let e):  return .failure(e)
         }
     }
-    
+
     /// Returns a new phase by applying `transform` to the associated error
     /// when the phase is `.failure`; passes all other cases through unchanged.
     ///
@@ -106,7 +106,7 @@ public extension PublisherPhase {
         default:              return self
         }
     }
-    
+
     /// Returns `.value(replacement)` when the phase is `.failure`, passing
     /// all other cases through unchanged.
     ///
@@ -119,7 +119,7 @@ public extension PublisherPhase {
         default:       return self
         }
     }
-    
+
     /// Returns `.idle` when the phase is `.failure`, effectively suppressing
     /// the error and resetting to the initial state.
     func ignoreError() -> PublisherPhase<Output> {
@@ -128,7 +128,7 @@ public extension PublisherPhase {
         default:       return self
         }
     }
-    
+
     /// Unwraps `.value(wrapped?)` phases, returning `.idle` when the wrapped
     /// value is `nil`.
     ///
@@ -192,4 +192,3 @@ extension PublisherPhase: Hashable where Output: Hashable {
 // MARK: - Sendable
 
 extension PublisherPhase: Sendable where Output: Sendable {}
-

@@ -13,15 +13,41 @@ line_length:
 
 identifier_name:
   min_length: 2
+  # `_`-prefixed names are the repo's internal-slot convention (spec 004); the
+  # rule's excluded matches exact names — extend when new slots land.
   excluded:
     - id
     - to
     - by
     - at
+    - _addDependentRef
+    - _erasedEffect
+    - _getOrCreateBox
+    - _recompute
+    - _recomputePathSet
+    - _registerEffect
+    - _removeDependentRef
+    - _safeUpdate
+    - _setup
+    - _state
+    - _storeOverride
+    - _task
+    - _teardown
+    - _value
+    - _writeOverride
 
 type_name:
   # The project prefixes: use* hooks (functions), SK* machinery, unprefixed Riverpod layer.
   allowed_symbols: []
+  # `_`-prefixed internal box types are deliberately unpronounceable from outside
+  # their module (rule's excluded matches exact names — extend when new boxes land).
+  excluded:
+    - _StoreOverrideBox
+    - _HookCallbackBox
+    - _HookMemoBox
+    - _HookReducerBox
+    - _HookAsyncSequenceBox
+    - _HookPublisherBox
 
 force_unwrapping:
   severity: warning
@@ -43,7 +69,7 @@ opt_in_rules:
   - force_cast
   - empty_count
   - first_where
-  - contains_over_first_where
+  - contains_over_first_not_nil
   - contains_over_filter_count
 
 disabled_rules:
@@ -55,3 +81,20 @@ excluded:
   - .build
   - DerivedData
   - Examples/CaseStudies/CaseStudies.xcodeproj
+  # Tutorial chapters: long display strings/URLs; line-length wrapping hurts them.
+  - Examples/CaseStudies/ReferenceExamplesApp/StartHere
+  # Codegen templates: generated code must stay byte-identical to the pinned
+  # expected sources in StateKitMacrosTests — long interpolation lines are inherent.
+  - Sources/StateKitMacrosPlugin/Hooks/HookReducerMacro.swift
+  - Sources/StateKitMacrosPlugin/Hooks/HookFormMacro.swift
+
+# `x.count == 0` stays legal on types that only expose `count` (counters);
+# the idiom fixer's `isEmpty` rewrite broke such receivers (spec 012).
+empty_count:
+  severity: warning
+
+# SKAtomStore is the single core graph; macro expansion test suites are long by
+# nature. Warning stays at the default 350, error raised to 500 (spec 012).
+type_body_length:
+  warning: 350
+  error: 500

@@ -11,7 +11,7 @@ public enum SKTaskDuration: Comparable, Sendable {
     case seconds(UInt64)
     case minutes(UInt64)
     case hours(UInt64)
-    
+
     /// Initializes a TaskDuration from a TimeInterval (seconds)
     /// - Parameter seconds: The time interval in seconds
     ///
@@ -26,7 +26,7 @@ public enum SKTaskDuration: Comparable, Sendable {
         let clamped = seconds.isFinite && seconds > 0 ? seconds : 0
         self = .nanoseconds(UInt64(clamped * 1_000_000_000))
     }
-    
+
     /// Converts the duration to TimeInterval (seconds)
     /// - Returns: The duration in seconds as a TimeInterval
     ///
@@ -56,7 +56,7 @@ public enum SKTaskDuration: Comparable, Sendable {
                 Double(hours * 60 * 60)
         }
     }
-    
+
     /// Converts the duration to milliseconds
     /// - Returns: The duration in milliseconds as UInt64
     ///
@@ -86,7 +86,7 @@ public enum SKTaskDuration: Comparable, Sendable {
                 hours * 60 * 60 * 1_000
         }
     }
-    
+
     /// Converts the duration to nanoseconds
     /// - Returns: The duration in nanoseconds as UInt64
     ///
@@ -116,7 +116,7 @@ public enum SKTaskDuration: Comparable, Sendable {
                 hours * 60 * 60 * 1_000_000_000
         }
     }
-    
+
     /// Adds two TaskDuration values
     /// - Parameters:
     ///   - lhs: Left-hand side duration
@@ -126,7 +126,7 @@ public enum SKTaskDuration: Comparable, Sendable {
         let (nanoseconds, didOverflow): (UInt64, Bool) = lhs.asNanoseconds.addingReportingOverflow(rhs.asNanoseconds)
         return didOverflow ? .never : .nanoseconds(nanoseconds)
     }
-    
+
     /// Subtracts two TaskDuration values
     /// - Parameters:
     ///   - lhs: Left-hand side duration
@@ -136,7 +136,7 @@ public enum SKTaskDuration: Comparable, Sendable {
         let (nanoseconds, didOverflow): (UInt64, Bool) = lhs.asNanoseconds.subtractingReportingOverflow(rhs.asNanoseconds)
         return didOverflow ? .now : .nanoseconds(nanoseconds)
     }
-    
+
     /// Compares two TaskDuration values
     /// - Parameters:
     ///   - lhs: Left-hand side duration
@@ -145,7 +145,7 @@ public enum SKTaskDuration: Comparable, Sendable {
     public static func < (lhs: SKTaskDuration, rhs: SKTaskDuration) -> Bool {
         lhs.asNanoseconds < rhs.asNanoseconds
     }
-    
+
     /// Compares two TaskDuration values for equality
     /// - Parameters:
     ///   - lhs: Left-hand side duration

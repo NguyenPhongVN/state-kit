@@ -13,18 +13,18 @@ import Foundation
 ///   - E: The specific error type that can be thrown.
 struct CheckedContinuationWrapper<T, E>: Sendable where E: Error {
     private let wrapped: CheckedContinuation<Result<T, E>, Never>
-    
+
     init(continuation: CheckedContinuation<Result<T, E>, Never>) {
         self.wrapped = continuation
     }
-    
+
     /// Resumes the continuation with a result.
     ///
     /// - Parameter result: The result to resume with (success or failure).
     func resume(with result: sending Result<T, E>) {
         wrapped.resume(with: .success(result))
     }
-    
+
     /// Resumes the continuation with a result, type-erasing the error.
     ///
     /// This overload is available when `E` is `any Error`, allowing you to resume
@@ -34,28 +34,28 @@ struct CheckedContinuationWrapper<T, E>: Sendable where E: Error {
     func resume<Er>(with result: sending Result<T, Er>) where E == any Error, Er: Error {
         resume(with: result.mapError { $0 as E })
     }
-    
+
     /// Resumes the continuation by returning a success value.
     ///
     /// - Parameter value: The value to return.
     func resume(returning value: sending T) {
         resume(with: .success(value))
     }
-    
+
     /// Resumes the continuation when the success type is `Void`.
     ///
     /// This is a convenience method for resuming without a value.
     func resume() where T == () {
         resume(with: .success(()))
     }
-    
+
     /// Resumes the continuation by throwing an error.
     ///
     /// - Parameter error: The error to throw.
     func resume(throwing error: E) {
         resume(with: .failure(error))
     }
-    
+
     /// Resumes the continuation by throwing an error, type-erasing it.
     ///
     /// This overload is available when `E` is `any Error`, allowing you to throw

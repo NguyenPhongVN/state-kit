@@ -162,7 +162,6 @@ public enum KeychainAccessibility: String, Sendable {
     /// Item is inaccessible after device restart, and while device is locked.
     case afterFirstUnlockThisDeviceOnly = "cku"
 
-
     /// Item is accessible when device is unlocked (most common).
     case whenUnlocked = "ak"
 

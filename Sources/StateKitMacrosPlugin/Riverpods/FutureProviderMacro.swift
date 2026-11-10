@@ -36,7 +36,7 @@ public struct FutureProviderMacro: PeerMacro {
         let isThrowing = funcDecl.signature.effectSpecifiers?.throwsSpecifier != nil
         let tryKeyword = isThrowing ? "try " : ""
 
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         if isNested {
             let providerDecl: DeclSyntax = """

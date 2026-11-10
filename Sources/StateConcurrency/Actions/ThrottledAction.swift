@@ -11,11 +11,11 @@ import ConcurrencyExtras
 ///       await api.syncData()
 ///   }
 ///
-///   await sync()  // executes immediately
-///   await sync()  // ignored (within 1s)
-///   await sync()  // ignored (within 1s)
+///   sync()  // executes immediately (fire-and-forget, not awaited)
+///   sync()  // ignored (within 1s)
+///   sync()  // ignored (within 1s)
 ///   // after 1s from first call:
-///   await sync()  // executes again
+///   sync()  // executes again
 ///
 /// ## Thread Safety
 /// The last-execution timestamp is protected by `LockIsolated`, making this safe to

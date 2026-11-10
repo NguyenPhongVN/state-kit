@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 // MARK: - Notifier Composition Helpers
 
@@ -346,6 +347,8 @@ public protocol ActionRoutable {
 /// Enable detailed logging of state changes and action routing across
 /// composed notifiers, similar to Redux DevTools.
 public struct CompositionDebugger {
+    private static let logger = Logger(subsystem: "app.statekit.riverpods", category: "composition")
+
     /// Logs state changes in a formatted, hierarchical way.
     ///
     /// - Parameters:
@@ -371,11 +374,11 @@ public struct CompositionDebugger {
     ) {
         let actionInfo = action.map { " via \($0)" } ?? ""
         let stateChange = oldState.description == newState.description ? "unchanged" : "changed"
-        print("[StateKit] [\(scope)] State \(stateChange)\(actionInfo)")
+        CompositionDebugger.logger.info("[StateKit] [\(scope)] State \(stateChange)\(actionInfo)")
 
         #if DEBUG
-        print("  Old: \(oldState)")
-        print("  New: \(newState)")
+        CompositionDebugger.logger.debug("  Old: \(oldState)")
+        CompositionDebugger.logger.debug("  New: \(newState)")
         #endif
     }
 
@@ -390,7 +393,7 @@ public struct CompositionDebugger {
         to: String,
         action: String
     ) {
-        print("[StateKit] [\(from) → \(to)] Action: \(action)")
+        CompositionDebugger.logger.info("[StateKit] [\(from) → \(to)] Action: \(action)")
     }
 
     /// Logs notifier lifecycle events.
@@ -402,7 +405,7 @@ public struct CompositionDebugger {
         scope: String,
         event: String
     ) {
-        print("[StateKit] [\(scope)] \(event)")
+        CompositionDebugger.logger.info("[StateKit] [\(scope)] \(event)")
     }
 }
 

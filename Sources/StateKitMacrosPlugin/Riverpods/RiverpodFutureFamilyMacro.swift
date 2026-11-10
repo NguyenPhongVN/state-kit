@@ -36,7 +36,7 @@ public struct RiverpodFutureFamilyMacro: PeerMacro {
         // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Find the first non-ProviderRef parameter — that's the family key
         guard let keyParam = funcDecl.signature.parameterClause.parameters.first(where: { $0.type.trimmedDescription != "ProviderRef" }) else {

@@ -25,7 +25,7 @@ import SwiftUI
 public protocol StateView: View {
     /// The type of view representing the body of this view that can use hooks.
     associatedtype StateBody: View
-    
+
     /// The content and behavior of the hook-scoped view.
     @ViewBuilder @MainActor var stateBody: Self.StateBody { get }
 }

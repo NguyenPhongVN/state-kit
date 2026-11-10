@@ -4,7 +4,7 @@ import Foundation
 
 /// Tracks user journey through app (sessions, funnels, conversions).
 @MainActor
-public final class UserJourneyTracker: Sendable {
+public final class UserJourneyTracker {
     /// One user session: identity, span, and aggregate counts.
     public struct Session: Sendable {
     /// Session identifier.

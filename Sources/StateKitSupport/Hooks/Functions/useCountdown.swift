@@ -53,8 +53,8 @@ public func useCountdown(
     @HState var isRunning = false
     @HState var phase = CountdownController.Phase.idle
 
-    @HRef var timer: Timer? = nil
-    @HRef var deadline: Date? = nil
+    @HRef var timer: Timer?
+    @HRef var deadline: Date?
     @HRef var latestDuration = duration
 
     latestDuration = duration
@@ -206,4 +206,3 @@ public extension CountdownController {
         case completed
     }
 }
-

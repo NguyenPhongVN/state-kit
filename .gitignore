@@ -6,7 +6,7 @@
 # Swift Package Manager
 .build/
 Packages/
-Package.resolved
+# Package.resolved is tracked deliberately (deterministic builds for a library).
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 .swiftpm/configuration/registries.json
 

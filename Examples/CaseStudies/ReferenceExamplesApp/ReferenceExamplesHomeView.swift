@@ -65,7 +65,10 @@ struct ReferenceExamplesHomeView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Label("Start Here — learn StateKit step by step", systemImage: "graduationcap.fill")
                                 .font(.headline)
-                            Text("19 tiny lessons in 6 chapters: local state → atoms → providers → async → persistence → architecture, ending in a capstone app.")
+                            Text(
+                                "19 tiny lessons in 6 chapters: local state → atoms → providers → async → "
+                                    + "persistence → architecture, ending in a capstone app."
+                            )
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

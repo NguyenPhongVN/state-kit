@@ -73,7 +73,7 @@ public struct AtomMacro: ExtensionMacro, MemberAttributeMacro {
             \(raw: typealiasList)
         }
         """)
-        
+
         let hashableExt: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 
         return [ext, hashableExt]
@@ -86,7 +86,7 @@ public struct AtomMacro: ExtensionMacro, MemberAttributeMacro {
         in context: some MacroExpansionContext
     ) throws -> [AttributeSyntax] {
         guard let funcDecl = member.as(FunctionDeclSyntax.self) else { return [] }
-        
+
         let targetNames = ["defaultValue", "value", "task", "publisher"]
         guard targetNames.contains(funcDecl.name.text) else { return [] }
 

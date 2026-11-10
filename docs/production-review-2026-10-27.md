@@ -35,6 +35,16 @@ phát hiện khi implement + FIFO ordering), Notifier docs trung thực, CI hard
 blocking, pin Xcode, cache SPM, TSan experimental), xoá dead TCA dependency, sync API
 inventory + UNIT_TEST_PLAN, tag 1.0.0. Full package green, tag `1.0.0` cắt trên release commit.
 
+**Cập nhật 2026-11-05 (feature 012 — final sweep):** Toàn bộ finding còn lại của review
+đã đóng qua speckit flow (`specs/012-final-sweep/`): diagnostics chuyển sang `os.Logger`
+(hết print trong production path), pin regression cho 2 hợp đồng đã đúng (TTL onExpire-only,
+GeolocationRollout resolver — memory notes cũ đã lỗi thời), dọn docs stale (SKStatus/
+SCGlobalActor/ThrottledAction), repo hygiene (0 tracked-ignored), target mới
+`StateKitTestingTests` + coverage Support hooks, CI build thêm destination iOS, SwiftLint
+0 errors (gate blocking đã chứng minh xanh). Các mục out-of-scope có lý do ghi rõ:
+sweep 79 fixed-sleep trong tests, audit 38 @unchecked Sendable, quyết định kiến trúc
+3-engine.
+
 **Cập nhật 2026-10-27 (feature 008):** 10 P1 blocker trong "Lộ trình đề xuất" đã được sửa qua speckit flow
 (`specs/008-p1-blocker-fixes/`), red→green cho từng fix, toàn package pass. Finding 24 được rút khỏi danh
 sách (false positive — xem bảng P1). **Finding mới phát hiện khi implement** (chưa có trong danh sách ban

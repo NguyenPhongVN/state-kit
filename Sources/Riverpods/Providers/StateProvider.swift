@@ -363,7 +363,7 @@ public struct StateProviderNotifier<T: Sendable>: ProviderProtocol, @unchecked S
     /// Creates an element that provides access to the StateController
     @MainActor
     public func createElement(container: ProviderContainer) -> AnyProviderElement {
-        SimpleProviderElement(provider: self, container: container) { ref in
+        SimpleProviderElement(provider: self, container: container) { _ in
             // Get the state provider's element
             // Invariant: ensureElement(for:) builds an element for exactly
             // this provider type.

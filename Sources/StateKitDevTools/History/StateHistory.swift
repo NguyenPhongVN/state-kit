@@ -413,7 +413,6 @@ public struct InMemoryStateHistory: StateHistory {
     }
 }
 
-
 // MARK: - Replay Report
 
 /// The outcome of an `InMemoryStateHistory.replay(using:)` run.

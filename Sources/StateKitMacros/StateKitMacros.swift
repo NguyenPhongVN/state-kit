@@ -435,7 +435,6 @@ public macro ObservableState() = #externalMacro(module: "StateKitMacrosPlugin", 
 @attached(peer, names: overloaded)
 public macro Hook() = #externalMacro(module: "StateKitMacrosPlugin", type: "CheckHookFunctionMacro")
 
-
 /// @HookState: Generates a hook function 'use<StructName>' returning a Binding (Peer).
 @attached(peer, names: prefixed(use))
 public macro HookState() = #externalMacro(module: "StateKitMacrosPlugin", type: "HookStateMacro")

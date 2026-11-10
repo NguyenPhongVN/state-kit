@@ -25,7 +25,6 @@ public extension AsyncPhase {
         }
     }
 
-
     /// Converts this `AsyncPhase` to a `PublisherPhase`.
     ///
     /// | `AsyncPhase` | `PublisherPhase` |
@@ -126,5 +125,3 @@ public extension PublisherPhase {
         }
     }
 }
-
-

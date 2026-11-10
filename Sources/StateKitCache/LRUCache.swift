@@ -14,7 +14,7 @@ import Foundation
 /// if let data = cache.get("key1") { }
 /// ```
 @MainActor
-public final class LeastRecentlyUsedCache<Key: Hashable & Sendable, Value: Sendable>: @preconcurrency CacheProtocol, Sendable {
+public final class LeastRecentlyUsedCache<Key: Hashable & Sendable, Value: Sendable>: @preconcurrency CacheProtocol {
 
     /// One linked-list cell; also stored in `cache` for O(1) lookup.
     private final class Node {
@@ -159,7 +159,7 @@ public final class LeastRecentlyUsedCache<Key: Hashable & Sendable, Value: Senda
 
 /// LFU variant: Least Frequently Used eviction.
 @MainActor
-public final class LeastFrequentlyUsedCache<Key: Hashable & Sendable, Value: Sendable>: @preconcurrency CacheProtocol, Sendable {
+public final class LeastFrequentlyUsedCache<Key: Hashable & Sendable, Value: Sendable>: @preconcurrency CacheProtocol {
     private var cache: [Key: Value] = [:]
     private var frequency: [Key: Int] = [:]
     private var hits = 0

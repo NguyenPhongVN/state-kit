@@ -44,7 +44,7 @@ public struct PublisherAtomMacro: ExtensionMacro, MemberAttributeMacro {
             \(raw: accessPrefix)typealias AtomPublisher = \(raw: returnType.trimmedDescription)
         }
         """)
-        
+
         // Generate: extension MyAtom: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 

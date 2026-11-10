@@ -56,7 +56,6 @@ extension AsyncSequence where Self: Sendable {
 }
 #endif
 
-
 /// Wraps a pump-fed subject so deallocating the publisher (with no active
 /// subscriptions) cancels the pump task.
 private final class PumpPublisher<Output, Failure: Error>: Publisher, @unchecked Sendable {

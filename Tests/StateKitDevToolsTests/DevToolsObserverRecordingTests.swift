@@ -44,7 +44,7 @@ struct DevToolsObserverRecordingTests {
         let provider = StateProvider { _ in 0 }
 
         _ = container.watch(provider)
-        #expect(recorder.added == 1, "didAddProvider must dispatch exactly once with the initial value — if this fails, the witness label changed and a protocol-extension no-op is shadowing it")
+        #expect(recorder.added == 1, "didAddProvider must dispatch once — if this fails, the witness label changed and a no-op default is shadowing it")
 
         container.removeListener(for: provider)
         #expect(recorder.disposed == 1, "didDisposeProvider must dispatch exactly once on auto-disposal")

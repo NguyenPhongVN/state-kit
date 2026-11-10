@@ -37,7 +37,6 @@ public enum AsyncPhase<Value> {
     case failure(Error)
 }
 
-
 // MARK: - AsyncPhase — Equatable
 
 /// Conditional `Equatable` conformance for `AsyncPhase`.
@@ -277,4 +276,3 @@ public extension AsyncPhase {
         value ?? defaultValue
     }
 }
-

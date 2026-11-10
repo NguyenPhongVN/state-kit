@@ -101,7 +101,7 @@ public final class ProviderContainer {
     var recomputePath = [ProviderID]()
     @ObservationIgnored
     var _recomputePathSet = Set<ProviderID>()
-    
+
     // MARK: - Initialization
 
     /// Creates a new provider container.
@@ -470,7 +470,7 @@ public final class ProviderContainer {
     func element(for id: ProviderID) -> (any AnyProviderElement)? {
         return elements[id]
     }
-    
+
     // MARK: - Internal Propagation
 
     /// Notifies the container that a provider's value has changed.

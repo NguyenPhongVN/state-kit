@@ -1,6 +1,6 @@
 import Foundation
 
-fileprivate func withTaskCancellationWithError<T: Sendable>(
+private func withTaskCancellationWithError<T: Sendable>(
     _ onCancelError: any Error,
     operation: @Sendable @escaping () async throws -> T
 ) async throws -> T {
@@ -12,7 +12,7 @@ fileprivate func withTaskCancellationWithError<T: Sendable>(
                 continuation.resume(throwing: onCancelError)
                 return
             }
-            
+
             let _task = Task {
                 await withTaskCancellationHandler {
                     do {
@@ -27,7 +27,7 @@ fileprivate func withTaskCancellationWithError<T: Sendable>(
                     }
                 }
             }
-            
+
             task.set(_task)
         }
     }, onCancel: {
@@ -38,8 +38,7 @@ fileprivate func withTaskCancellationWithError<T: Sendable>(
 }
 
 extension Task where Success == Never, Failure == Never {
-    
-    
+
     /// Executes an operation with custom cancellation error
     /// - Parameters:
     ///   - onCancelError: The error to throw when cancelled

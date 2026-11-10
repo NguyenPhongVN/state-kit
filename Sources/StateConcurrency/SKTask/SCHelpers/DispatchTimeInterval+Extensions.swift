@@ -2,30 +2,30 @@ import Foundation
 
 // MARK: - DispatchTimeInterval
 extension DispatchTimeInterval {
-    
+
     /// Creates a `DispatchTimeInterval` from a `TimeInterval` with millisecond precision.
     init(_ timeInterval: TimeInterval) {
         self = .milliseconds(Int(timeInterval * 1000))
     }
-    
+
     static func minutes(_ minutes: Int) -> Self {
         precondition(minutes >= 0, "Minutes must be positive: \(minutes)")
-        
+
         return .seconds(minutes * 60)
     }
-    
+
     static func hours(_ hours: Int) -> Self {
         precondition(hours >= 0, "Hours must be positive: \(hours)")
-        
+
         return .seconds(hours * 60 * 60)
     }
-    
+
     static func days(_ days: Int) -> Self {
         precondition(days >= 0, "Days must be positive: \(days)")
-        
+
         return Self.hours(days * 24)
     }
-    
+
     /// `DispatchTimeInterval` can only be used by specifying a unit of time.
     /// This allows us to easily convert any `DispatchTimeInterval` into nanoseconds.
     /// - Important: It's likely that `x * 1_000_000_000` can't be represented in 32 bits.
@@ -39,7 +39,7 @@ extension DispatchTimeInterval {
             @unknown default: fatalError("Unknown value: \(self)")
         }
     }
-    
+
     /// - Note: this returns `Int`, so it might lose precision for `.milliseconds` and `.microseconds`.
     var milliseconds: Int {
         switch self {
@@ -51,7 +51,7 @@ extension DispatchTimeInterval {
             @unknown default: fatalError("Unknown value: \(self)")
         }
     }
-    
+
     /// `DispatchTimeInterval` can only be used by specifying a unit of time.
     /// This allows us to easily convert any `DispatchTimeInterval` into seconds.
     var seconds: Double {
@@ -64,11 +64,11 @@ extension DispatchTimeInterval {
             @unknown default: fatalError("Unknown value: \(self)")
         }
     }
-    
+
     var days: Double {
         return self.seconds / (60 * 60 * 24)
     }
-    
+
 }
 
 // swiftlint:enable identifier_name

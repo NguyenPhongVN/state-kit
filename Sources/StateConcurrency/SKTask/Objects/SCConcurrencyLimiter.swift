@@ -10,20 +10,20 @@ public actor SKConcurrencyLimiter {
     private var activeTasks = 0
     private var waitingTasks: [UUID: CheckedContinuation<Bool, Never>] = [:]
     private var waitingOrder: [UUID] = []
-    
+
     /// Initializes a new concurrency limiter.
     /// - Parameter maxConcurrentTasks: The maximum number of tasks to allow concurrently.
     public init(maxConcurrentTasks: Int) {
         self.maxConcurrentTasks = maxConcurrentTasks
     }
-    
+
     /// Executes an operation, waiting for a slot if the limit has been reached.
     /// - Parameter operation: The operation to execute.
     /// - Returns: The result of the operation.
     public func execute<T: Sendable>(_ operation: @Sendable () async throws -> T) async throws -> T {
         let id = UUID()
         var acquired = false
-        
+
         // Wait for a slot, handling cancellation
         await withTaskCancellationHandler {
             acquired = await wait(id: id)
@@ -32,23 +32,23 @@ public actor SKConcurrencyLimiter {
                 await self.cancelWait(id: id)
             }
         }
-        
+
         guard acquired else {
             throw CancellationError()
         }
-        
+
         defer { signal() }
         try Task.checkCancellation()
-        
+
         return try await operation()
     }
-    
+
     private func wait(id: UUID) async -> Bool {
         if activeTasks < maxConcurrentTasks {
             activeTasks += 1
             return true
         }
-        
+
         // A task cancelled BEFORE its continuation registers would otherwise
         // deadlock: cancelWait ran first, found nothing, and the continuation
         // registered below would never be resumed. Register, then re-check
@@ -66,14 +66,14 @@ public actor SKConcurrencyLimiter {
         }
         return registered
     }
-    
+
     private func cancelWait(id: UUID) {
         if let continuation = waitingTasks.removeValue(forKey: id) {
             waitingOrder.removeAll(where: { $0 == id })
             continuation.resume(returning: false)
         }
     }
-    
+
     private func signal() {
         while !waitingOrder.isEmpty {
             let id = waitingOrder.removeFirst()

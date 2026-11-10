@@ -31,7 +31,8 @@ enum MacroError: Error, CustomStringConvertible {
         case .multipleMethodsFound(let name):
             return "Multiple definitions of method '\(name)' found"
         case .ambiguousAtomType:
-            return "@Atom could not determine atom type — struct must have exactly one of: defaultValue(context:), value(context:), task(context:), or publisher(context:)"
+            return "@Atom could not determine atom type — struct must have exactly one of: "
+                + "defaultValue(context:), value(context:), task(context:), or publisher(context:)"
         case .invalidReturnType:
             return "Invalid or unsupported return type"
         case .missingBaseClass:

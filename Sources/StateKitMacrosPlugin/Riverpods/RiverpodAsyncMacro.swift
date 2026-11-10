@@ -47,7 +47,7 @@ public struct RiverpodAsyncMacro: PeerMacro {
         // Extract access level from the function's modifiers
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Check if the function is throwing — need to prepend try if so
         let tryKeyword = funcDecl.signature.effectSpecifiers?.throwsClause != nil ? "try " : ""

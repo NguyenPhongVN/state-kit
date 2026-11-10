@@ -1,36 +1,36 @@
 import Foundation
 
-fileprivate func withThrowingTimeout<T: Sendable>(
+private func withThrowingTimeout<T: Sendable>(
     _ timeout: SKTaskDuration,
     operation: sending @escaping @isolated(any) () async throws -> T,
     isolation: isolated (any Actor)? = #isolation
 ) async throws -> T {
     let task = Task(operation: operation)
-    
+
     var timeoutTask: Task<Void, any Error>?
-    
+
     if timeout < .never {
         guard timeout > .now else {
             task.cancel()
             throw SKTimeoutError(timeout.asTimeInterval)
         }
-        
+
         timeoutTask = Task {
             defer { task.cancel() }
             try await Task.sleep(duration: timeout)
             throw SKTimeoutError(timeout.asTimeInterval)
         }
     }
-    
+
     let result = await withTaskCancellationHandler {
         await task.result
     } onCancel: {
         task.cancel()
     }
-    
+
     if let timeoutTask {
         timeoutTask.cancel()
-        
+
         // A success must win over a timeout that fired in the same instant —
         // previously the computed result was discarded and SKTimeoutError
         // thrown nondeterministically. Only throw when no result exists.
@@ -41,7 +41,7 @@ fileprivate func withThrowingTimeout<T: Sendable>(
             throw error
         }
     }
-    
+
     return try result.get()
 }
 
@@ -72,4 +72,3 @@ extension Task where Success == Never, Failure == Never {
         try await withThrowingTimeout(timeout, operation: operation)
     }
 }
-

@@ -1,4 +1,5 @@
 import SwiftSyntax
+// swiftlint:disable:line_length
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
 
@@ -135,3 +136,5 @@ public struct HookFormMacro: PeerMacro {
         return [hookStruct, hookFunction]
     }
 }
+
+// swiftlint:enable:line_length

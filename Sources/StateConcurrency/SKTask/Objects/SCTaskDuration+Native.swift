@@ -8,7 +8,7 @@ extension SKTaskDuration {
         let nanoseconds = duration.components.seconds * 1_000_000_000 + (duration.components.attoseconds / 1_000_000_000)
         self = .nanoseconds(UInt64(nanoseconds))
     }
-    
+
     /// Converts the SKTaskDuration to a native Swift Duration
     public var asDuration: Swift.Duration {
         switch self {

@@ -54,8 +54,8 @@ public enum StateHookInspector {
     public static func valueString(_ value: Any) -> String {
         if let s = value as? String { return "\"\(s)\"" }
         if let d = value as? Double { return String(d) }
-        if let i = value as? Int    { return String(i) }
-        if let b = value as? Bool   { return String(b) }
+        if let i = value as? Int { return String(i) }
+        if let b = value as? Bool { return String(b) }
         return String(describing: value)
     }
 }
@@ -115,6 +115,7 @@ public struct StateDevScope<Content: View>: View {
         // the overlay that displays it. (A @State counter read here would
         // re-invalidate this body on every count — a self-sustaining re-render
         // loop, previously active even in Release builds.)
+        // swiftlint:disable:next redundant_discardable_let — @ViewBuilder requires `let _ =`
         let _ = context.enqueuePostRenderEffect { [renderCounter] in
             Task { @MainActor in
                 renderCounter.increment()

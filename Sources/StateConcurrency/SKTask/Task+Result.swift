@@ -39,7 +39,10 @@ extension Task where Success == Never, Failure == Never {
     ///   - operation: An async operation that may throw a typed error.
     /// - Returns: A task that returns a `Result<Success, Failure>` and never throws.
     @discardableResult
-    public static func withResult<T: Sendable, E: Sendable>(priority: TaskPriority? = nil, operation: sending @escaping @isolated(any) () async throws(E) -> T) -> Task<Result<T, E>, Never> {
+    public static func withResult<T: Sendable, E: Sendable>(
+        priority: TaskPriority? = nil,
+        operation: sending @escaping @isolated(any) () async throws(E) -> T
+    ) -> Task<Result<T, E>, Never> {
         Task<Result<T, E>, Never>(priority: priority) { () async -> Result<T, E> in
             do throws(E) {
                 let value = try await operation()
@@ -50,4 +53,3 @@ extension Task where Success == Never, Failure == Never {
         }
     }
 }
-

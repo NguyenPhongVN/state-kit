@@ -45,7 +45,7 @@ public struct RiverpodNotifierMacro: PeerMacro {
         let accessPrefix = AttributeHelper.accessLevel(from: classDecl)
 
         // Check if the class is nested inside another type
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Generate extension on the class (file scope) or a static let member (nested)
         if isNested {

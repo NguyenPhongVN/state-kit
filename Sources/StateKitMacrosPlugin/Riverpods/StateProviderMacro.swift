@@ -34,7 +34,7 @@ public struct StateProviderMacro: PeerMacro {
         let accessPrefix = AttributeHelper.accessLevel(from: structDecl)
 
         // Check if the struct is nested inside another type
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Extract the initial value expression from the struct's `initial` property
         var initialValue = "initial"

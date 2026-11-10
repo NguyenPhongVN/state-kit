@@ -48,7 +48,7 @@ public struct ProviderMacro: PeerMacro {
         let (accessPrefix, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
         // Check if the function is nested inside another type
-        let isNested = context.lexicalContext.count > 0
+        let isNested = !context.lexicalContext.isEmpty
 
         // Validate that the return type is concrete (not opaque/some)
         guard let returnType = funcDecl.signature.returnClause?.type else {

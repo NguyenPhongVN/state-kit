@@ -48,7 +48,7 @@ public struct TaskAtomMacro: ExtensionMacro, MemberAttributeMacro {
             \(raw: accessPrefix)typealias TaskSuccess = \(raw: typeName)
         }
         """)
-        
+
         // Generate: extension MyAtom: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 

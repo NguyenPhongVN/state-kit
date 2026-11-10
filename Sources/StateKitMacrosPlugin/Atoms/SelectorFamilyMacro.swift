@@ -43,7 +43,7 @@ public struct SelectorFamilyMacro: ExtensionMacro, MemberAttributeMacro {
             \(raw: accessPrefix)typealias Value = \(raw: typeName)
         }
         """)
-        
+
         // Generate: extension UserSelector: Hashable {}
         let hashableExtension: ExtensionDeclSyntax = try ExtensionDeclSyntax("extension \(type.trimmed): Hashable {}")
 

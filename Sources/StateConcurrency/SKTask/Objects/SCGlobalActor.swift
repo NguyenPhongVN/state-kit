@@ -2,17 +2,17 @@ import Foundation
 
 /// A global actor that serializes access to shared mutable state.
 ///
-/// `PerformerActor` provides a global actor that can be used to isolate shared mutable state
+/// `SKGlobalActor` provides a global actor that can be used to isolate shared mutable state
 /// and ensure thread-safe access across your application. It's particularly useful for
 /// coordinating async operations and managing state that needs to be accessed from multiple
 /// concurrent contexts.
 ///
 /// ## Usage Example:
 /// ```swift
-/// @PerformerActor
+/// @SKGlobalActor
 /// var sharedState: Int = 0
 ///
-/// @PerformerActor
+/// @SKGlobalActor
 /// func updateState() {
 ///     sharedState += 1
 /// }
@@ -26,7 +26,7 @@ actor SKGlobalActor {
 /// A thread-safe reference to a `Task` that can be stored and cancelled.
 ///
 /// `TaskReference` provides a `Sendable`-conforming wrapper around a `Task<Void, Never>`
-/// that uses `PerformerActor` to ensure thread-safe access. This is useful when you need
+/// that uses `SKGlobalActor` to ensure thread-safe access. This is useful when you need
 /// to store a task reference and potentially cancel it from different concurrent contexts.
 ///
 /// ## Usage Example:
@@ -68,7 +68,7 @@ final class TaskReference: Sendable {
 
 /// A thread-safe mechanism to ensure an operation is performed exactly once.
 ///
-/// `OncePerformer` uses `PerformerActor` to guarantee that a given operation is executed
+/// `OncePerformer` uses `SKGlobalActor` to guarantee that a given operation is executed
 /// only one time, even when called from multiple concurrent contexts. This is useful for
 /// one-time initialization, cleanup operations, or ensuring idempotent behavior.
 ///

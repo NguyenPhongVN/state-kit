@@ -55,7 +55,7 @@ public struct ThrottleMacro: PeerMacro {
         }
 
         let functionName = funcDecl.name.text
-        
+
         let (_, staticKeyword) = AttributeHelper.modifierPrefixes(from: funcDecl)
 
         // Extract the interval expression (any expression, not just integer literals)
@@ -77,7 +77,7 @@ public struct ThrottleMacro: PeerMacro {
         \(raw: staticKeyword)func \(raw: functionName)Throttled() {
             let now = Date()
             let interval = TimeInterval(\(raw: intervalExpr)) / 1000.0
-            
+
             if now.timeIntervalSince(_\(raw: functionName)ThrottleLastExec) >= interval {
                 _\(raw: functionName)ThrottleLastExec = now
                 Task { await \(raw: functionName)() }

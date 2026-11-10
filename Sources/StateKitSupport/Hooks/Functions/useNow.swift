@@ -44,7 +44,7 @@ public func useNow(
 
     @HState var now = Date()
     @HRef var clock = ContinuousClock()
-    
+
     useEffect(updateStrategy: .preserved(by: updateInterval)) {
         let task = Task {
             while !Task.isCancelled {

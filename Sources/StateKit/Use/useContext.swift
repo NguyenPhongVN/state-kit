@@ -67,7 +67,6 @@ extension HookContext {
     }
 }
 
-
 // MARK: - HookContext
 extension HookContext: Observable {}
 
