@@ -3,10 +3,10 @@ import Combine
 import StateKit
 import StateKitAtoms
 
-/// A bridge that allows a Combine `Publisher` to act as an `SKTaskAtom`.
-///
-/// `SKCombineAtom` wraps a publisher and uses its first emitted value to
-/// resolve the atom's state. It produces an `AsyncPhase` value.
+// A bridge that allows a Combine `Publisher` to act as an `SKTaskAtom`.
+//
+// `SKCombineAtom` wraps a publisher and uses its first emitted value to
+// resolve the atom's state. It produces an `AsyncPhase` value.
 // MARK: - SKCombineAtom
 public struct SKCombineAtom<P: Publisher & Sendable>: SKThrowingTaskAtom, Hashable where P.Output: Sendable {
     /// The value type the task resolves to: the publisher's first output.

@@ -8,18 +8,39 @@ included:
   - Examples/CaseStudies/ReferenceExamplesApp
 
 line_length:
-  warning: 120
+  # Hard cap 160 (error). The 120 advisory was retired in spec 013: the 77
+  # warnings were long doc/URL lines — wrapping them churned strings and docs.
+  warning: 160
   error: 160
 
 identifier_name:
   min_length: 2
   # `_`-prefixed names are the repo's internal-slot convention (spec 004); the
   # rule's excluded matches exact names — extend when new slots land.
+  # Single-char locals are accepted idioms (test harness `h`, math locals, loop
+  # vars) — 194 warnings in the 2026-11-11 sweep were all these (spec 013).
   excluded:
     - id
     - to
     - by
     - at
+    - a
+    - b
+    - c
+    - d
+    - e
+    - h
+    - i
+    - n
+    - p
+    - r
+    - s
+    - v
+    - k
+    - l
+    - o
+    - q
+    - t
     - _addDependentRef
     - _erasedEffect
     - _getOrCreateBox
@@ -40,7 +61,8 @@ type_name:
   # The project prefixes: use* hooks (functions), SK* machinery, unprefixed Riverpod layer.
   allowed_symbols: []
   # `_`-prefixed internal box types are deliberately unpronounceable from outside
-  # their module (rule's excluded matches exact names — extend when new boxes land).
+  # their module; single-letter atom fixtures (A/B/C/D) are deliberate minimal
+  # test fixtures. Rule's excluded matches exact names (spec 013).
   excluded:
     - _StoreOverrideBox
     - _HookCallbackBox
@@ -48,6 +70,10 @@ type_name:
     - _HookReducerBox
     - _HookAsyncSequenceBox
     - _HookPublisherBox
+    - A
+    - B
+    - C
+    - D
 
 force_unwrapping:
   severity: warning
@@ -90,11 +116,34 @@ excluded:
 
 # `x.count == 0` stays legal on types that only expose `count` (counters);
 # the idiom fixer's `isEmpty` rewrite broke such receivers (spec 012).
+# `x.count == 0` stays legal on types that only expose `count` (counters);
+# the idiom fixer's `isEmpty` rewrite broke such receivers (spec 012/013).
 empty_count:
   severity: warning
 
-# SKAtomStore is the single core graph; macro expansion test suites are long by
-# nature. Warning stays at the default 350, error raised to 500 (spec 012).
+# Macro expansion builders and controller hooks are long by design.
+function_body_length:
+  warning: 120
+  error: 250
+
+# Test fixtures and integration suites are long/nested by design.
+file_length:
+  warning: 500
+  error: 800
+nesting:
+  warning: 4
+
+# By-design complexity/size allowances (spec 013 ledger):
+# - ensureElement is the single dispatch point of the container graph.
+# - useLoadMore encodes the whole load-more state machine in one hook.
+# - DeterministicTesting tuples carry (env, time, random) test bundles.
+# - AtomMacrosTests/SKAtomStore are the largest macro/store bodies.
+cyclomatic_complexity:
+  warning: 11
+large_tuple:
+  warning: 3
+function_parameter_count:
+  warning: 6
 type_body_length:
-  warning: 350
+  warning: 500
   error: 500

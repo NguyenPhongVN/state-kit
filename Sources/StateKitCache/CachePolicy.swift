@@ -8,6 +8,7 @@ import Riverpods
 
 /// Cache-aside pattern helper.
 @MainActor
+// Sendable audit 013: NSLock-protected LRU instance behind the read-through policy (see docs/engineering/SENDABLE_AUDIT.md)
 public final class CacheAsidePattern<Key: Hashable & Sendable, Value: Sendable>: @unchecked Sendable {
     private let cache: LeastRecentlyUsedCache<Key, Value>
     private let fetcher: (Key) async throws -> Value
@@ -166,10 +167,8 @@ public struct MemoryPressureHandler<Key: Hashable & Sendable, Value: Sendable> {
         let keys = cache.keys
         let itemsToRemove = max(0, keys.count - targetSize)
 
-        for i in 0..<itemsToRemove {
-            if i < keys.count {
-                cache.remove(keys[i])
-            }
+        for i in 0..<itemsToRemove where i < keys.count {
+            cache.remove(keys[i])
         }
     }
 }

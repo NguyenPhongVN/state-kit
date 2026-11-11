@@ -1,11 +1,11 @@
 import Combine
 
-/// StateKitCombine — Combine-focused convenience extensions layered on top of
-/// the core `StateKit` hook runtime.
-///
-/// Import this module when you want ergonomic bridges between Combine
-/// publishers and `PublisherPhase`, while keeping the underlying hook APIs in
-/// `StateKit`.
+// StateKitCombine — Combine-focused convenience extensions layered on top of
+// the core `StateKit` hook runtime.
+//
+// Import this module when you want ergonomic bridges between Combine
+// publishers and `PublisherPhase`, while keeping the underlying hook APIs in
+// `StateKit`.
 
 // MARK: - Publisher — hook bridge
 

@@ -31,24 +31,24 @@ extension DispatchTimeInterval {
     /// - Important: It's likely that `x * 1_000_000_000` can't be represented in 32 bits.
     var nanoseconds: UInt64 {
         switch self {
-            case let .seconds(s): return UInt64(s) * UInt64(1_000_000_000)
-            case let .milliseconds(ms): return UInt64(ms) * UInt64(1_000_000)
-            case let .microseconds(ms): return UInt64(ms) * UInt64(1000)
-            case let .nanoseconds(ns): return UInt64(ns)
-            case .never: return 0
-            @unknown default: fatalError("Unknown value: \(self)")
+        case let .seconds(s): return UInt64(s) * UInt64(1_000_000_000)
+        case let .milliseconds(ms): return UInt64(ms) * UInt64(1_000_000)
+        case let .microseconds(ms): return UInt64(ms) * UInt64(1000)
+        case let .nanoseconds(ns): return UInt64(ns)
+        case .never: return 0
+        @unknown default: fatalError("Unknown value: \(self)")
         }
     }
 
     /// - Note: this returns `Int`, so it might lose precision for `.milliseconds` and `.microseconds`.
     var milliseconds: Int {
         switch self {
-            case let .seconds(s): return s * 1_000
-            case let .milliseconds(ms): return ms
-            case let .microseconds(ms): return Int((Double(ms) / 1_000).rounded())
-            case let .nanoseconds(ns): return Int((Double(ns) / 1_000_000).rounded())
-            case .never: return 0
-            @unknown default: fatalError("Unknown value: \(self)")
+        case let .seconds(s): return s * 1_000
+        case let .milliseconds(ms): return ms
+        case let .microseconds(ms): return Int((Double(ms) / 1_000).rounded())
+        case let .nanoseconds(ns): return Int((Double(ns) / 1_000_000).rounded())
+        case .never: return 0
+        @unknown default: fatalError("Unknown value: \(self)")
         }
     }
 
@@ -56,12 +56,12 @@ extension DispatchTimeInterval {
     /// This allows us to easily convert any `DispatchTimeInterval` into seconds.
     var seconds: Double {
         switch self {
-            case let .seconds(seconds): return Double(seconds)
-            case let .milliseconds(ms): return Double(ms) / 1_000
-            case let .microseconds(ms): return Double(ms) / 1_000_000
-            case let .nanoseconds(ns): return Double(ns) / 1_000_000_000
-            case .never: return 0
-            @unknown default: fatalError("Unknown value: \(self)")
+        case let .seconds(seconds): return Double(seconds)
+        case let .milliseconds(ms): return Double(ms) / 1_000
+        case let .microseconds(ms): return Double(ms) / 1_000_000
+        case let .nanoseconds(ns): return Double(ns) / 1_000_000_000
+        case .never: return 0
+        @unknown default: fatalError("Unknown value: \(self)")
         }
     }
 
@@ -70,8 +70,6 @@ extension DispatchTimeInterval {
     }
 
 }
-
-// swiftlint:enable identifier_name
 
 func + (lhs: DispatchTimeInterval, rhs: DispatchTimeInterval) -> DispatchTimeInterval {
     // Note: `DispatchTimeInterval` uses `Int` for nanoseconds, which might overflow in 32 bits
@@ -90,5 +88,6 @@ func - (lhs: DispatchTimeInterval, rhs: DispatchTimeInterval) -> DispatchTimeInt
 // Its conformance is safe since it only represents data
 // See https://github.com/apple/swift/issues/65044
 // MARK: - DispatchTimeInterval
+// Sendable audit 013: immutable enum of value payloads (see docs/engineering/SENDABLE_AUDIT.md)
 extension DispatchTimeInterval: @unchecked Sendable {}
 #endif

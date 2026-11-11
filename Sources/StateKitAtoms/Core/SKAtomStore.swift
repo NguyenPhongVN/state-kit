@@ -14,6 +14,7 @@ public struct SKInterceptorToken: Hashable, Sendable {
     fileprivate init() {}
 }
 
+// Sendable audit 013: state guarded by the store's NSLock; every public method takes the lock (see docs/engineering/SENDABLE_AUDIT.md)
 /// The central atom store for `StateKitAtoms`.
 ///
 /// `SKAtomStore` owns every `SKAtomBox`, the dependency graph that connects
@@ -628,6 +629,7 @@ public final class SKAtomStore: @unchecked Sendable {
 
 // MARK: - SubscriberToken
 
+// Sendable audit 013: callback fires on MainActor; token is identity/cancel only (see docs/engineering/SENDABLE_AUDIT.md)
 /// Internal helper that manages an external subscription lifecycle via deinit.
 ///
 /// Use this inside property wrappers or hook slots to ensure `removeExternalSubscriber`

@@ -14,6 +14,7 @@ struct ConcurrencyHardeningTests {
         // Operation completes right at the timeout boundary; the result must
         // win over the nondeterministic timeout fire.
         let result = try await Task.throwingTimeout(.milliseconds(50)) {
+            // sleep justification: simulated async work inside the operation under test
             try await Task.sleep(for: .milliseconds(30))
             return 42
         }
@@ -29,6 +30,7 @@ struct ConcurrencyHardeningTests {
         let holder = Task {
             try await limiter.execute {
                 gate.open()
+                // sleep justification: simulated async work inside the operation under test
                 try await Task.sleep(for: .seconds(2))
             }
         }
@@ -37,6 +39,7 @@ struct ConcurrencyHardeningTests {
         // Enqueue a waiter that gets cancelled BEFORE its continuation
         // registers (it starts, sees no free slot, is cancelled immediately).
         let waiter = Task { try await limiter.execute { 7 } }
+        // sleep justification: simulated async work inside the operation under test
         try await Task.sleep(for: .milliseconds(20))
         waiter.cancel()
 
@@ -86,6 +89,7 @@ final class GateFlag: @unchecked Sendable {
 
     func waitOpen() async throws {
         while !isOpen {
+            // sleep justification: simulated async work inside the operation under test
             try await Task.sleep(for: .milliseconds(5))
         }
     }

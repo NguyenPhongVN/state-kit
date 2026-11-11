@@ -40,12 +40,16 @@ struct HookSemanticsTests {
         }
 
         // After the first finishes, the second is still in flight → pending.
-        try await Task.sleep(for: .milliseconds(80))
+        for _ in 0..<100 where !firstDone.isDone {
+            try await Task.sleep(for: .milliseconds(5))
+        }
         #expect(firstDone.isDone)
         #expect(h.render { useTransition().isPending } == true,
                 "isPending dropped early while an overlapping transition still ran")
 
-        try await Task.sleep(for: .milliseconds(120))
+        for _ in 0..<100 where !secondDone.isDone {
+            try await Task.sleep(for: .milliseconds(5))
+        }
         #expect(secondDone.isDone)
         #expect(h.render { useTransition().isPending } == false)
     }

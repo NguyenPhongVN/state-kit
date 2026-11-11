@@ -1,5 +1,7 @@
 import Foundation
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
+// Sendable audit 013: immutable identifier, only hashed/compared (see docs/engineering/SENDABLE_AUDIT.md)
 /// A unique identifier for each Provider instance.
 ///
 /// `ProviderID` serves as a unique key to identify and cache provider states across the application.

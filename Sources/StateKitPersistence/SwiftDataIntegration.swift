@@ -28,6 +28,7 @@ public struct SwiftDataProvider<T: Sendable> {
     }
 }
 
+// Sendable audit 013: ModelContext is touched only from MainActor call sites (see docs/engineering/SENDABLE_AUDIT.md)
 /// Reference type for SwiftData provider context.
 public final class SwiftDataProviderRef: @unchecked Sendable {
     /// The SwiftData context this feature reads and writes.
@@ -106,6 +107,7 @@ public struct SwiftDataNotifierProvider {
     }
 }
 
+// Sendable audit 013: subclasses @MainActor AsyncNotifier; context used in MainActor methods only (see docs/engineering/SENDABLE_AUDIT.md)
 /// Notifier that maintains SwiftData synchronization.
 public final class SwiftDataNotifier<T: Sendable & Codable>: AsyncNotifier<T>, @unchecked Sendable {
     private let initialState: T

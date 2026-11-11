@@ -1,6 +1,5 @@
 import Testing
 import SwiftUI
-import StateKitUI
 @testable import StateKitUI
 
 @MainActor

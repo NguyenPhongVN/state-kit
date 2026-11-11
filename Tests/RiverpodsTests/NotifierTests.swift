@@ -9,20 +9,20 @@ struct RiverpodNotifierTests {
     @Test("Notifier preserves state and notifies dependents")
     func notifierState() {
         let container = ProviderContainer()
-        
+
         class TestNotifier: Notifier<Int> {
             override func build() -> Int { 0 }
             func inc() { state += 1 }
         }
-        
+
         let p = NotifierProvider { TestNotifier() }
         let dep = Provider { ref in ref.watch(p) * 10 }
-        
+
         #expect(container.read(p) == 0)
         #expect(container.read(dep) == 0)
-        
+
         container.read(p.notifier).inc()
-        
+
         #expect(container.read(p) == 1)
         #expect(container.read(dep) == 10)
     }
@@ -30,7 +30,7 @@ struct RiverpodNotifierTests {
     @Test("AsyncNotifier handles loading and data transitions")
     func asyncNotifier() async throws {
         let container = ProviderContainer()
-        
+
         class TestAsyncNotifier: AsyncNotifier<String> {
             var buildCount = 0
             override func build() async throws -> String {
@@ -39,13 +39,13 @@ struct RiverpodNotifierTests {
                 return "Done"
             }
         }
-        
+
         let p = AsyncNotifierProvider { TestAsyncNotifier() }
-        
+
         // Initial state is loading
         let firstRead = container.read(p)
         #expect(firstRead.isLoading)
-        
+
         // Wait for result (poll with a deadline — a fixed sleep flakes under
         // parallel test load).
         var secondRead = container.read(p)
@@ -55,11 +55,11 @@ struct RiverpodNotifierTests {
             secondRead = container.read(p)
         }
         #expect(secondRead.value == "Done")
-        
+
         // Manual refresh should trigger refreshing state
         container.refresh(p)
         let thirdRead = container.read(p)
-        
+
         if case .refreshing(let val) = thirdRead {
             #expect(val == "Done")
         } else {

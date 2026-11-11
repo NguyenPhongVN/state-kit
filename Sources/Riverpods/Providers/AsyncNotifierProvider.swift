@@ -422,6 +422,7 @@ public final class AsyncNotifierProviderElement<N: AsyncNotifier<T>, T: Sendable
 
 // MARK: - AsyncNotifierProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that manages complex asynchronous state using an AsyncNotifier instance.
 ///
 /// `AsyncNotifierProvider` wraps an `AsyncNotifier` and exposes its async state as a provider.
@@ -666,6 +667,7 @@ public struct AsyncNotifierProvider<N: AsyncNotifier<T>, T: Sendable>: ProviderP
 
 // MARK: - AsyncNotifierInstanceProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that gives direct access to an AsyncNotifier instance.
 ///
 /// `AsyncNotifierInstanceProvider` wraps an `AsyncNotifierProvider` and exposes
@@ -762,6 +764,7 @@ public final class AsyncNotifierInstanceElement<N: AsyncNotifier<T>, T: Sendable
 
 // MARK: - AsyncNotifierFutureProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that returns an awaitable Task for an AsyncNotifier's result.
 ///
 /// `AsyncNotifierFutureProvider` allows awaiting an AsyncNotifier's async state

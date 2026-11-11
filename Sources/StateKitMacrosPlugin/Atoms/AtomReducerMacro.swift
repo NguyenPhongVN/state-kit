@@ -30,7 +30,7 @@ public struct AtomReducerMacro: MemberMacro, ExtensionMacro {
         providingMembersOf declaration: some DeclGroupSyntax,
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
-        guard let _ = declaration.as(StructDeclSyntax.self) else {
+        guard declaration.is(StructDeclSyntax.self) else {
             throw MacroError.onlyApplicableToStructs
         }
 

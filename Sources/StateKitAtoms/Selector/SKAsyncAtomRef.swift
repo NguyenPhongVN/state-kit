@@ -1,3 +1,4 @@
+// Sendable audit 013: touched only through SKAtomStore operations (locked graph) (see docs/engineering/SENDABLE_AUDIT.md)
 /// An inline, anonymous non-throwing async atom created by `asyncAtom()`.
 ///
 /// `SKAsyncAtomRef` wraps an async closure and exposes its result as an
@@ -66,6 +67,7 @@ public final class SKAsyncAtomRef<Success>: SKTaskAtom, @unchecked Sendable {
     }
 }
 
+// Sendable audit 013: touched only through SKAtomStore operations (locked graph) (see docs/engineering/SENDABLE_AUDIT.md)
 /// An inline, anonymous throwing async atom created by `throwingAsyncAtom()`.
 ///
 /// Like `SKAsyncAtomRef` but the task closure can throw; failures surface as

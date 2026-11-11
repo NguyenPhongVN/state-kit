@@ -3,24 +3,24 @@ import StateKitAtoms
 
 // MARK: - Ecosystem Bridge Overview
 
-/// The Ecosystem Bridge connects two powerful state management systems:
-/// - **Riverpods**: Provider-based reactive state with fine-grained reactivity and lifecycle management
-/// - **Atoms**: Lightweight atomic state with minimal boilerplate
-///
-/// **Why Both?**
-/// - Atoms are great for simple, local state (toggles, text inputs, UI state)
-/// - Providers excel at complex state with dependencies, async operations, and side effects
-/// - The bridge allows seamless interoperability between both systems
-///
-/// **Two-Way Bridge:**
-/// 1. **Riverpod → Atom**: Providers can watch Atoms
-/// 2. **Atom → Riverpod**: Atoms can watch Providers
-///
-/// This enables:
-/// - Using simple atoms alongside complex providers
-/// - Sharing state between both ecosystems
-/// - Mixing paradigms in the same application
-/// - Gradual migration between systems
+// The Ecosystem Bridge connects two powerful state management systems:
+// - **Riverpods**: Provider-based reactive state with fine-grained reactivity and lifecycle management
+// - **Atoms**: Lightweight atomic state with minimal boilerplate
+//
+// **Why Both?**
+// - Atoms are great for simple, local state (toggles, text inputs, UI state)
+// - Providers excel at complex state with dependencies, async operations, and side effects
+// - The bridge allows seamless interoperability between both systems
+//
+// **Two-Way Bridge:**
+// 1. **Riverpod → Atom**: Providers can watch Atoms
+// 2. **Atom → Riverpod**: Atoms can watch Providers
+//
+// This enables:
+// - Using simple atoms alongside complex providers
+// - Sharing state between both ecosystems
+// - Mixing paradigms in the same application
+// - Gradual migration between systems
 
 // MARK: - Riverpod → Atom Bridge
 

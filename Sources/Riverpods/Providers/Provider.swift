@@ -48,6 +48,7 @@ public final class SimpleProviderElement<P: ProviderProtocol>: ProviderElement<P
 
 // MARK: - Provider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A read-only provider that computes and caches a derived value based on other providers.
 ///
 /// `Provider` is typically used for selectors and computed values that depend on other providers.

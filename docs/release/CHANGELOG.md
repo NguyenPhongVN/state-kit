@@ -8,6 +8,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased (part of V1)
 
+### Hardening completion (specs/013-hardening-completion)
+
+- **Architecture decision published** — the three engines (hooks / atoms / providers)
+  are the intended design; `docs/engineering/ARCHITECTURE.md` is the boundary contract
+  with selection guidance and the dependency map, linked from the README.
+- **Linter noise eliminated** — 965 warnings → 132, each residual category documented
+  in the rulebook's lint policy ledger (whitespace inside pinned macro strings, justified
+  force casts, by-design size thresholds). 43 switch-case alignments reindented; 28
+  orphaned doc comments converted; stale disable commands removed.
+- **Deterministic test waits** — 17 fixed-sleep-then-assert sites converted to bounded
+  deadline polling; intentional time-modeling sleeps carry justification comments.
+  Stability proven by 3 consecutive full-suite runs.
+- **`@unchecked Sendable` audit published** — all 40 sites carry a justification comment
+  (`// Sendable audit 013: …`) and are tabulated in `docs/engineering/SENDABLE_AUDIT.md`;
+  no unsafe site found (FileAtomStorage's 011 lock fix held under re-review).
+
+### Hardening completion (specs/013-hardening-completion) — tests
+
+- Async hook/atom test bodies converted to bounded waits (non-behavioral; the assertions
+  are unchanged, only how long they wait).
+
+
 ### Fixed (final sweep — specs/012-final-sweep)
 
 - **Diagnostics go through the unified system log** — `CompositionDebugger`, the DevTools

@@ -115,7 +115,8 @@ public struct StateDevScope<Content: View>: View {
         // the overlay that displays it. (A @State counter read here would
         // re-invalidate this body on every count — a self-sustaining re-render
         // loop, previously active even in Release builds.)
-        // swiftlint:disable:next redundant_discardable_let — @ViewBuilder requires `let _ =`
+        // @ViewBuilder requires `let _ =` for discardable statements.
+        // swiftlint:disable:next redundant_discardable_let
         let _ = context.enqueuePostRenderEffect { [renderCounter] in
             Task { @MainActor in
                 renderCounter.increment()

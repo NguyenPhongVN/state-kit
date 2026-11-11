@@ -67,10 +67,8 @@ public struct ObservableStateMacro: MemberMacro, ExtensionMacro, MemberAttribute
         }
 
         // Only track stored properties (no accessors)
-        for binding in varDecl.bindings {
-            if binding.accessorBlock != nil {
-                return []
-            }
+        for binding in varDecl.bindings where binding.accessorBlock != nil {
+            return []
         }
 
         // We use @ObservationTracked which is the standard way Observation works

@@ -3,10 +3,10 @@ import Combine
 import StateKit
 import StateKitAtoms
 
-/// A bridge that allows a Combine `Publisher` to act as an `SKPublisherAtom`.
-///
-/// `SKCombinePublisherAtom` wraps a publisher and exposes its lifecycle as
-/// reactive atom state (`PublisherPhase`).
+// A bridge that allows a Combine `Publisher` to act as an `SKPublisherAtom`.
+//
+// `SKCombinePublisherAtom` wraps a publisher and exposes its lifecycle as
+// reactive atom state (`PublisherPhase`).
 // MARK: - SKCombinePublisherAtom
 public struct SKCombinePublisherAtom<P: Publisher & Sendable>: SKPublisherAtom, Hashable where P.Output: Sendable {
     /// The publisher's output type.

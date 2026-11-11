@@ -2,6 +2,7 @@ import StateKit
 
 // MARK: - SKFocusAtom
 
+// Sendable audit 013: immutable derived view of the base atom (spec 006 design) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A read/write lens over one field of a state atom's value.
 ///
 /// `SKFocusAtom` derives its value from a base state atom through a writable

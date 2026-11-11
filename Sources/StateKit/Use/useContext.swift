@@ -1,36 +1,37 @@
 import Observation
 import SwiftUI
 
-/// A reference-type container for a value that can be shared across a view
-/// hierarchy without passing it explicitly through every level.
-///
-/// `HookContext` is conceptually similar to React's Context API. A shared
-/// instance is created at a high level in the tree and read inside any
-/// descendant `StateScope` via `useContext(_:)`.
-///
-/// Because `HookContext` is a `final class`, passing it down the tree shares
-/// the same instance — mutations to `value` are immediately visible to all
-/// holders of the same reference.
-///
-/// ### Example
-/// ```swift
-/// let themeContext = HookContext(Theme.light)
-///
-/// struct RootView: StateView {
-///     var stateBody: some View {
-///         ChildView(context: themeContext)
-///     }
-/// }
-///
-/// struct ChildView: StateView {
-///     let context: HookContext<Theme>
-///     var stateBody: some View {
-///         let theme = useContext(context)
-///         Text("Theme: \(theme)")
-///     }
-/// }
-/// ```
+// A reference-type container for a value that can be shared across a view
+// hierarchy without passing it explicitly through every level.
+//
+// `HookContext` is conceptually similar to React's Context API. A shared
+// instance is created at a high level in the tree and read inside any
+// descendant `StateScope` via `useContext(_:)`.
+//
+// Because `HookContext` is a `final class`, passing it down the tree shares
+// the same instance — mutations to `value` are immediately visible to all
+// holders of the same reference.
+//
+// ### Example
+// ```swift
+// let themeContext = HookContext(Theme.light)
+//
+// struct RootView: StateView {
+//     var stateBody: some View {
+//         ChildView(context: themeContext)
+//     }
+// }
+//
+// struct ChildView: StateView {
+//     let context: HookContext<Theme>
+//     var stateBody: some View {
+//         let theme = useContext(context)
+//         Text("Theme: \(theme)")
+//     }
+// }
+// ```
 // MARK: - HookContext
+// Sendable audit 013: slot state confined to the StateRuntime render pass on MainActor (see docs/engineering/SENDABLE_AUDIT.md)
 public final class HookContext<Value>: @unchecked Sendable {
 
     private var _value: Value

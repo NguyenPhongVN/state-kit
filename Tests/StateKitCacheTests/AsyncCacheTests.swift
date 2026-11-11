@@ -27,13 +27,17 @@ struct AsyncCacheTests {
     }
 
     @Test("TTL entries expire after the interval")
-    func ttlExpiry() async {
+    func ttlExpiry() async throws {
         let cache = SKAsyncCache<String, Int>(ttl: 0.05)
 
         await cache.set("k", 9)
         #expect(await cache.get("k") == 9)
 
-        try? await Task.sleep(nanoseconds: 150_000_000)
+        var gone = false
+        for _ in 0..<100 where !gone {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            gone = await cache.get("k") == nil
+        }
         #expect(await cache.get("k") == nil, "expired entry must be evicted")
     }
 
@@ -65,6 +69,8 @@ struct AsyncCacheTests {
 
         await cache.removeAll()
         #expect(await cache.get("y") == nil)
+        // receiver only exposes `count`
+        // swiftlint:disable:next empty_count
         #expect(await cache.count == 0)
     }
 }

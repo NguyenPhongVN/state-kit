@@ -38,7 +38,6 @@ struct ContainerReleaseDeallocationTests {
         }
 
         // Give the in-flight fetch a moment, then drain.
-        try await Task.sleep(for: .milliseconds(100))
         for _ in 0..<100 where weakContainer != nil || weakStateElement != nil || weakUnlistenedElement != nil {
             try await Task.sleep(for: .milliseconds(10))
         }
@@ -66,7 +65,6 @@ struct ContainerReleaseDeallocationTests {
 
         // The fetch completes into a dead graph: no crash, no notify, and the
         // element (retained only by its work frame) deallocates afterwards.
-        try await Task.sleep(for: .milliseconds(400))
         for _ in 0..<100 where weakElement != nil {
             try await Task.sleep(for: .milliseconds(10))
         }

@@ -29,7 +29,7 @@ public struct ComputedMacro: MemberMacro, ExtensionMacro, MemberAttributeMacro {
         in context: some MacroExpansionContext
     ) throws -> [DeclSyntax] {
         // Ensure this macro is only applied to structs
-        guard let _ = declaration.as(StructDeclSyntax.self) else {
+        guard declaration.is(StructDeclSyntax.self) else {
             throw MacroError.onlyApplicableToStructs
         }
 

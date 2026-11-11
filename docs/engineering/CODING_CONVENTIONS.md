@@ -164,3 +164,30 @@ Per-module status is recorded below and refreshed when conventions change:
 | StateKitDevTools | ✅ | ✅ |
 | StateKitMacros | ✅ | ✅ |
 | StateKitMacrosPlugin | ✅ | ✅ (public facade; plugin internals are compiler-side) |
+
+## 10. Lint policy ledger (spec 013, 2026-11-11)
+
+SwiftLint runs blocking in CI with **0 errors**. Residual warnings are deliberate,
+each backed by a decision below — silence is not a valid state:
+
+| Category | Count (013) | Decision |
+|---|---|---|
+| `trailing_whitespace` in `Tests/StateKitMacrosTests` | ~50 | Expected-source strings pin macro output byte-for-byte; whitespace inside them is part of the contract (fixers corrupt them — see spec 012) |
+| `force_cast` / `force_unwrapping` in Tests | ~41 | Test-local assertion idiom; safe patterns preferred in new tests |
+| `force_cast` / `force_unwrapping` in Sources | ~19 | "Justified conversion" sites — preceded by validation invariants (see ProviderContainer/ProviderElement comments) |
+| `nesting` / `file_length` | ~21 | Test fixtures and integration suites are long/nested by design; thresholds raised (nesting 4, file 500/800) |
+| `line_length` 121–160 | 0 after policy change | Advisory retired (`warning == error` at 160): wrapping long doc/URL lines churned strings and docs; the 160 hard cap is the enforced rule |
+| `empty_count` on count-only receivers | 5 disabled inline | Receivers expose only `count` (counters, Payload) — `isEmpty` fixer broke compile (spec 012 lesson) |
+| `identifier_name` single-char locals | 0 after config | `h` (test harness), math locals, loop vars — accepted idioms, exact-name excluded list |
+| `switch_case_alignment` | 0 after reindent | Codebase standard is aligned cases; 43 sites reindented in 013 |
+| `type_body_length` / `cyclomatic` / `large_tuple` / `function_parameter_count` | documented thresholds | Macro builders, `ensureElement` dispatch point, and controller hooks are large by design (thresholds in `.swiftlint.yml` with comments) |
+| `orphaned_doc_comment` | 0 after fix | File-header example blocks converted to plain comments |
+
+## 11. Test wait policy (spec 013)
+
+- Fixed-sleep-then-assert is banned: waits on assertion paths use bounded deadline
+  polling (`for _ in 0..<100 where !condition { try await Task.sleep(5ms) }`).
+- `try?`-swallowed sleeps survive only in non-throwing bodies with a bounded loop
+  (cancellation terminates the bound; the assertion still runs).
+- Genuinely time-based waits (TTL, debounce, cacheTime windows, absence checks)
+  keep their sleep with a `// sleep justification: …` comment above it.

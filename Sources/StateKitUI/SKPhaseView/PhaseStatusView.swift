@@ -53,10 +53,10 @@ public struct SKStatusView<Value, Idle: View, Loading: View, Success: View, Fail
     /// Switches over the status and renders the matching builder.
     public var body: some View {
         switch status {
-            case .idle:    idle()
-            case .loading: loading()
-            case .success: success()
-            case .failure: failure()
+        case .idle:    idle()
+        case .loading: loading()
+        case .success: success()
+        case .failure: failure()
         }
     }
 }

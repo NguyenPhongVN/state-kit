@@ -22,6 +22,7 @@
 
 // MARK: - Internal shared definition
 
+// Sendable audit 013: immutable definition captured at creation; keyed by id in the store (see docs/engineering/SENDABLE_AUDIT.md)
 /// Shared identity object for atoms produced by the same `atomFamily` call.
 ///
 /// Stored as a reference so that `SKAtomFamilyMember` values produced by the
@@ -66,6 +67,7 @@ public struct SKAtomFamilyMember<ID: Hashable & Sendable, Value: Sendable>: SKSt
 
 // MARK: - SKSelectorFamilyMember (Value/derived)
 
+// Sendable audit 013: immutable definition captured at creation; keyed by id in the store (see docs/engineering/SENDABLE_AUDIT.md)
 /// Shared definition for selector families.
 final class SKSelectorFamilyDefinition<ID: Hashable & Sendable, Value>: @unchecked Sendable {
     let compute: @MainActor (ID, SKAtomTransactionContext) -> Value

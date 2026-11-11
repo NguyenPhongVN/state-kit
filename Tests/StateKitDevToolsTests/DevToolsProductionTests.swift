@@ -154,7 +154,9 @@ struct TestingHonestyTests {
         subscription.close()
         SKAtomStore.shared.setStateValue(2, for: watchedAtom)
 
-        try await Task.sleep(for: .milliseconds(30))
+        for _ in 0..<100 where !seen.contains(1) {
+            try await Task.sleep(for: .milliseconds(5))
+        }
         #expect(seen.contains(1), "observe() was an empty stub")
         #expect(!seen.contains(2), "listener stayed active after close")
     }

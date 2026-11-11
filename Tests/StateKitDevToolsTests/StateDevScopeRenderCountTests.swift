@@ -17,6 +17,8 @@ struct StateDevScopeRenderCountTests {
     @Test("counter increments and notifies observers")
     func incrementsAndNotifies() async throws {
         let counter = StateDevRenderCounter()
+        // receiver only exposes `count`
+        // swiftlint:disable:next empty_count
         #expect(counter.count == 0)
 
         let fired = FiredFlag()

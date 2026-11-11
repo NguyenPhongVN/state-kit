@@ -40,19 +40,19 @@ public enum SKTaskDuration: Comparable, Sendable {
     /// ```
     public var asTimeInterval: TimeInterval {
         switch self {
-            case .never:
+        case .never:
                 Double.nan
-            case .now:
+        case .now:
                 0
-            case let .nanoseconds(nanoseconds):
+        case let .nanoseconds(nanoseconds):
                 Double(nanoseconds) / 1_000_000_000
-            case let .milliseconds(milliseconds):
+        case let .milliseconds(milliseconds):
                 Double(milliseconds) / 1_000
-            case let .seconds(seconds):
+        case let .seconds(seconds):
                 Double(seconds)
-            case let .minutes(minutes):
+        case let .minutes(minutes):
                 Double(minutes * 60)
-            case let .hours(hours):
+        case let .hours(hours):
                 Double(hours * 60 * 60)
         }
     }
@@ -70,19 +70,19 @@ public enum SKTaskDuration: Comparable, Sendable {
     /// ```
     public var asMilliseconds: UInt64 {
         switch self {
-            case .never:
+        case .never:
                 UInt64.max
-            case .now:
+        case .now:
                 0
-            case let .nanoseconds(nanoseconds):
+        case let .nanoseconds(nanoseconds):
                 nanoseconds / 1_000_000
-            case let .milliseconds(milliseconds):
+        case let .milliseconds(milliseconds):
                 milliseconds
-            case let .seconds(seconds):
+        case let .seconds(seconds):
                 seconds * 1_000
-            case let .minutes(minutes):
+        case let .minutes(minutes):
                 minutes * 60 * 1_000
-            case let .hours(hours):
+        case let .hours(hours):
                 hours * 60 * 60 * 1_000
         }
     }
@@ -100,19 +100,19 @@ public enum SKTaskDuration: Comparable, Sendable {
     /// ```
     public var asNanoseconds: UInt64 {
         switch self {
-            case .never:
+        case .never:
                 UInt64.max
-            case .now:
+        case .now:
                 0
-            case let .nanoseconds(nanoseconds):
+        case let .nanoseconds(nanoseconds):
                 nanoseconds
-            case let .milliseconds(milliseconds):
+        case let .milliseconds(milliseconds):
                 milliseconds * 1_000_000
-            case let .seconds(seconds):
+        case let .seconds(seconds):
                 seconds * 1_000_000_000
-            case let .minutes(minutes):
+        case let .minutes(minutes):
                 minutes * 60 * 1_000_000_000
-            case let .hours(hours):
+        case let .hours(hours):
                 hours * 60 * 60 * 1_000_000_000
         }
     }

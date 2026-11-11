@@ -1,3 +1,4 @@
+// Sendable audit 013: touched only through SKAtomStore operations (locked graph) (see docs/engineering/SENDABLE_AUDIT.md)
 /// An inline, anonymous mutable atom created by the `atom()` factory function.
 ///
 /// `SKAtomRef` uses **reference identity** as its `Hashable` key — two distinct

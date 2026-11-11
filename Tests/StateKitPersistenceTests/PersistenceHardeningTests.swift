@@ -33,6 +33,8 @@ struct PersistenceHardeningTests {
                     } else {
                         let loaded = storage.load()
                         // Must be a valid stored payload or the default — never garbage.
+                        // Payload has no isEmpty — the count check is the only option here.
+                        // swiftlint:disable:next empty_count
                         assert(loaded == Payload.defaultValue || loaded.count >= 0)
                     }
                 }
@@ -40,6 +42,8 @@ struct PersistenceHardeningTests {
         }
 
         let final = storage.load()
+        // Payload has no isEmpty — the count check is the only option here.
+        // swiftlint:disable:next empty_count
         #expect(final == Payload.defaultValue || final.count >= 0,
                 "post-stress load must return a coherent payload, got \(final)")
     }
@@ -73,6 +77,7 @@ struct PersistenceHardeningTests {
                 loaded = value
                 break
             }
+            // sleep justification: polling step inside a bounded notifier-build loop
             try await Task.sleep(nanoseconds: 5_000_000)
         }
 

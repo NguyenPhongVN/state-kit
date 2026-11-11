@@ -5,269 +5,269 @@ import StateKitAtoms
 import Riverpods
 import Observation
 
-/// ## Examples (All Macros)
-///
-/// ### Atom macros
-/// ```swift
-/// @StateAtom
-/// struct CounterAtom {
-///     func defaultValue(context: Context) -> Int { 0 }
-/// }
-///
-/// @ValueAtom
-/// struct ThemeAtom {
-///     func value(context: Context) -> String { "light" }
-/// }
-///
-/// @TaskAtom
-/// struct UserTaskAtom {
-///     func task(context: Context) async -> User {
-///         await api.currentUser()
-///     }
-/// }
-///
-/// @ThrowingTaskAtom
-/// struct RemoteConfigAtom {
-///     func task(context: Context) async throws -> Config {
-///         try await api.fetchConfig()
-///     }
-/// }
-///
-/// @PublisherAtom
-/// struct ClockAtom {
-///     func publisher(context: Context) -> AnyPublisher<Date, Never> {
-///         Timer.publish(every: 1, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
-///     }
-/// }
-///
-/// @Atom
-/// struct AutoAtom {
-///     func defaultValue(context: Context) -> Int { 1 }
-/// }
-///
-/// @AtomFamily
-/// struct CountByIdAtom {
-///     let id: String
-///     func defaultValue(context: Context) -> Int { 0 }
-/// }
-///
-/// @SelectorFamily
-/// struct NameByIdSelector {
-///     let id: String
-///     func value(context: Context) -> String { "name-\(id)" }
-/// }
-///
-/// @AsyncTaskFamily
-/// struct UserByIdTask {
-///     let id: String
-///     func task(context: Context) async -> User {
-///         await api.user(id: id)
-///     }
-/// }
-///
-/// @AtomReducer
-/// struct CounterReducer {
-///     func defaultValue(context: Context) -> Int { 0 }
-/// }
-///
-/// @Computed
-/// struct FullNameComputed {
-///     func compute(context: Context) -> String { "State Kit" }
-/// }
-///
-/// @SelectorAtom
-/// struct IsLoggedInSelector {
-///     func select(context: Context) -> Bool { true }
-/// }
-///
-/// @FilteredAtom
-/// struct PositiveOnlyAtom {
-///     func source(context: Context) -> Int { 10 }
-///     func predicate(context: Context, value: Int) -> Bool { value > 0 }
-/// }
-///
-/// @MappedAtom
-/// struct CountTextAtom {
-///     func source(context: Context) -> Int { 3 }
-///     func transform(context: Context, value: Int) -> String { "\(value)" }
-/// }
-///
-/// @CombineAtom
-/// struct CombinedLabelAtom {
-///     func combine(context: Context) -> String { "A-B" }
-/// }
-///
-/// @DistinctAtom
-/// struct DistinctValueAtom {
-///     func source(context: Context) -> Int { 0 }
-/// }
-///
-/// @FlatMapAtom
-/// struct NestedTaskAtom {
-///     func flatMap(context: Context) async -> Int { 42 }
-/// }
-/// ```
-///
-/// ### Riverpod macros
-/// ```swift
-/// @RiverpodNotifier
-/// final class CounterNotifier {
-///     func build() -> Int { 0 }
-/// }
-///
-/// @RiverpodFamily
-/// func userFamily(id: String) -> User? { nil }
-///
-/// @StateProvider
-/// func selectedTab() -> Int { 0 }
-///
-/// @Provider
-/// func greeting() -> String { "Hello StateKit" }
-///
-/// @FutureProvider
-/// func userProfile() async throws -> Profile {
-///     try await api.profile()
-/// }
-///
-/// @StreamProvider
-/// func ticker() -> AsyncStream<Int> {
-///     AsyncStream { continuation in
-///         continuation.yield(1)
-///         continuation.finish()
-///     }
-/// }
-///
-/// @ProviderFamily
-/// func todoById(id: String) -> Todo? { store[id] }
-///
-/// @RiverpodSelector
-/// func isPremium() -> Bool { false }
-///
-/// @RiverpodAsync
-/// func bootstrap() async -> Bool { true }
-///
-/// @RiverpodFutureFamily
-/// func postById(id: String) async throws -> Post {
-///     try await api.post(id: id)
-/// }
-///
-/// @RiverpodStreamFamily
-/// func chatByRoom(id: String) -> AsyncStream<Message> {
-///     AsyncStream { continuation in
-///         continuation.finish()
-///     }
-/// }
-/// ```
-///
-/// ### View macros
-/// ```swift
-/// @HookView
-/// struct CounterScreen: View {
-///     var stateBody: some View { Text("Counter") }
-/// }
-///
-/// @StateView
-/// struct ProfileScreen: View {
-///     var stateBody: some View { Text("Profile") }
-/// }
-///
-/// @AsyncView(atom: UserTaskAtom())
-/// struct UserScreen: View {
-///     var stateBody: some View { Text("User") }
-/// }
-///
-/// @ObservableState
-/// struct FormState {
-///     var name: String = ""
-/// }
-/// ```
-///
-/// ### Hook macros
-/// ```swift
-/// @Hook
-/// func useLogger(_ value: Int) {
-///     _ = value
-/// }
-///
-/// @HookState
-/// struct CounterState {
-///     var count: Int = 0
-/// }
-///
-/// @HookRef
-/// struct NodeRef {
-///     var node: Int? = nil
-/// }
-///
-/// @HookToggle
-/// struct ToggleState {
-///     var isOn: Bool = false
-/// }
-///
-/// @HookEffect
-/// struct ScreenEffect {
-///     var deps: [Int] = [0]
-///     func effect() {}
-/// }
-///
-/// @AsyncHook
-/// struct LoadHook {
-///     func run() async {}
-/// }
-///
-/// @HookPrevious
-/// struct PreviousValueHook {
-///     var value: Int = 0
-/// }
-///
-/// @HookInterval
-/// struct PollHook {
-///     var milliseconds: Int = 1000
-///     func tick() {}
-/// }
-///
-/// @HookMemo
-/// struct FullNameMemo {
-///     var first: String = "A"
-///     var last: String = "B"
-///     func build() -> String { "\(first) \(last)" }
-/// }
-///
-/// @HookCallback
-/// struct SaveCallback {
-///     func callback() {}
-/// }
-///
-/// @HookReducer
-/// struct CounterHookReducer {
-///     enum Action { case inc }
-///     var initialState: Int = 0
-///     func reduce(state: Int, action: Action) -> Int { state + 1 }
-/// }
-///
-/// @HookContext
-/// struct SessionContext {
-///     var token: String = ""
-/// }
-///
-/// @HookForm
-/// struct LoginForm {
-///     var email: String = ""
-///     var password: String = ""
-/// }
-/// ```
-///
-/// ### Utility macros
-/// ```swift
-/// @Debounce(milliseconds: 300)
-/// func onSearchChanged(_ query: String) async {
-///     _ = query
-/// }
-///
-/// @Throttle(milliseconds: 500)
-/// func onTap() async {}
-/// ```
-///
+// ## Examples (All Macros)
+//
+// ### Atom macros
+// ```swift
+// @StateAtom
+// struct CounterAtom {
+//     func defaultValue(context: Context) -> Int { 0 }
+// }
+//
+// @ValueAtom
+// struct ThemeAtom {
+//     func value(context: Context) -> String { "light" }
+// }
+//
+// @TaskAtom
+// struct UserTaskAtom {
+//     func task(context: Context) async -> User {
+//         await api.currentUser()
+//     }
+// }
+//
+// @ThrowingTaskAtom
+// struct RemoteConfigAtom {
+//     func task(context: Context) async throws -> Config {
+//         try await api.fetchConfig()
+//     }
+// }
+//
+// @PublisherAtom
+// struct ClockAtom {
+//     func publisher(context: Context) -> AnyPublisher<Date, Never> {
+//         Timer.publish(every: 1, on: .main, in: .common).autoconnect().eraseToAnyPublisher()
+//     }
+// }
+//
+// @Atom
+// struct AutoAtom {
+//     func defaultValue(context: Context) -> Int { 1 }
+// }
+//
+// @AtomFamily
+// struct CountByIdAtom {
+//     let id: String
+//     func defaultValue(context: Context) -> Int { 0 }
+// }
+//
+// @SelectorFamily
+// struct NameByIdSelector {
+//     let id: String
+//     func value(context: Context) -> String { "name-\(id)" }
+// }
+//
+// @AsyncTaskFamily
+// struct UserByIdTask {
+//     let id: String
+//     func task(context: Context) async -> User {
+//         await api.user(id: id)
+//     }
+// }
+//
+// @AtomReducer
+// struct CounterReducer {
+//     func defaultValue(context: Context) -> Int { 0 }
+// }
+//
+// @Computed
+// struct FullNameComputed {
+//     func compute(context: Context) -> String { "State Kit" }
+// }
+//
+// @SelectorAtom
+// struct IsLoggedInSelector {
+//     func select(context: Context) -> Bool { true }
+// }
+//
+// @FilteredAtom
+// struct PositiveOnlyAtom {
+//     func source(context: Context) -> Int { 10 }
+//     func predicate(context: Context, value: Int) -> Bool { value > 0 }
+// }
+//
+// @MappedAtom
+// struct CountTextAtom {
+//     func source(context: Context) -> Int { 3 }
+//     func transform(context: Context, value: Int) -> String { "\(value)" }
+// }
+//
+// @CombineAtom
+// struct CombinedLabelAtom {
+//     func combine(context: Context) -> String { "A-B" }
+// }
+//
+// @DistinctAtom
+// struct DistinctValueAtom {
+//     func source(context: Context) -> Int { 0 }
+// }
+//
+// @FlatMapAtom
+// struct NestedTaskAtom {
+//     func flatMap(context: Context) async -> Int { 42 }
+// }
+// ```
+//
+// ### Riverpod macros
+// ```swift
+// @RiverpodNotifier
+// final class CounterNotifier {
+//     func build() -> Int { 0 }
+// }
+//
+// @RiverpodFamily
+// func userFamily(id: String) -> User? { nil }
+//
+// @StateProvider
+// func selectedTab() -> Int { 0 }
+//
+// @Provider
+// func greeting() -> String { "Hello StateKit" }
+//
+// @FutureProvider
+// func userProfile() async throws -> Profile {
+//     try await api.profile()
+// }
+//
+// @StreamProvider
+// func ticker() -> AsyncStream<Int> {
+//     AsyncStream { continuation in
+//         continuation.yield(1)
+//         continuation.finish()
+//     }
+// }
+//
+// @ProviderFamily
+// func todoById(id: String) -> Todo? { store[id] }
+//
+// @RiverpodSelector
+// func isPremium() -> Bool { false }
+//
+// @RiverpodAsync
+// func bootstrap() async -> Bool { true }
+//
+// @RiverpodFutureFamily
+// func postById(id: String) async throws -> Post {
+//     try await api.post(id: id)
+// }
+//
+// @RiverpodStreamFamily
+// func chatByRoom(id: String) -> AsyncStream<Message> {
+//     AsyncStream { continuation in
+//         continuation.finish()
+//     }
+// }
+// ```
+//
+// ### View macros
+// ```swift
+// @HookView
+// struct CounterScreen: View {
+//     var stateBody: some View { Text("Counter") }
+// }
+//
+// @StateView
+// struct ProfileScreen: View {
+//     var stateBody: some View { Text("Profile") }
+// }
+//
+// @AsyncView(atom: UserTaskAtom())
+// struct UserScreen: View {
+//     var stateBody: some View { Text("User") }
+// }
+//
+// @ObservableState
+// struct FormState {
+//     var name: String = ""
+// }
+// ```
+//
+// ### Hook macros
+// ```swift
+// @Hook
+// func useLogger(_ value: Int) {
+//     _ = value
+// }
+//
+// @HookState
+// struct CounterState {
+//     var count: Int = 0
+// }
+//
+// @HookRef
+// struct NodeRef {
+//     var node: Int? = nil
+// }
+//
+// @HookToggle
+// struct ToggleState {
+//     var isOn: Bool = false
+// }
+//
+// @HookEffect
+// struct ScreenEffect {
+//     var deps: [Int] = [0]
+//     func effect() {}
+// }
+//
+// @AsyncHook
+// struct LoadHook {
+//     func run() async {}
+// }
+//
+// @HookPrevious
+// struct PreviousValueHook {
+//     var value: Int = 0
+// }
+//
+// @HookInterval
+// struct PollHook {
+//     var milliseconds: Int = 1000
+//     func tick() {}
+// }
+//
+// @HookMemo
+// struct FullNameMemo {
+//     var first: String = "A"
+//     var last: String = "B"
+//     func build() -> String { "\(first) \(last)" }
+// }
+//
+// @HookCallback
+// struct SaveCallback {
+//     func callback() {}
+// }
+//
+// @HookReducer
+// struct CounterHookReducer {
+//     enum Action { case inc }
+//     var initialState: Int = 0
+//     func reduce(state: Int, action: Action) -> Int { state + 1 }
+// }
+//
+// @HookContext
+// struct SessionContext {
+//     var token: String = ""
+// }
+//
+// @HookForm
+// struct LoginForm {
+//     var email: String = ""
+//     var password: String = ""
+// }
+// ```
+//
+// ### Utility macros
+// ```swift
+// @Debounce(milliseconds: 300)
+// func onSearchChanged(_ query: String) async {
+//     _ = query
+// }
+//
+// @Throttle(milliseconds: 500)
+// func onTap() async {}
+// ```
+//
 // MARK: - Atom Macros
 
 /// @StateAtom: Applied to `struct`. Generates `typealias Value` and `SKStateAtom` conformance.

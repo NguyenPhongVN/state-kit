@@ -234,6 +234,7 @@ extension ProviderProtocol {
 
 // MARK: - ProviderOverride
 
+// Sendable audit 013: immutable value wrapper (see docs/engineering/SENDABLE_AUDIT.md)
 /// A record that overrides a provider's value or implementation.
 ///
 /// `ProviderOverride` is used to temporarily replace a provider's behavior for testing,
@@ -268,6 +269,7 @@ public struct ProviderOverride: @unchecked Sendable {
 
 // MARK: - SelectorProvider
 
+// Sendable audit 013: immutable config; @MainActor closure; engine access is MainActor-confined (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that selects a specific part of another provider's state.
 ///
 /// `SelectorProvider` wraps another provider and extracts a value using a KeyPath.

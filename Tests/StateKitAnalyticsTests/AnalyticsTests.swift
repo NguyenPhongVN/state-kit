@@ -181,8 +181,9 @@ final class AnalyticsTests: XCTestCase {
         tracker = nil
 
         for _ in 0..<50 { await Task.yield() }
-        try await Task.sleep(nanoseconds: 100_000_000)
-
+        for _ in 0..<100 where weakTracker != nil {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         XCTAssertNil(weakTracker, "EventTracker leaked: auto-flush task captures self strongly")
     }
 
@@ -198,6 +199,7 @@ final class AnalyticsTests: XCTestCase {
         tracker?.track("pending_event")  // Below batch size: only the auto-flush would send it
         tracker = nil
 
+        // sleep justification: auto-flush interval window under test
         try await Task.sleep(nanoseconds: 300_000_000)
 
         XCTAssertNil(weakTracker, "released tracker must deallocate")

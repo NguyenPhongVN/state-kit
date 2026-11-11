@@ -1,3 +1,4 @@
+// Sendable audit 013: touched only through SKAtomStore operations (locked graph) (see docs/engineering/SENDABLE_AUDIT.md)
 /// An inline, anonymous derived atom created by the `selector()` factory function.
 ///
 /// `SKSelectorRef` is the read-only counterpart to `SKAtomRef`. It computes

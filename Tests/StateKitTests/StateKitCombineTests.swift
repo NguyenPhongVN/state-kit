@@ -92,9 +92,11 @@ struct StateKitCombineTests {
         #expect(phase1 == .loading)
 
         // Wait for it to resolve (CurrentValueSubject emits immediately)
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        let phase2 = atom._getOrCreateBox(in: store).value
+        var phase2 = atom._getOrCreateBox(in: store).value
+        for _ in 0..<100 where phase2 != .success(10) {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            phase2 = atom._getOrCreateBox(in: store).value
+        }
         #expect(phase2 == .success(10))
     }
 }

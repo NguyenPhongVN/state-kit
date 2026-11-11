@@ -1,9 +1,9 @@
 import Foundation
 
-/// A single page returned by `useLoadMore`.
-///
-/// The page carries the newly fetched items plus the cursor needed to load
-/// the next page. Set `nextCursor` to `nil` when there are no more pages.
+// A single page returned by `useLoadMore`.
+//
+// The page carries the newly fetched items plus the cursor needed to load
+// the next page. Set `nextCursor` to `nil` when there are no more pages.
 // MARK: - LoadMorePage
 public struct LoadMorePage<Item, Cursor>: Sendable where Item: Sendable, Cursor: Sendable {
     /// Accumulated items across all loaded pages.
@@ -21,16 +21,16 @@ public struct LoadMorePage<Item, Cursor>: Sendable where Item: Sendable, Cursor:
     }
 }
 
-/// The current state and controls returned by `useLoadMore`.
-///
-/// `phase` represents the current list-level async state:
-/// - before the first successful load, it moves through `.idle`, `.loading`,
-///   `.success`, and `.failure`
-/// - after a successful load, later `reload()` calls keep the last
-///   `.success(items)` visible while `isReloading` becomes `true`
-///
-/// `loadMoreError` is separate from `phase` because loading the next page
-/// should not replace already rendered items with a failure phase.
+// The current state and controls returned by `useLoadMore`.
+//
+// `phase` represents the current list-level async state:
+// - before the first successful load, it moves through `.idle`, `.loading`,
+//   `.success`, and `.failure`
+// - after a successful load, later `reload()` calls keep the last
+//   `.success(items)` visible while `isReloading` becomes `true`
+//
+// `loadMoreError` is separate from `phase` because loading the next page
+// should not replace already rendered items with a failure phase.
 // MARK: - LoadMoreController
 public struct LoadMoreController<Item> {
     /// Initial load lifecycle (idle/loading/success/failure).

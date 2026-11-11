@@ -98,7 +98,7 @@ public struct ABTest<T: Sendable>: Sendable {
 
 /// Runs A/B test and collects results.
 @MainActor
-public final class ABTestRunner <T: Sendable>{
+public final class ABTestRunner<T: Sendable> {
     /// One user's assignment outcome.
     public struct Result: Sendable {
     /// The test that produced the assignment.

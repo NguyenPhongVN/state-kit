@@ -349,6 +349,7 @@ public final class NotifierInstanceElement<N: Notifier<T>, T: Sendable>: Provide
 
 // MARK: - NotifierProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that manages complex stateful logic using a Notifier instance.
 ///
 /// `NotifierProvider` wraps a `Notifier` class and exposes its computed state as a provider.
@@ -602,6 +603,7 @@ public struct NotifierProvider<N: Notifier<T>, T: Sendable>: ProviderProtocol, @
 
 // MARK: - NotifierInstanceProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that returns the notifier instance rather than just its state.
 ///
 /// `NotifierInstanceProvider` is a companion provider accessible via `.notifier`

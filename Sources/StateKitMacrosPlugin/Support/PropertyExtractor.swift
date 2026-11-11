@@ -1,13 +1,13 @@
 import SwiftSyntax
 
-/// Metadata for a stored property extracted from a declaration.
-///
-/// ── Example ──────────────────────────────────────────────────────────
-///   For `let count: Int = 0`:
-///     PropertyInfo(name: "count", typeName: "Int", defaultValue: "0")
-///
-///   For `var name: String`:
-///     PropertyInfo(name: "name", typeName: "String", defaultValue: nil)
+// Metadata for a stored property extracted from a declaration.
+//
+// ── Example ──────────────────────────────────────────────────────────
+//   For `let count: Int = 0`:
+//     PropertyInfo(name: "count", typeName: "Int", defaultValue: "0")
+//
+//   For `var name: String`:
+//     PropertyInfo(name: "name", typeName: "String", defaultValue: nil)
 // MARK: - PropertyInfo
 struct PropertyInfo {
     let name: String
@@ -15,21 +15,21 @@ struct PropertyInfo {
     let defaultValue: String?
 }
 
-/// Utility for extracting stored properties, typealiases, and functions from `DeclGroupSyntax`.
-///
-/// Used by Hook macros to inspect struct bodies and generate `use<Name>` peer functions
-/// with matching parameter signatures.
-///
-/// ## What counts as a "stored property"
-/// - `var` and `let` instance members (not `static`/`class`)
-/// - Properties with or without initial values
-/// - Properties with `willSet`/`didSet` observers
-///
-/// ## What is excluded
-/// - Computed properties (`get`/`set`/`read`/`modify`)
-/// - Static/class properties
-/// - Lazy properties (Swift memberwise init excludes them)
-/// - Property wrappers (`@State`, `@Binding`, etc.) — handled by their own macro
+// Utility for extracting stored properties, typealiases, and functions from `DeclGroupSyntax`.
+//
+// Used by Hook macros to inspect struct bodies and generate `use<Name>` peer functions
+// with matching parameter signatures.
+//
+// ## What counts as a "stored property"
+// - `var` and `let` instance members (not `static`/`class`)
+// - Properties with or without initial values
+// - Properties with `willSet`/`didSet` observers
+//
+// ## What is excluded
+// - Computed properties (`get`/`set`/`read`/`modify`)
+// - Static/class properties
+// - Lazy properties (Swift memberwise init excludes them)
+// - Property wrappers (`@State`, `@Binding`, etc.) — handled by their own macro
 // MARK: - PropertyExtractor
 enum PropertyExtractor {
 

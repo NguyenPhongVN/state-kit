@@ -28,6 +28,7 @@ struct TTLCallbackRoutingTests {
         cache.set("stays", 2, ttl: 60)
 
         // Past the short TTL.
+        // sleep justification: real-clock TTL expiry — the wait is the behavior under test
         try await Task.sleep(nanoseconds: 120_000_000)
 
         #expect(cache.get("gone") == nil, "expired entry must read as miss")

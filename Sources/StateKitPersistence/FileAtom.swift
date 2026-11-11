@@ -15,6 +15,7 @@ public protocol FileAtomSerializable: Codable, Sendable {
 
 // MARK: - FileAtomStorage
 
+// Sendable audit 013: NSLock guards cachedValue and observers (see load/save/delete) (see docs/engineering/SENDABLE_AUDIT.md)
 /// JSON-file-backed storage for atom values.
 ///
 /// The load/save contract is explicit — **load at start, save on change** —
@@ -64,6 +65,7 @@ public final class FileAtomStorage<T: FileAtomSerializable>: @unchecked Sendable
 
     private var cachedValue: T?
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
     /// Reads the stored value; returns `T.defaultValue` when the file is
     /// missing or cannot be decoded. The decoded value is cached — repeated
     /// atom reads do not re-read the disk (`save` refreshes the cache).

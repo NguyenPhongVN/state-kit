@@ -3,41 +3,41 @@ import Combine
 
 // MARK: - Provider Family Overview
 
-/// A "family" is a parameterized set of providers, one per unique argument.
-///
-/// Families solve the problem of creating dynamic providers based on runtime arguments.
-/// Instead of manually creating a provider for each possible value, use a family to
-/// automatically generate providers as needed.
-///
-/// **Example Problem (Without Families):**
-/// ```swift
-/// // Need provider for user 1
-/// let user1Provider = Provider { ... fetch user 1 ... }
-/// // Need provider for user 2
-/// let user2Provider = Provider { ... fetch user 2 ... }
-/// // Need provider for user 3
-/// let user3Provider = Provider { ... fetch user 3 ... }
-/// // etc... (manual for each user ID)
-/// ```
-///
-/// **Solution (With Families):**
-/// ```swift
-/// let userProvider = Provider.family { (ref, userId: Int) in
-///     return try await fetchUser(userId)
-/// }
-///
-/// // Now automatically generates separate cached providers
-/// userProvider(1)  // Cached provider for user 1
-/// userProvider(2)  // Cached provider for user 2
-/// userProvider(3)  // Cached provider for user 3
-/// ```
-///
-/// **Key Benefits:**
-/// - **Dynamic**: Create providers on-demand for any argument
-/// - **Cached**: Each unique argument gets its own provider with independent cache
-/// - **Efficient**: Only creates providers for arguments actually used
-/// - **Type-safe**: Arguments must be Hashable and Sendable
-/// - **Zero boilerplate**: No manual provider creation for each value
+// A "family" is a parameterized set of providers, one per unique argument.
+//
+// Families solve the problem of creating dynamic providers based on runtime arguments.
+// Instead of manually creating a provider for each possible value, use a family to
+// automatically generate providers as needed.
+//
+// **Example Problem (Without Families):**
+// ```swift
+// // Need provider for user 1
+// let user1Provider = Provider { ... fetch user 1 ... }
+// // Need provider for user 2
+// let user2Provider = Provider { ... fetch user 2 ... }
+// // Need provider for user 3
+// let user3Provider = Provider { ... fetch user 3 ... }
+// // etc... (manual for each user ID)
+// ```
+//
+// **Solution (With Families):**
+// ```swift
+// let userProvider = Provider.family { (ref, userId: Int) in
+//     return try await fetchUser(userId)
+// }
+//
+// // Now automatically generates separate cached providers
+// userProvider(1)  // Cached provider for user 1
+// userProvider(2)  // Cached provider for user 2
+// userProvider(3)  // Cached provider for user 3
+// ```
+//
+// **Key Benefits:**
+// - **Dynamic**: Create providers on-demand for any argument
+// - **Cached**: Each unique argument gets its own provider with independent cache
+// - **Efficient**: Only creates providers for arguments actually used
+// - **Type-safe**: Arguments must be Hashable and Sendable
+// - **Zero boilerplate**: No manual provider creation for each value
 
 // MARK: - FamilyMemberID
 

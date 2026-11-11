@@ -250,3 +250,11 @@ Testing stubs: implement hoặc xóa khỏi public API (23, 25, 26).
 
 **Giai đoạn 3 — Macros + coverage:** validation + unique names cho macros (20-22, 26), sau đó bù test cho toàn bộ
 khoảng trống liệt kê trên (ưu tiên teardown/leak test vì bắt đúng class bug P1).
+
+**Cập nhật 2026-11-11 (feature 013 — hardening completion):** 4 mục còn lại của review
+đã đóng: (1) quyết định kiến trúc 3-engine được chủ sở hữu phê duyệt — giữ cả 3 paradigm,
+docs/engineering/ARCHITECTURE.md là bản đồ ranh giới; (2) lint 965 → 132 warnings, mọi
+nhóm còn lại có quyết định ghi trong rulebook §10 (0 errors); (3) 17 site fixed-sleep
+chuyển sang bounded deadline polling + 19 sleep có chủ đích có justification — ổn định
+qua 3 lần chạy suite liên tiếp; (4) audit 40 site @unchecked Sendable công bố tại
+docs/engineering/SENDABLE_AUDIT.md — 0 site unsafe.

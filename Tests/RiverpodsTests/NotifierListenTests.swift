@@ -74,8 +74,9 @@ struct NotifierListenTests {
         let sub = container.listen(provider) { _, _ in calls += 1 }
 
         container.read(provider.notifier).state = .data(9)
-        try await Task.sleep(for: .milliseconds(50))
-
+        for _ in 0..<100 where calls < 1 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
         #expect(calls >= 1, "listener missed an AsyncNotifier mutation")
         sub.close()
     }

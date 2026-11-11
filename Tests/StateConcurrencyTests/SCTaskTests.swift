@@ -4,7 +4,7 @@ import Foundation
 
 @Suite("StateConcurrency — SKTask Extensions")
 struct SKTaskTests {
-    
+
     final class AtomicCounter: @unchecked Sendable {
         private var _count = 0
         private let lock = NSLock()
@@ -20,7 +20,7 @@ struct SKTaskTests {
             return _count
         }
     }
-    
+
     @Test("Task.retrying succeeds after failures")
     func testTaskRetrySucceeds() async throws {
         let counter = AtomicCounter()
@@ -31,11 +31,11 @@ struct SKTaskTests {
             }
             return "Success"
         }.value
-        
+
         #expect(result == "Success")
         #expect(counter.count == 3)
     }
-    
+
     @Test("Task.retrying fails after max retries")
     func testTaskRetryFails() async throws {
         let counter = AtomicCounter()
@@ -49,7 +49,7 @@ struct SKTaskTests {
             #expect(counter.count == 3) // Initial + 2 retries
         }
     }
-    
+
     @Test("Task.timeout throws on timeout")
     func testTaskTimeout() async throws {
         do {
@@ -62,7 +62,7 @@ struct SKTaskTests {
             // Success: threw error
         }
     }
-    
+
     @Test("Task.gather executes tasks in parallel")
     func testTaskGather() async throws {
         let results = await Task.gather([
@@ -70,11 +70,11 @@ struct SKTaskTests {
             { @Sendable in "B" },
             { @Sendable in "C" }
         ])
-        
+
         let values = try results.map { try $0.get() }
         #expect(values.sorted() == ["A", "B", "C"])
     }
-    
+
     @Test("Task.race returns first finisher")
     func testTaskRace() async throws {
         let result = try await Task.race([
@@ -87,7 +87,7 @@ struct SKTaskTests {
                 return "Fast"
             }
         ])
-        
+
         #expect(result == "Fast")
     }
 }

@@ -17,7 +17,7 @@ extension AsyncSequence where Element: Sendable, Self: Sendable {
     }
 }
 
-/// An async sequence that throws a timeout error if an element is not produced within a specified duration.
+// An async sequence that throws a timeout error if an element is not produced within a specified duration.
 // MARK: - AsyncThrowingTimeoutSequence
 public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: AsyncSequence where Base.Element: Sendable {
     /// Elements are the awaited task results.
@@ -93,7 +93,7 @@ public struct AsyncThrowingTimeoutSequence<Base: AsyncSequence & Sendable>: Asyn
     }
 }
 
-/// An async sequence that debounces the elements of a base async sequence.
+// An async sequence that debounces the elements of a base async sequence.
 // MARK: - AsyncDebounceSequence
 public struct AsyncDebounceSequence<Base: AsyncSequence & Sendable>: AsyncSequence where Base.Element: Sendable {
     /// Elements are the awaited task results.

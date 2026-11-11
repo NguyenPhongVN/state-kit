@@ -10,16 +10,16 @@ struct RiverpodLifecycleTests {
     func autoDispose() {
         let container = ProviderContainer()
         var disposed = false
-        
+
         let p = Provider { ref in
             ref.onDispose { disposed = true }
             return "Value"
         }
-        
+
         // Use and then release
         _ = container.addListener(for: p)
         #expect(!disposed)
-        
+
         container.removeListener(for: p)
         #expect(disposed)
     }
@@ -28,15 +28,15 @@ struct RiverpodLifecycleTests {
     func keepAlive() {
         let container = ProviderContainer()
         var disposed = false
-        
+
         let p = Provider(autoDispose: false) { ref in
             ref.onDispose { disposed = true }
             return "Solid"
         }
-        
+
         _ = container.addListener(for: p)
         container.removeListener(for: p)
-        
+
         #expect(!disposed)
         #expect(container.read(p) == "Solid")
     }
@@ -46,22 +46,22 @@ struct RiverpodLifecycleTests {
         let container = ProviderContainer()
         var cancelledCount = 0
         var resumedCount = 0
-        
+
         let p = Provider { ref in
             ref.onCancel { cancelledCount += 1 }
             ref.onResume { resumedCount += 1 }
             return "Live"
         }
-        
+
         // Initial setup
         _ = container.addListener(for: p)
         #expect(cancelledCount == 0)
         #expect(resumedCount == 1) // First activation triggers resume
-        
+
         // Remove all listeners
         container.removeListener(for: p)
         #expect(cancelledCount == 1)
-        
+
         // Re-add listener (This should trigger onResume again)
         _ = container.addListener(for: p)
         #expect(resumedCount == 2)

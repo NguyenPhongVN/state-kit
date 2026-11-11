@@ -112,6 +112,7 @@ public final class AsyncSequenceProviderElement<T: Sendable, S: AsyncSequence>: 
 
 // MARK: - AsyncSequenceProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that iterates an async sequence and emits values as they arrive.
 ///
 /// `AsyncSequenceProvider` is designed for handling continuous sequences of data using

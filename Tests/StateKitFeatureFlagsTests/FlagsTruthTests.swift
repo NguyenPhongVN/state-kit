@@ -78,10 +78,8 @@ struct FlagsTruthTests {
         let rolloutB = PercentageRollout(percentage: 50, salt: "feature-b")
 
         var differing = 0
-        for user in 0..<50 {
-            if rolloutA.isEnabled(for: "user-\(user)") != rolloutB.isEnabled(for: "user-\(user)") {
-                differing += 1
-            }
+        for user in 0..<50 where rolloutA.isEnabled(for: "user-\(user)") != rolloutB.isEnabled(for: "user-\(user)") {
+            differing += 1
         }
         #expect(differing > 0, "unsalted rollouts correlate across features")
 

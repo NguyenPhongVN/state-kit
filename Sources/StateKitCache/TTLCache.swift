@@ -112,10 +112,8 @@ public final class TimeToLiveCache<Key: Hashable & Sendable, Value: Sendable>: @
         let now = Date()
         var expired: [Key] = []
 
-        for (key, entry) in cache {
-            if entry.expiresAt <= now {
-                expired.append(key)
-            }
+        for (key, entry) in cache where entry.expiresAt <= now {
+            expired.append(key)
         }
 
         for key in expired {
@@ -242,10 +240,8 @@ public final class SlidingWindowTTLCache<Key: Hashable & Sendable, Value: Sendab
         let now = Date()
         var expired: [Key] = []
 
-        for (key, entry) in cache {
-            if now.timeIntervalSince(entry.lastAccessedAt) > ttl {
-                expired.append(key)
-            }
+        for (key, entry) in cache where now.timeIntervalSince(entry.lastAccessedAt) > ttl {
+            expired.append(key)
         }
 
         for key in expired {

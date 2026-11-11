@@ -56,6 +56,7 @@ extension AsyncSequence where Self: Sendable {
 }
 #endif
 
+// Sendable audit 013: pump task is the single writer; Combine handles cross-thread delivery (see docs/engineering/SENDABLE_AUDIT.md)
 /// Wraps a pump-fed subject so deallocating the publisher (with no active
 /// subscriptions) cancels the pump task.
 private final class PumpPublisher<Output, Failure: Error>: Publisher, @unchecked Sendable {

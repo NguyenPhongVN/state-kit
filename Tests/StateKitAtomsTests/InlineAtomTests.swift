@@ -43,28 +43,32 @@ struct InlineAtomTests {
     }
 
     @Test("asyncAtom succeeds")
-    func asyncAtomSucceeds() async {
+    func asyncAtomSucceeds() async throws {
         let store = SKAtomStore()
         let inlineAtom = asyncAtom { _ in "loaded" }
 
         _ = store.taskBox(for: inlineAtom)
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        let box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(inlineAtom))
+        var box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(inlineAtom))
+        for _ in 0..<100 where box?.value.value != "loaded" {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            box = store.existingBox(for: SKAtomKey(inlineAtom))
+        }
         #expect(box?.value.value == "loaded")
     }
 
     @Test("throwingAsyncAtom stores failure")
-    func throwingAsyncAtomFails() async {
+    func throwingAsyncAtomFails() async throws {
         let store = SKAtomStore()
         let inlineAtom: SKThrowingAsyncAtomRef<String> = throwingAsyncAtom { _ in
             throw ControlledRefreshError()
         }
 
         _ = store.throwingTaskBox(for: inlineAtom)
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        let box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(inlineAtom))
+        var box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(inlineAtom))
+        for _ in 0..<100 where box?.value.isFailure != true {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            box = store.existingBox(for: SKAtomKey(inlineAtom))
+        }
         #expect(box?.value.isFailure == true)
     }
 }

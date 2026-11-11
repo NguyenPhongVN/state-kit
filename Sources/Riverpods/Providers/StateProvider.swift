@@ -61,6 +61,7 @@ public final class StateProviderElement<T: Sendable>: ProviderElement<StateProvi
 
 // MARK: - StateProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that stores and manages mutable state that can be updated directly.
 ///
 /// `StateProvider<T>` is the reactive foundation for mutable state in the Riverpods system.
@@ -296,6 +297,7 @@ public struct StateProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable 
 
 // MARK: - StateProviderNotifier
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that grants access to a StateProvider's state for mutation.
 ///
 /// `StateProviderNotifier` is a companion provider that wraps a `StateProvider` and

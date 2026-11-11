@@ -43,9 +43,11 @@ struct DeferredHooksTests {
         source = 4
         let lagging = renderPass() // still an older deferred copy
 
-        // Let the low-priority catch-up land.
-        try? await Task.sleep(nanoseconds: 250_000_000)
-
+        // Let the low-priority catch-up land (bounded settle; try? keeps the
+        // non-throwing test body — the bound terminates on cancellation too).
+        for _ in 0..<50 {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+        }
         let caughtUp = renderPass()
         #expect(lagging <= 3, "deferred copy lags behind the urgent value")
         #expect(caughtUp == 4, "deferred must coalesce to the latest source (got \(caughtUp))")
@@ -85,9 +87,13 @@ struct DeferredHooksTests {
         #expect(isPending == true, "isPending must be true while the work is in flight")
 
         gate.release()
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        render(context) { (isPending, _) = useTransition() }
-        #expect(isPending == false, "isPending must clear after the work completes")
+        var cleared = false
+        for _ in 0..<100 where !cleared {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+            var pending = true
+            render(context) { (pending, _) = useTransition() }
+            cleared = !pending
+        }
+        #expect(cleared, "isPending must clear after the work completes")
     }
 }

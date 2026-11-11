@@ -23,25 +23,25 @@ actor SKGlobalActor {
     static let shared = SKGlobalActor()
 }
 
-/// A thread-safe reference to a `Task` that can be stored and cancelled.
-///
-/// `TaskReference` provides a `Sendable`-conforming wrapper around a `Task<Void, Never>`
-/// that uses `SKGlobalActor` to ensure thread-safe access. This is useful when you need
-/// to store a task reference and potentially cancel it from different concurrent contexts.
-///
-/// ## Usage Example:
-/// ```swift
-/// let taskRef = TaskReference()
-///
-/// // Store a task
-/// let task = Task {
-///     await performLongRunningOperation()
-/// }
-/// await taskRef.set(task)
-///
-/// // Cancel it later from anywhere
-/// await taskRef.cancel()
-/// ```
+// A thread-safe reference to a `Task` that can be stored and cancelled.
+//
+// `TaskReference` provides a `Sendable`-conforming wrapper around a `Task<Void, Never>`
+// that uses `SKGlobalActor` to ensure thread-safe access. This is useful when you need
+// to store a task reference and potentially cancel it from different concurrent contexts.
+//
+// ## Usage Example:
+// ```swift
+// let taskRef = TaskReference()
+//
+// // Store a task
+// let task = Task {
+//     await performLongRunningOperation()
+// }
+// await taskRef.set(task)
+//
+// // Cancel it later from anywhere
+// await taskRef.cancel()
+// ```
 // MARK: - TaskReference
 final class TaskReference: Sendable {
     typealias Wrapped = Task<Void, Never>
@@ -66,36 +66,36 @@ final class TaskReference: Sendable {
     }
 }
 
-/// A thread-safe mechanism to ensure an operation is performed exactly once.
-///
-/// `OncePerformer` uses `SKGlobalActor` to guarantee that a given operation is executed
-/// only one time, even when called from multiple concurrent contexts. This is useful for
-/// one-time initialization, cleanup operations, or ensuring idempotent behavior.
-///
-/// ## Usage Example:
-/// ```swift
-/// let performer = OncePerformer()
-///
-/// // Called from multiple places concurrently
-/// Task {
-///     await performer.perform {
-///         print("This will only print once")
-///         setupResources()
-///     }
-/// }
-///
-/// Task {
-///     await performer.perform {
-///         print("This will never execute")
-///     }
-/// }
-/// ```
-///
-/// ## Common Use Cases:
-/// - **Initialization**: Ensure setup code runs only once
-/// - **Cleanup**: Guarantee teardown happens exactly once
-/// - **Event Handlers**: Prevent duplicate event processing
-/// - **Resource Management**: One-time resource allocation
+// A thread-safe mechanism to ensure an operation is performed exactly once.
+//
+// `OncePerformer` uses `SKGlobalActor` to guarantee that a given operation is executed
+// only one time, even when called from multiple concurrent contexts. This is useful for
+// one-time initialization, cleanup operations, or ensuring idempotent behavior.
+//
+// ## Usage Example:
+// ```swift
+// let performer = OncePerformer()
+//
+// // Called from multiple places concurrently
+// Task {
+//     await performer.perform {
+//         print("This will only print once")
+//         setupResources()
+//     }
+// }
+//
+// Task {
+//     await performer.perform {
+//         print("This will never execute")
+//     }
+// }
+// ```
+//
+// ## Common Use Cases:
+// - **Initialization**: Ensure setup code runs only once
+// - **Cleanup**: Guarantee teardown happens exactly once
+// - **Event Handlers**: Prevent duplicate event processing
+// - **Resource Management**: One-time resource allocation
 // MARK: - OncePerformer
 final class OncePerformer: Sendable {
     @SKGlobalActor

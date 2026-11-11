@@ -37,6 +37,8 @@ struct HookMacroRuntimeTests {
     func hookState() {
         let h = StateTest()
         let binding = h.render { useCountState(count: 0) }
+        // receiver only exposes `count`
+        // swiftlint:disable:next empty_count
         #expect(binding.wrappedValue.count == 0)
         binding.wrappedValue = CountState(count: 7)
         let binding2 = h.render { useCountState(count: 0) }

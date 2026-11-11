@@ -144,6 +144,7 @@ public final class FutureProviderElement<T: Sendable>: ProviderElement<FuturePro
 
 // MARK: - FutureProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that executes a one-shot async operation and caches the result.
 ///
 /// `FutureProvider` is designed for single, fire-and-forget async operations like API calls,
@@ -387,6 +388,7 @@ public struct FutureProvider<T: Sendable>: ProviderProtocol, @unchecked Sendable
 
 // MARK: - FutureFutureProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that returns an awaitable Task for a FutureProvider.
 ///
 /// `FutureFutureProvider` is a companion provider that wraps a `FutureProvider` and

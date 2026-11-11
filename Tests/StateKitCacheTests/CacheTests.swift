@@ -71,6 +71,7 @@ final class CacheTests: XCTestCase {
         cache.set("key", "value")
         XCTAssertEqual(cache.get("key"), "value")
 
+        // sleep justification: real-clock TTL expiry — the wait IS the behavior under test
         try? await Task.sleep(nanoseconds: 200_000_000)  // 0.2 seconds
 
         XCTAssertNil(cache.get("key"))
@@ -83,6 +84,7 @@ final class CacheTests: XCTestCase {
         cache.set("b", "B")
         XCTAssertEqual(cache.validCount, 2)
 
+        // sleep justification: real-clock TTL expiry — the wait IS the behavior under test
         try? await Task.sleep(nanoseconds: 150_000_000)  // 0.15 seconds
 
         XCTAssertEqual(cache.validCount, 0)
@@ -143,8 +145,9 @@ final class CacheTests: XCTestCase {
         cache = nil
 
         for _ in 0..<50 { await Task.yield() }
-        try await Task.sleep(nanoseconds: 100_000_000)
-
+        for _ in 0..<100 where weakCache != nil {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         XCTAssertNil(weakCache, "TimeToLiveCache leaked: housekeeping task captures self strongly")
     }
 
@@ -155,6 +158,7 @@ final class CacheTests: XCTestCase {
         cache = nil
 
         for _ in 0..<50 { await Task.yield() }
+        // sleep justification: real-clock TTL expiry — the wait IS the behavior under test
         try await Task.sleep(nanoseconds: 100_000_000)
 
         XCTAssertNil(weakCache, "SlidingWindowTTLCache leaked: housekeeping task captures self strongly")
@@ -176,6 +180,7 @@ final class CacheTests: XCTestCase {
         })
         cache.set("k", 1)
 
+        // sleep justification: real-clock TTL expiry — the wait IS the behavior under test
         try await Task.sleep(nanoseconds: 500_000_000)
 
         XCTAssertNil(cache.get("k"), "entry must expire while the cache is alive")
@@ -196,6 +201,7 @@ final class CacheTests: XCTestCase {
 
         // Eager expiry drives the callback (the background sweep is floored at
         // 1s so tiny TTLs cannot hot-loop the main actor).
+        // sleep justification: real-clock TTL expiry — the wait IS the behavior under test
         Thread.sleep(forTimeInterval: 0.08)
         XCTAssertNil(cache.get("k"), "expired entry must not be served")
 
@@ -230,6 +236,7 @@ final class CacheTests: XCTestCase {
         }
         cache.set("k", 1)
 
+        // sleep justification: real-clock TTL expiry — the wait IS the behavior under test
         try await Task.sleep(nanoseconds: 500_000_000)
 
         XCTAssertNil(cache.get("k"), "entry must expire while the cache is alive")

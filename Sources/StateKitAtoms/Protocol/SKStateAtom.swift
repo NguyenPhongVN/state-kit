@@ -1,36 +1,36 @@
-/// A mutable atom whose value can be read and written from any view.
-///
-/// `SKStateAtom` is the atom equivalent of SwiftUI's `@State`: it owns a
-/// piece of state with a defined default value and exposes it to any view
-/// that watches it.
-///
-/// ## Defining a named atom
-///
-/// ```swift
-/// struct CounterAtom: SKStateAtom, Hashable {
-///     typealias Value = Int   // required in Swift 6.3 — see SKAtom docs
-///     func defaultValue(context: SKAtomTransactionContext) -> Int { 0 }
-/// }
-/// ```
-///
-/// ## Using it in a view
-///
-/// ```swift
-/// struct CounterView: View {
-///     @SKState(CounterAtom()) var count
-///
-///     var body: some View {
-///         Stepper("\(count)", value: $count)
-///     }
-/// }
-/// ```
-///
-/// ## Inline atoms
-///
-/// ```swift
-/// let counterAtom = atom(0)           // SKAtomRef<Int>
-/// @SKState(counterAtom) var count
-/// ```
+// A mutable atom whose value can be read and written from any view.
+//
+// `SKStateAtom` is the atom equivalent of SwiftUI's `@State`: it owns a
+// piece of state with a defined default value and exposes it to any view
+// that watches it.
+//
+// ## Defining a named atom
+//
+// ```swift
+// struct CounterAtom: SKStateAtom, Hashable {
+//     typealias Value = Int   // required in Swift 6.3 — see SKAtom docs
+//     func defaultValue(context: SKAtomTransactionContext) -> Int { 0 }
+// }
+// ```
+//
+// ## Using it in a view
+//
+// ```swift
+// struct CounterView: View {
+//     @SKState(CounterAtom()) var count
+//
+//     var body: some View {
+//         Stepper("\(count)", value: $count)
+//     }
+// }
+// ```
+//
+// ## Inline atoms
+//
+// ```swift
+// let counterAtom = atom(0)           // SKAtomRef<Int>
+// @SKState(counterAtom) var count
+// ```
 // MARK: - SKStateAtom
 public protocol SKStateAtom: SKAtom {
     /// Returns the initial (default) value for this atom.

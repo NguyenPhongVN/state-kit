@@ -67,10 +67,8 @@ final class FeatureFlagsTests: XCTestCase {
         let rollout = PercentageRollout(percentage: 50)
 
         var enabledCount = 0
-        for i in 0..<10_000 {
-            if rollout.isEnabled(for: "user\(i)") {
-                enabledCount += 1
-            }
+        for i in 0..<10_000 where rollout.isEnabled(for: "user\(i)") {
+            enabledCount += 1
         }
 
         // Should be roughly 50% (allow ±5 percentage points — a 100-user
@@ -190,10 +188,8 @@ final class FeatureFlagsTests: XCTestCase {
         let five = PercentageRollout(percentage: 5)
         let fifty = PercentageRollout(percentage: 50)
 
-        for id in internationalIDs {
-            if five.isEnabled(for: id) {
-                XCTAssertTrue(fifty.isEnabled(for: id), "\(id) enabled at 5% must stay enabled at 50%")
-            }
+        for id in internationalIDs where five.isEnabled(for: id) {
+            XCTAssertTrue(fifty.isEnabled(for: id), "\(id) enabled at 5% must stay enabled at 50%")
         }
     }
 

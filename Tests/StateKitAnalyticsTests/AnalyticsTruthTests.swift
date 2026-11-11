@@ -133,7 +133,6 @@ struct AnalyticsTruthTests {
     }
 }
 
-
 private func analyticsIntOf(_ codable: AnyCodable?) -> Int {
     guard let data = try? JSONEncoder().encode(codable) else { return -999 }
     return (try? JSONDecoder().decode(Int.self, from: data)) ?? -999

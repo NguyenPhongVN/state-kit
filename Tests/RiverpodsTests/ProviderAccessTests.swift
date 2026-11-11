@@ -21,12 +21,14 @@ struct ProviderAccessTests {
 
         // While watched, the auto-dispose provider must stay alive past its
         // dispose window.
+        // sleep justification: absence check: must wait a full window to prove NO premature dispose
         try await Task.sleep(nanoseconds: 200_000_000)
         #expect(!disposed, "watch must keep an auto-dispose provider alive")
 
         container.removeListener(for: p)
         #expect(container.element(for: id)?.listenersCount == 0, "removeListener must balance watch")
 
+        // sleep justification: absence check: must wait a full window to prove NO premature dispose
         try await Task.sleep(nanoseconds: 200_000_000)
         #expect(disposed, "releasing the last listener must dispose the provider after its window")
     }
@@ -55,6 +57,7 @@ struct ProviderAccessTests {
         #expect(container.element(for: id)?.listenersCount == 1, "addListener must register like watch")
 
         container.removeListener(for: p)
+        // sleep justification: absence check: must wait a full window to prove NO premature dispose
         try await Task.sleep(nanoseconds: 200_000_000)
         #expect(disposed, "addListener/removeListener must balance and dispose")
     }

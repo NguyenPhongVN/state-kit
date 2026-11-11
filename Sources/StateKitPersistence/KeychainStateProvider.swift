@@ -26,6 +26,7 @@ public struct KeychainStateProvider<T: Sendable & Codable> {
     private let encoder: JSONEncoder = JSONEncoder()
     private let decoder: JSONDecoder = JSONDecoder()
 
+// Sendable audit 013: immutable @Sendable handler captured once (see docs/engineering/SENDABLE_AUDIT.md)
     /// Test seam (internal): reference box holding a store failure handler.
     /// A struct copy shared with a notifier still sees handler mutations.
     /// When `handler` is non-nil, `store` invokes it instead of the real
@@ -220,6 +221,7 @@ public struct KeychainNotifierProvider {
     }
 }
 
+// Sendable audit 013: subclasses @MainActor Notifier (see docs/engineering/SENDABLE_AUDIT.md)
 /// Notifier that maintains Keychain synchronization.
 public final class KeychainNotifier<T: Sendable & Codable>: Notifier<T>, @unchecked Sendable {
     private let provider: KeychainStateProvider<T>

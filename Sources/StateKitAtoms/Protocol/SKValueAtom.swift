@@ -1,39 +1,39 @@
-/// A read-only derived atom whose value is computed from other atoms.
-///
-/// `SKValueAtom` is the atom equivalent of a computed property or Recoil's
-/// `selector`. Its value is recomputed automatically whenever any atom it
-/// watches changes.
-///
-/// ## Defining a derived atom
-///
-/// ```swift
-/// struct DoubledCounterAtom: SKValueAtom, Hashable {
-///     typealias Value = Int   // required in Swift 6.3 — see SKAtom docs
-///     func value(context: SKAtomTransactionContext) -> Int {
-///         context.watch(CounterAtom()) * 2
-///     }
-/// }
-/// ```
-///
-/// Every call to `context.watch(_:)` creates a dependency edge in the graph.
-/// When `CounterAtom` changes, `DoubledCounterAtom` is recomputed and views
-/// subscribed to it re-render.
-///
-/// ## Using it in a view
-///
-/// ```swift
-/// struct DoubledView: View {
-///     @SKValue(DoubledCounterAtom()) var doubled
-///
-///     var body: some View { Text("\(doubled)") }
-/// }
-/// ```
-///
-/// ## Inline selectors
-///
-/// ```swift
-/// let doubledAtom = selector { ctx in ctx.watch(counterAtom) * 2 }
-/// ```
+// A read-only derived atom whose value is computed from other atoms.
+//
+// `SKValueAtom` is the atom equivalent of a computed property or Recoil's
+// `selector`. Its value is recomputed automatically whenever any atom it
+// watches changes.
+//
+// ## Defining a derived atom
+//
+// ```swift
+// struct DoubledCounterAtom: SKValueAtom, Hashable {
+//     typealias Value = Int   // required in Swift 6.3 — see SKAtom docs
+//     func value(context: SKAtomTransactionContext) -> Int {
+//         context.watch(CounterAtom()) * 2
+//     }
+// }
+// ```
+//
+// Every call to `context.watch(_:)` creates a dependency edge in the graph.
+// When `CounterAtom` changes, `DoubledCounterAtom` is recomputed and views
+// subscribed to it re-render.
+//
+// ## Using it in a view
+//
+// ```swift
+// struct DoubledView: View {
+//     @SKValue(DoubledCounterAtom()) var doubled
+//
+//     var body: some View { Text("\(doubled)") }
+// }
+// ```
+//
+// ## Inline selectors
+//
+// ```swift
+// let doubledAtom = selector { ctx in ctx.watch(counterAtom) * 2 }
+// ```
 // MARK: - SKValueAtom
 public protocol SKValueAtom: SKAtom {
     /// Computes and returns this atom's current value.

@@ -41,6 +41,11 @@ Then add only the products you need:
 
 ## Modules
 
+> **Three engines, three paradigms** — hooks (React-style local state), atoms
+> (Recoil-style derived graph), providers (Riverpod-style DI graph). This is the
+> intended architecture: see [docs/engineering/ARCHITECTURE.md](docs/engineering/ARCHITECTURE.md)
+> for the boundary contract and selection guide.
+
 | Module | Purpose |
 |--------|---------|
 | `StateKitCore` | Runtime primitives (`StateContext`, `StateRuntime`, `StateSignal`, `StateRef`) |

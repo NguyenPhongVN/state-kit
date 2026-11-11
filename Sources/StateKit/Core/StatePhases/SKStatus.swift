@@ -1,7 +1,7 @@
 import Foundation
 
-/// Case-only status mirrors of the phase types, for consumers that need the
-/// lifecycle state without associated values (e.g. badges, simple switches).
+// Case-only status mirrors of the phase types, for consumers that need the
+// lifecycle state without associated values (e.g. badges, simple switches).
 // MARK: - SKStatus
 public enum SKStatus: Equatable, Hashable, Sendable {
     /// No async work has started yet.

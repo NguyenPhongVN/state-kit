@@ -458,10 +458,11 @@ open class ProviderElement<P: ProviderProtocol>: AnyProviderElement, ProviderRef
     /// Removes one listener; no-op below zero (double-close safe).
     public func onRemoveListener(_ callback: @escaping () -> Void) { appendCallback(.removeListener, callback) }
 
-    /// Pins this element in memory until the returned link is released.
+    // Pins this element in memory until the returned link is released.
 
     // One-shot close flag backing keep-alive links. Lock-based so the idempotency
     // contract holds regardless of which actor the close lands on.
+// Sendable audit 013: one-shot flag guarded by NSLock (see docs/engineering/SENDABLE_AUDIT.md)
     final class KeepAliveCloseFlag: @unchecked Sendable {
         private let lock = NSLock()
         private var closed = false

@@ -63,6 +63,7 @@ struct RiverpodNewFeaturesTests {
         #expect(computeCount == 1)
 
         // Wait for cacheTime
+        // sleep justification: cacheTime dispose window — waiting for the wall-clock window is the behavior
         try await Task.sleep(nanoseconds: 200_000_000)
 
         // Now it should be disposed, so next read recomputes

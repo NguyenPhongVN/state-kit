@@ -51,6 +51,7 @@ public func userDefaultsAtom<T: UserDefaultsSerializable>(
 
 // MARK: - Persistent Atom Storage
 
+// Sendable audit 013: UserDefaults is thread-safe; observers guarded by NSLock (see docs/engineering/SENDABLE_AUDIT.md)
 /// Storage system for persistent atoms with observation.
 public final class PersistentAtomStorage<T: UserDefaultsSerializable>: @unchecked Sendable {
     private let defaults: UserDefaults

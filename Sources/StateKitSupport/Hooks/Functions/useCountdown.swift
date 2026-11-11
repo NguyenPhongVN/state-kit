@@ -158,7 +158,7 @@ public func useCountdown(
     )
 }
 
-    /// Everything needed to drive a countdown from the UI.
+    // Everything needed to drive a countdown from the UI.
 // MARK: - CountdownController
 public struct CountdownController {
     /// Seconds left, observable by SwiftUI.

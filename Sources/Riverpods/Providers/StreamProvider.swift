@@ -90,6 +90,7 @@ public final class StreamProviderElement<T: Sendable>: ProviderElement<StreamPro
 
 // MARK: - StreamProvider
 
+// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
 /// A provider that subscribes to a Combine publisher and emits a stream of values.
 ///
 /// `StreamProvider` is designed for handling continuous streams of data, such as:

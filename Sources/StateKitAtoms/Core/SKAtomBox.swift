@@ -1,18 +1,19 @@
 import Observation
 
-/// A per-atom reactive value container.
-///
-/// Every atom registered in `SKAtomStore` owns exactly one `SKAtomBox`. Because
-/// the box itself is the `Observable` unit — not the store — SwiftUI tracks
-/// dependencies at the atom level: changing atom A's box only re-renders views
-/// that accessed `A.box.value` during their last body run, leaving unrelated
-/// views untouched.
-///
-/// - Note: Mutations must only happen on the main thread (via `@MainActor`
-///   store methods). The type itself is not `@MainActor`-isolated so it can
-///   be returned from protocol methods without actor-isolation constraints on
-///   the protocol requirement.
+// A per-atom reactive value container.
+//
+// Every atom registered in `SKAtomStore` owns exactly one `SKAtomBox`. Because
+// the box itself is the `Observable` unit — not the store — SwiftUI tracks
+// dependencies at the atom level: changing atom A's box only re-renders views
+// that accessed `A.box.value` during their last body run, leaving unrelated
+// views untouched.
+//
+// - Note: Mutations must only happen on the main thread (via `@MainActor`
+//   store methods). The type itself is not `@MainActor`-isolated so it can
+//   be returned from protocol methods without actor-isolation constraints on
+//   the protocol requirement.
 // MARK: - SKAtomBox
+// Sendable audit 013: contents mutated only under the owning SKAtomStore's lock (see docs/engineering/SENDABLE_AUDIT.md)
 public final class SKAtomBox<Value>: @unchecked Sendable {
 
     private var _value: Value

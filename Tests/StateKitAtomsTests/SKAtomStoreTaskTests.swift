@@ -13,24 +13,28 @@ struct SKAtomStoreTaskTests {
     }
 
     @Test("task atom transitions to success")
-    func taskAtomSuccess() async {
+    func taskAtomSuccess() async throws {
         let store = SKAtomStore()
         _ = store.taskBox(for: FetchAtom())
 
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        let box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(FetchAtom()))
+        var box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(FetchAtom()))
+        for _ in 0..<100 where box?.value.value != "fetched" {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            box = store.existingBox(for: SKAtomKey(FetchAtom()))
+        }
         #expect(box?.value.value == "fetched")
     }
 
     @Test("throwing task atom transitions to failure")
-    func throwingTaskAtomFailure() async {
+    func throwingTaskAtomFailure() async throws {
         let store = SKAtomStore()
         _ = store.throwingTaskBox(for: FailingAtom())
 
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        let box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(FailingAtom()))
+        var box: SKAtomBox<AsyncPhase<String>>? = store.existingBox(for: SKAtomKey(FailingAtom()))
+        for _ in 0..<100 where box?.value.isFailure != true {
+            try await Task.sleep(nanoseconds: 5_000_000)
+            box = store.existingBox(for: SKAtomKey(FailingAtom()))
+        }
         #expect(box?.value.isFailure == true)
     }
 
