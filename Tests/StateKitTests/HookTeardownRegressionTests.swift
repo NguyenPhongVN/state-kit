@@ -73,7 +73,9 @@ struct HookTeardownRegressionTests {
     }
 
     // P1 finding 2026-11-16: no dealloc under the Xcode 26 toolchain; investigate
-    @Test("useAsyncPerform box deallocates after in-flight perform on teardown", .disabled(if: ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26))
+    @Test("useAsyncPerform box deallocates after in-flight perform on teardown",
+          .disabled(if: ProcessInfo.processInfo
+              .operatingSystemVersion.majorVersion < 26))
     func useAsyncPerformTeardown() async throws {
         let h = StateTest()
         let perform = h.render { useAsyncPerform { try await neverResolvingSleep() } }.perform
@@ -89,7 +91,9 @@ struct HookTeardownRegressionTests {
     }
 
     // P1 finding 2026-11-16: no dealloc under the Xcode 26 toolchain; investigate
-    @Test("useAsyncRefresh box deallocates after in-flight refresh on teardown", .disabled(if: ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26))
+    @Test("useAsyncRefresh box deallocates after in-flight perform on teardown",
+          .disabled(if: ProcessInfo.processInfo
+              .operatingSystemVersion.majorVersion < 26))
     func useAsyncRefreshTeardown() async throws {
         let h = StateTest()
         let refresh = h.render { useAsyncRefresh { try await neverResolvingSleep() } }.refresh
