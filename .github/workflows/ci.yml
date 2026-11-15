@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     name: Build & Test
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -39,14 +39,21 @@ jobs:
         run: swift build
 
       - name: Run tests
-        run: swift test
+        run: swift test --enable-code-coverage
+
+      - name: Coverage report (advisory, spec 014)
+        run: |
+          xcrun llvm-cov report \
+            ".build/out/Products/Debug/RiverpodsTests.xctest/Contents/MacOS/RiverpodsTests" \
+            -instr-profile ".build/out/Products/Debug/codecov/default.profdata" \
+            --summary-only | grep -E "Riverpods/(Container|Core)" || true
 
       - name: Build Examples
         run: cd Examples && swift build
 
   lint:
     name: SwiftLint
-    runs-on: macos-14
+    runs-on: macos-15
     # Blocking since specs/011: violations fail CI. (--strict escalation to
     # warnings is deferred until the codebase is warning-clean.)
     steps:
@@ -59,12 +66,11 @@ jobs:
         run: swiftlint lint --quiet
 
   thread-sanitizer:
-    name: Thread Sanitizer (experimental)
-    runs-on: macos-14
-    # Experimental (non-blocking) — same non-blocking start lint had before it
-    # was promoted to blocking in specs/011. Promote to blocking once the suite
-    # is proven race-clean under TSan.
-    continue-on-error: true
+    name: Thread Sanitizer
+    runs-on: macos-15
+    # BLOCKING since spec 014: proven race-clean locally (exit 0, zero warnings,
+    # full suite) before promotion — mirrors the lint promotion path.
+
     steps:
       - uses: actions/checkout@v4
 
@@ -84,7 +90,7 @@ jobs:
 
   build-ios:
     name: Build (iOS destination)
-    runs-on: macos-14
+    runs-on: macos-15
     # The package declares iOS among its platforms; the macOS suite alone never
     # compiles the iOS-specific surface. Library build only (spec 012).
     steps:
