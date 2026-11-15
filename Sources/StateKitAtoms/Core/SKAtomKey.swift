@@ -10,7 +10,7 @@
 //
 // SKAtomKey(CounterAtom()) != SKAtomKey(LabelAtom())  // distinct even if both hash to 0
 // ```
-// Sendable audit 013: immutable config; the stored build closure is @MainActor and all engine access is MainActor-confined (see ARCHITECTURE.md) (see docs/engineering/SENDABLE_AUDIT.md)
+// Sendable audit 013: immutable config; @MainActor closure — see SENDABLE_AUDIT.md (see docs/engineering/SENDABLE_AUDIT.md)
 // AnyHashable is not Sendable; we use @unchecked Sendable because atom keys
 // are always created and used on @MainActor, making cross-actor send impossible
 // Sendable audit 013: immutable composite; the erased AnyHashable is only hashed/compared (see docs/engineering/SENDABLE_AUDIT.md)

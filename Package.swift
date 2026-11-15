@@ -45,7 +45,6 @@ let package = Package(
     dependencies: [
         // Macro parsing/expansion
         .package(url: "https://github.com/swiftlang/swift-syntax", from: "603.0.0"),
-        .package(url: "https://github.com/pointfreeco/swift-issue-reporting", from: "2.1.1"),
         .package(url: "https://github.com/pointfreeco/swift-concurrency-extras", from: "1.4.1"),
     ],
     targets: [
@@ -96,7 +95,6 @@ let package = Package(
             name: "StateConcurrency",
             dependencies: [
                 PackageDescription.Target.Dependency.byName(name: "StateKit"),
-                PackageDescription.Target.Dependency.product(name: "IssueReporting", package: "swift-issue-reporting"),
                 PackageDescription.Target.Dependency.product(name: "ConcurrencyExtras", package: "swift-concurrency-extras"),
             ],
             exclude: ["README.md"]

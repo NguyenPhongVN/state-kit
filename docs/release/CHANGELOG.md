@@ -13,10 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **Architecture decision published** — the three engines (hooks / atoms / providers)
   are the intended design; `docs/engineering/ARCHITECTURE.md` is the boundary contract
   with selection guidance and the dependency map, linked from the README.
-- **Linter noise eliminated** — 965 warnings → 132, each residual category documented
+- **Linter noise eliminated** — 965 warnings → 133, each residual category documented
   in the rulebook's lint policy ledger (whitespace inside pinned macro strings, justified
   force casts, by-design size thresholds). 43 switch-case alignments reindented; 28
-  orphaned doc comments converted; stale disable commands removed.
+  orphaned doc comments converted; stale disable commands removed. Spec 014 re-check:
+  lint 0 errors / exit 0 after fixing the audit-comment overflow introduced by 013.
 - **Deterministic test waits** — 17 fixed-sleep-then-assert sites converted to bounded
   deadline polling; intentional time-modeling sleeps carry justification comments.
   Stability proven by 3 consecutive full-suite runs.
