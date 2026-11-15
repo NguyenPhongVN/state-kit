@@ -72,7 +72,7 @@ struct HookTeardownRegressionTests {
         #expect(weakBox == nil)
     }
 
-    // P1 finding 2026-11-16: box does not deallocate under the Xcode 26 toolchain (passes on 27); investigate
+    // P1 finding 2026-11-16: no dealloc under the Xcode 26 toolchain; investigate
     @Test("useAsyncPerform box deallocates after in-flight perform on teardown", .disabled(if: ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26))
     func useAsyncPerformTeardown() async throws {
         let h = StateTest()
@@ -88,7 +88,7 @@ struct HookTeardownRegressionTests {
         #expect(weakBox == nil, "box leaked: the perform task closure retains the box")
     }
 
-    // P1 finding 2026-11-16: box does not deallocate under the Xcode 26 toolchain (passes on 27); investigate
+    // P1 finding 2026-11-16: no dealloc under the Xcode 26 toolchain; investigate
     @Test("useAsyncRefresh box deallocates after in-flight refresh on teardown", .disabled(if: ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26))
     func useAsyncRefreshTeardown() async throws {
         let h = StateTest()
@@ -104,7 +104,7 @@ struct HookTeardownRegressionTests {
         #expect(weakBox == nil, "box leaked: the refresh task closure retains the box")
     }
 
-    // P1 finding 2026-11-16: box does not deallocate under the Xcode 26 toolchain (passes on 27); investigate
+    // P1 finding 2026-11-16: no dealloc under the Xcode 26 toolchain; investigate
     @Test("usePublisherPerform box deallocates on teardown", .disabled(if: ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26))
     func usePublisherPerformTeardown() async throws {
         let h = StateTest()
@@ -126,7 +126,7 @@ struct HookTeardownRegressionTests {
         #expect(weakBox == nil)
     }
 
-    // P1 finding 2026-11-16: box does not deallocate under the Xcode 26 toolchain (passes on 27); investigate
+    // P1 finding 2026-11-16: no dealloc under the Xcode 26 toolchain; investigate
     @Test("usePublisherRefresh box deallocates on teardown", .disabled(if: ProcessInfo.processInfo.operatingSystemVersion.majorVersion < 26))
     func usePublisherRefreshTeardown() async throws {
         let h = StateTest()

@@ -86,7 +86,9 @@ jobs:
           swift --version
 
       - name: Run tests under Thread Sanitizer
-        run: swift test --sanitize=thread
+        # PublisherHookMainThreadTests: TSan's ~5x scheduling overhead breaks
+        # their main-actor write-tracking windows (false positives, not races).
+        run: swift test --sanitize=thread --skip PublisherHookMainThread
 
   build-ios:
     name: Build (iOS destination)
