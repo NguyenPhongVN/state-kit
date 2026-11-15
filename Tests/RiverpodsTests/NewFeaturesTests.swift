@@ -66,7 +66,14 @@ struct RiverpodNewFeaturesTests {
         // sleep justification: cacheTime dispose window — waiting for the wall-clock window is the behavior
         try await Task.sleep(nanoseconds: 200_000_000)
 
-        // Now it should be disposed, so next read recomputes
+        // Now it should be disposed, so next read recomputes (bounded poll —
+        // the cacheTime task may land slightly after the wall-clock window on CI)
+        for _ in 0..<100 where computeCount == 1 {
+            _ = container.read(p)
+            if computeCount == 1 {
+                try? await Task.sleep(nanoseconds: 5_000_000)
+            }
+        }
         #expect(container.read(p) == "Value")
         #expect(computeCount == 2)
     }

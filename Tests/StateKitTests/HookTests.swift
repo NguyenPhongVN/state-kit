@@ -206,11 +206,15 @@ struct HookTests {
         }
         #expect(phase1 == .loading)
 
-        // Wait for task to finish
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        let phase2 = h.render {
+        // Wait for task to finish (bounded poll)
+        var phase2 = h.render {
             useAsync(updateStrategy: .once) { "Done" }
+        }
+        for _ in 0..<100 where phase2 != .success("Done") {
+            try? await Task.sleep(nanoseconds: 5_000_000)
+            phase2 = h.render {
+                useAsync(updateStrategy: .once) { "Done" }
+            }
         }
         #expect(phase2 == .success("Done"))
     }

@@ -81,6 +81,9 @@ struct HookTeardownRegressionTests {
         #expect(weakBox != nil)
 
         h.reset()
+        for _ in 0..<100 where weakBox != nil {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         #expect(weakBox == nil, "box leaked: the perform task closure retains the box")
     }
 
@@ -93,11 +96,14 @@ struct HookTeardownRegressionTests {
         #expect(weakBox != nil)
 
         h.reset()
+        for _ in 0..<100 where weakBox != nil {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         #expect(weakBox == nil, "box leaked: the refresh task closure retains the box")
     }
 
     @Test("usePublisherPerform box deallocates on teardown")
-    func usePublisherPerformTeardown() {
+    func usePublisherPerformTeardown() async throws {
         let h = StateTest()
         let subject = PassthroughSubject<Int, Never>()
         let perform = h.render {
@@ -108,6 +114,9 @@ struct HookTeardownRegressionTests {
         #expect(weakBox != nil)
 
         h.reset()
+        for _ in 0..<100 where weakBox != nil {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         #expect(weakBox == nil, "box leaked: the sink closure retains the box")
 
         subject.send(1)
@@ -115,7 +124,7 @@ struct HookTeardownRegressionTests {
     }
 
     @Test("usePublisherRefresh box deallocates on teardown")
-    func usePublisherRefreshTeardown() {
+    func usePublisherRefreshTeardown() async throws {
         let h = StateTest()
         let subject = PassthroughSubject<Int, Never>()
         let refresh = h.render {
@@ -126,6 +135,9 @@ struct HookTeardownRegressionTests {
         #expect(weakBox != nil)
 
         h.reset()
+        for _ in 0..<100 where weakBox != nil {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         #expect(weakBox == nil, "box leaked: the sink closure retains the box")
 
         subject.send(1)

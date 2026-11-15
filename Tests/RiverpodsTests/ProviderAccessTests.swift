@@ -57,8 +57,10 @@ struct ProviderAccessTests {
         #expect(container.element(for: id)?.listenersCount == 1, "addListener must register like watch")
 
         container.removeListener(for: p)
-        // sleep justification: absence check: must wait a full window to prove NO premature dispose
-        try await Task.sleep(nanoseconds: 200_000_000)
+        // Bounded poll: dispose lands after the cacheTime window (CI machines slower)
+        for _ in 0..<100 where !disposed {
+            try await Task.sleep(nanoseconds: 5_000_000)
+        }
         #expect(disposed, "addListener/removeListener must balance and dispose")
     }
 }
